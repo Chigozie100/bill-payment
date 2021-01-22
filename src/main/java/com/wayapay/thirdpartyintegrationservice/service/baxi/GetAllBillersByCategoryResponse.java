@@ -13,7 +13,16 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 public class GetAllBillersByCategoryResponse extends SuperResponse {
-    private List<BillerDetail> data = new ArrayList<>();
+    private Provider data;
+
+}
+
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString
+class Provider {
+    private List<BillerDetail> providers = new ArrayList<>();
 }
 
 @Getter
@@ -21,24 +30,9 @@ public class GetAllBillersByCategoryResponse extends SuperResponse {
 @NoArgsConstructor
 @ToString
 class BillerDetail{
-
-    private String id;
-    private String serviceId;
-    private String serviceCode;
-    private String serviceCategory;
+    private String service_type;
+    private String shortname;
     private String biller_id;
-    private String serviceBiller;
-    private String serviceType;
-    private String serviceName;
-    private String serviceDescription;
-    private String serviceHandler;
-    private String serviceProvider;
-    private String serviceEnabled;
-    private String serviceStatus;
-    private String serviceLogo;
-    private String deployed;
-    private String b2b_deployed;
-    private String created_at;
-    private String updated_at;
-
+    private String product_id;
+    private String name;
 }

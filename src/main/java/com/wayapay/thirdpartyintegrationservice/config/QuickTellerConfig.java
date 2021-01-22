@@ -24,4 +24,10 @@ public class QuickTellerConfig {
 
     @NotBlank(message = "app.config.quickteller.biller-category-url is required")
     private String billerCategoryUrl;
+
+    @NotBlank(message = "app.config.quickteller.billers-url is required")
+    private String billersUrl;
+
+    @NotBlank(message = "app.config.quickteller.biller-payment-item-url is required")
+    private String billerPaymentItemUrl;
 }

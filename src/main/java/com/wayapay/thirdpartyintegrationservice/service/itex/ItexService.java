@@ -5,11 +5,14 @@ import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
+import com.wayapay.thirdpartyintegrationservice.util.Constants;
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -27,6 +30,15 @@ public class ItexService implements IThirdPartyService {
     private List<SubItem> paymentMethodSubList = new ArrayList<>();
     private static final String AMOUNT = "amount";
     private static final String ACCOUNT = "account";
+    private static final String ACCOUNT_TYPE = "accountType";
+    private static final String METER_NO = "meterNo";
+    private static final String CHANNEL = "channel";
+    private static final String PRODUCT_CODE = "productCode";
+    private static final String SUCCESS = "00";
+    private static final String CUSTOMER_PHONE_NUMBER = "customerPhoneNumber";
+    private static final String PAYMENT_METHOD = "paymentMethod";
+    private static final String PHONE = "phone";
+    private static final String REFERENCE = "reference";
     private static List<BillerResponse> categoryElectricity = Arrays.asList(new BillerResponse("ikedc", "IKEDC", ELECTRICITY), new BillerResponse("aedc", "AEDC", ELECTRICITY), new BillerResponse("phedc", "PHEDC", ELECTRICITY), new BillerResponse("eedc", "EEDC", ELECTRICITY), new BillerResponse("ibedc", "IBEDC", ELECTRICITY), new BillerResponse("ekedc", "EKEDC", ELECTRICITY), new BillerResponse("kedco", "KEDCO", ELECTRICITY));
     private static List<BillerResponse> categoryAirtime = Arrays.asList(new BillerResponse("mtnvtu", "MTN VTU", AIRTIME), new BillerResponse("9mobilevtu", "9MOBILE VTU", AIRTIME), new BillerResponse("glovtu", "GLO VTU", AIRTIME), new BillerResponse("glovot", "GLO VOT", AIRTIME), new BillerResponse("glovos", "GLO VOS", AIRTIME), new BillerResponse("airtelpin", "AIRTEL PIN", AIRTIME), new BillerResponse("airtelvtu", "AIRTEL VTU", AIRTIME));
     private static List<BillerResponse> categoryData = Arrays.asList(new BillerResponse( "mtndata","MTN DATA", DATA), new BillerResponse( "9mobiledata","9MOBILE DATA", DATA), new BillerResponse( "glodata","GLO DATA", DATA), new BillerResponse( "airteldata","AIRTEL DATA", DATA));
@@ -41,14 +53,36 @@ public class ItexService implements IThirdPartyService {
         this.itexUtil = itexUtil;
     }
 
-    private Optional<String> getAuthApiToken(){
-        ResponseEntity<Object> objectResponseEntity = feignClient.getAuthApiToken(new AuthApiTokenRequest(appConfig.getItex().getWalletId(), appConfig.getItex().getUsername(), appConfig.getItex().getPassword(), appConfig.getItex().getUniqueApiIdentifier()));
-        return Optional.empty();
+    private Optional<String> getAuthApiToken() throws ThirdPartyIntegrationException {
+        try {
+            AuthApiTokenResponse authApiTokenResponse = feignClient.getAuthApiToken(new AuthApiTokenRequest(appConfig.getItex().getWalletId(), appConfig.getItex().getUsername(), appConfig.getItex().getPassword(), appConfig.getItex().getUniqueApiIdentifier()));
+            if(SUCCESS.equals(authApiTokenResponse.getResponseCode())
+                && !Objects.isNull(authApiTokenResponse.getData())
+                && SUCCESS.equals(authApiTokenResponse.getData().getResponseCode())){
+                return Optional.of(authApiTokenResponse.getData().getToken());
+            }
+            return Optional.empty();
+        } catch (FeignException e) {
+            log.error("Unable to generate authApiToken ", e);
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
-    private Optional<String> generateEncryptedPin(){
-        ResponseEntity<Object> objectResponseEntity = feignClient.generateEncryptedPin(new EncryptedPinRequest(appConfig.getItex().getWalletId(), appConfig.getItex().getUsername(), appConfig.getItex().getPassword(), appConfig.getItex().getPayVicePin()));
-        return Optional.empty();
+    private Optional<String> generateEncryptedPin() throws ThirdPartyIntegrationException {
+        try {
+            EncryptedPinResponse encryptedPinResponse = feignClient.generateEncryptedPin(new EncryptedPinRequest(appConfig.getItex().getWalletId(), appConfig.getItex().getUsername(), appConfig.getItex().getPassword(), appConfig.getItex().getPayVicePin()));
+            if(SUCCESS.equals(encryptedPinResponse.getResponseCode())
+                    && !Objects.isNull(encryptedPinResponse.getData())
+                    && SUCCESS.equals(encryptedPinResponse.getData().getResponseCode())){
+                return Optional.of(encryptedPinResponse.getData().getPin());
+            }
+            return Optional.empty();
+        } catch (FeignException e) {
+            log.error("Unable to generate EncryptedPin", e);
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
     private Optional<String> generateSignature(String jsonRequestAsString){
@@ -128,19 +162,333 @@ public class ItexService implements IThirdPartyService {
     }
 
     @Override
-    public void validateCustomerValidationFormByBiller() {
+    public CustomerValidationResponse validateCustomerValidationFormByBiller(CustomerValidationRequest request) throws ThirdPartyIntegrationException {
 
         //for cableTv and Internet, the validationResponse should contain the bouquets or bundles
+
+        if (CommonUtils.isEmpty(request.getCategoryId()) || CommonUtils.isEmpty(request.getBillerId())){
+            log.error("categoryId => {} or billerId => {} is empty/null ", request.getCategoryId(), request.getBillerId());
+            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Invalid category or biller provided");
+        }
+
+        if (categoryElectricity.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return validateElectricity(request);
+        } else if (categoryAirtime.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            //Validation is not required
+            return new CustomerValidationResponse();
+        } else if (categoryData.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return validateData(request);
+        } else if (categoryInternet.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return validateInternet(request);
+        } else if (categoryCableTv.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return new CustomerValidationResponse();
+//            return getCableTvPaymentItems(billerId, categoryId);
+        } else if (categoryRemita.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return new CustomerValidationResponse();
+//            return getRemitaPaymentItems(billerId, categoryId);
+        } else if (categoryLcc.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return new CustomerValidationResponse();
+//            return getLCCPaymentItems(billerId, categoryId);
+        } else {
+            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Unknown biller name provided");
+        }
 
     }
 
     @Override
-    public void processPayment() {
+    public PaymentResponse processPayment(PaymentRequest request, String transactionId) throws ThirdPartyIntegrationException {
 
         //ensure that the MONEY to be paid is secured alongside the FEE
         //Initiate Payment
         //#Async : Confirm Payment Status by making a Transaction status, if not successfull, then reverse the MONEY and the FEE.
 
+        if (categoryElectricity.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return paymentElectricity(request, transactionId);
+        } else if (categoryAirtime.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return paymentAirtime(request, transactionId);
+        } else if (categoryData.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return paymentData(request, transactionId);
+        } else if (categoryInternet.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return paymentInternet(request, transactionId);
+        } else if (categoryCableTv.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return new PaymentResponse();
+//            return getCableTvPaymentItems(billerId, categoryId);
+        } else if (categoryRemita.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return new PaymentResponse();
+//            return getRemitaPaymentItems(billerId, categoryId);
+        } else if (categoryLcc.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return new PaymentResponse();
+//            return getLCCPaymentItems(billerId, categoryId);
+        } else {
+            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Unknown biller name provided");
+        }
+
+    }
+
+    private CustomerValidationResponse validateInternet(CustomerValidationRequest request) throws ThirdPartyIntegrationException {
+        InternetValidationRequest validationRequest = generateInternetValidationRequest(request);
+        Optional<InternetValidationResponse> internetValidationResponseOptional = Optional.empty();
+        try {
+            internetValidationResponseOptional = Optional.of(feignClient.internetValidation(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to validate customer internet detail via itex ", e);
+        }
+        InternetValidationResponse internetValidationResponse = internetValidationResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(internetValidationResponse.getResponseCode())
+                && !Objects.isNull(internetValidationResponse.getData()) && SUCCESS.equals(internetValidationResponse.getData().getResponseCode())) {
+
+            CustomerValidationResponse customerValidationResponse = new CustomerValidationResponse(request.getCategoryId(), request.getBillerId());
+            customerValidationResponse.getData().add(new ParamNameValue(PRODUCT_CODE, internetValidationResponse.getData().getProductCode()));
+
+            Item itemType = new Item("type");
+            itemType.getSubItems().add(new SubItem("subscription"));
+            itemType.getSubItems().add(new SubItem("topup"));
+
+            customerValidationResponse.getItems().add(itemType);
+            customerValidationResponse.getItems().add(new Item(PHONE));
+            customerValidationResponse.getItems().add(getPaymentMethodAsItem());
+            customerValidationResponse.getItems().add(getInternetBundles(validationRequest));
+            return customerValidationResponse;
+        }
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private Item getInternetBundles(InternetValidationRequest validationRequest) throws ThirdPartyIntegrationException {
+        Optional<InternetBundleResponse> internetBundleResponseOptional = Optional.empty();
+        try {
+            internetBundleResponseOptional = Optional.of(feignClient.getInternetBundles(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to get customer internet bundles via itex ", e);
+        }
+
+        InternetBundleResponse internetBundleResponse = internetBundleResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(internetBundleResponse.getResponseCode())
+                && !Objects.isNull(internetBundleResponse.getData()) && SUCCESS.equals(internetBundleResponse.getData().getResponseCode())) {
+            Item itemBundles = new Item("bundle");
+            internetBundleResponse.getData().getBundles().forEach(bundles -> itemBundles.getSubItems().add(new SubItem(bundles.getCode(), bundles.getCode(), getAmountInNaira(bundles.getPrice()), getAmountInNaira(bundles.getPrice()))));
+            return itemBundles;
+        }
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private CustomerValidationResponse validateData(CustomerValidationRequest request) throws ThirdPartyIntegrationException {
+        DataValidationRequest validationRequest = generateDataValidationRequest(request);
+        Optional<DataValidationResponse> dataValidationResponseOptional = Optional.empty();
+        try {
+            dataValidationResponseOptional = Optional.of(feignClient.dataValidation(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to validate customer data detail via itex ", e);
+        }
+        DataValidationResponse dataValidationResponse = dataValidationResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(dataValidationResponse.getResponseCode())
+                && !Objects.isNull(dataValidationResponse.getData()) && SUCCESS.equals(dataValidationResponse.getData().getResponseCode())) {
+            CustomerValidationResponse customerValidationResponse = new CustomerValidationResponse(request.getCategoryId(), request.getBillerId());
+            customerValidationResponse.getData().add(new ParamNameValue(PRODUCT_CODE, dataValidationResponse.getData().getProductCode()));
+
+            Item itemData = new Item("plan");
+            itemData.setIsAccountFixed(Boolean.TRUE);
+            dataValidationResponse.getData().getData().forEach(plan -> itemData.getSubItems().add(new SubItem(plan.getCode(), plan.getDescription(), plan.getAmount(), plan.getAmount())));
+            customerValidationResponse.getItems().add(itemData);
+            customerValidationResponse.getItems().add(getPaymentMethodAsItem());
+            return customerValidationResponse;
+        }
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private CustomerValidationResponse validateElectricity(CustomerValidationRequest request) throws ThirdPartyIntegrationException {
+        ElectricityValidationRequest validationRequest = generateElectricityValidationRequest(request);
+        Optional<ElectricityValidationResponse> electricityValidationResponseOptional = Optional.empty();
+        try {
+            electricityValidationResponseOptional = Optional.of(feignClient.electricityValidation(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to validate customer electricity detail via itex ", e);
+        }
+        ElectricityValidationResponse electricityValidationResponse = electricityValidationResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(electricityValidationResponse.getResponseCode())
+                && !Objects.isNull(electricityValidationResponse.getData()) && SUCCESS.equals(electricityValidationResponse.getData().getResponseCode())) {
+            CustomerValidationResponse customerValidationResponse = new CustomerValidationResponse(request.getCategoryId(), request.getBillerId());
+            customerValidationResponse.getData().add(new ParamNameValue("AccountNumber", electricityValidationResponse.getData().getAccountNumber()));
+            customerValidationResponse.getData().add(new ParamNameValue(METER_NO, electricityValidationResponse.getData().getMeterNumber()));
+            customerValidationResponse.getData().add(new ParamNameValue(PRODUCT_CODE, electricityValidationResponse.getData().getProductCode()));
+            customerValidationResponse.getData().add(new ParamNameValue(CUSTOMER_PHONE_NUMBER, electricityValidationResponse.getData().getPhone()));
+            customerValidationResponse.getItems().add(getPaymentMethodAsItem());
+
+            return customerValidationResponse;
+        }
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private InternetValidationRequest generateInternetValidationRequest(CustomerValidationRequest request){
+        InternetValidationRequest internetValidationRequest = new InternetValidationRequest();
+        internetValidationRequest.setService(request.getBillerId());
+        request.getData().forEach(paramNameValue -> {
+            if (CHANNEL.equals(paramNameValue.getName())){ internetValidationRequest.setChannel(paramNameValue.getValue()); }
+            if ("type".equals(paramNameValue.getName())){ internetValidationRequest.setType(paramNameValue.getValue()); }
+            if (ACCOUNT.equals(paramNameValue.getName())){ internetValidationRequest.setAccount(paramNameValue.getValue()); }
+        });
+        return internetValidationRequest;
+    }
+
+    private DataValidationRequest generateDataValidationRequest(CustomerValidationRequest request){
+        DataValidationRequest dataValidationRequest = new DataValidationRequest();
+        dataValidationRequest.setService(request.getBillerId());
+        request.getData().forEach(paramNameValue -> {
+            if (CHANNEL.equals(paramNameValue.getName())){ dataValidationRequest.setChannel(paramNameValue.getValue()); }
+        });
+        return dataValidationRequest;
+    }
+
+    private ElectricityValidationRequest generateElectricityValidationRequest(CustomerValidationRequest request){
+
+        ElectricityValidationRequest electricityValidationRequest = new ElectricityValidationRequest();
+        request.getData().forEach(paramNameValue -> {
+            if (ACCOUNT_TYPE.equals(paramNameValue.getName())){ electricityValidationRequest.setAccountType(paramNameValue.getValue()); }
+            if (AMOUNT.equals(paramNameValue.getName())){ electricityValidationRequest.setAmount(paramNameValue.getValue()); }
+            if (CHANNEL.equals(paramNameValue.getName())){ electricityValidationRequest.setChannel(paramNameValue.getValue()); }
+            if (METER_NO.equals(paramNameValue.getName())){ electricityValidationRequest.setMeterNo(paramNameValue.getValue()); }
+        });
+
+        electricityValidationRequest.setService(request.getBillerId());
+        return electricityValidationRequest;
+    }
+
+    private PaymentResponse paymentInternet(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        InternetPaymentRequest internetPaymentRequest = generateInternetPaymentRequest(paymentRequest, transactionId);
+        Optional<InternetPaymentResponse> internetPaymentResponseOptional = Optional.empty();
+        try {
+            internetPaymentResponseOptional = Optional.of(feignClient.internetPayment(internetPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(internetPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to process customer internet payment via itex ", e);
+        }
+
+        InternetPaymentResponse internetPaymentResponse = internetPaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(internetPaymentResponse.getResponseCode())
+                && !Objects.isNull(internetPaymentResponse.getData()) && SUCCESS.equals(internetPaymentResponse.getData().getResponseCode())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue("transactionID", internetPaymentResponse.getData().getTransactionID()));
+            paymentResponse.getData().add(new ParamNameValue(REFERENCE, internetPaymentResponse.getData().getReference()));
+            paymentResponse.getData().add(new ParamNameValue("bundle", internetPaymentResponse.getData().getBundle()));
+            return paymentResponse;
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private PaymentResponse paymentElectricity(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        ElectricityPaymentRequest electricityPaymentRequest = generateElectricityPaymentRequest(paymentRequest, transactionId);
+        Optional<ElectricityPaymentResponse> electricityPaymentResponseOptional = Optional.empty();
+        try {
+            electricityPaymentResponseOptional = Optional.of(feignClient.electricityPayment(electricityPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(electricityPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to process customer electricity payment via itex ", e);
+        }
+
+        ElectricityPaymentResponse electricityPaymentResponse = electricityPaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(electricityPaymentResponse.getResponseCode())
+                && !Objects.isNull(electricityPaymentResponse.getData()) && SUCCESS.equals(electricityPaymentResponse.getData().getResponseCode())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue("token", electricityPaymentResponse.getData().getToken()));
+            paymentResponse.getData().add(new ParamNameValue(REFERENCE, electricityPaymentResponse.getData().getReference()));
+            return paymentResponse;
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private PaymentResponse paymentAirtime(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        AirtimePaymentRequest airtimePaymentRequest = generateAirtimePaymentRequest(paymentRequest, transactionId);
+        Optional<AirtimePaymentResponse> airtimePaymentResponseOptional = Optional.empty();
+        try {
+            airtimePaymentResponseOptional = Optional.of(feignClient.airtimePayment(airtimePaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(airtimePaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to process customer electricity payment via itex ", e);
+        }
+
+        AirtimePaymentResponse airtimePaymentResponse = airtimePaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(airtimePaymentResponse.getResponseCode())
+                && !Objects.isNull(airtimePaymentResponse.getData()) && SUCCESS.equals(airtimePaymentResponse.getData().getResponseCode())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue(REFERENCE, airtimePaymentResponse.getData().getReference()));
+            return paymentResponse;
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private PaymentResponse paymentData(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        DataPaymentRequest dataPaymentRequest = generateDataPaymentRequest(paymentRequest, transactionId);
+        Optional<DataPaymentResponse> dataPaymentResponseOptional = Optional.empty();
+        try {
+            dataPaymentResponseOptional = Optional.of(feignClient.dataPayment(dataPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(dataPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to process customer data payment via itex ", e);
+        }
+
+        DataPaymentResponse dataPaymentResponse = dataPaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(dataPaymentResponse.getResponseCode())
+                && !Objects.isNull(dataPaymentResponse.getData()) && SUCCESS.equals(dataPaymentResponse.getData().getResponseCode())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue(REFERENCE, dataPaymentResponse.getData().getReference()));
+            return paymentResponse;
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private InternetPaymentRequest generateInternetPaymentRequest(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        InternetPaymentRequest internetPaymentRequest = new InternetPaymentRequest();
+        internetPaymentRequest.setClientReference(transactionId);
+        internetPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        internetPaymentRequest.setService(paymentRequest.getBillerId());
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if ("type".equals(paramNameValue.getName())){ internetPaymentRequest.setType(paramNameValue.getValue()); }
+            if ("code".equals(paramNameValue.getName())){ internetPaymentRequest.setCode(paramNameValue.getValue()); }
+            if (AMOUNT.equals(paramNameValue.getName())){ internetPaymentRequest.setAmount(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ internetPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if (PRODUCT_CODE.equals(paramNameValue.getName())){ internetPaymentRequest.setProductCode(paramNameValue.getValue()); }
+            if (PHONE.equals(paramNameValue.getName())){ internetPaymentRequest.setPhone(paramNameValue.getValue()); }
+        });
+        return internetPaymentRequest;
+    }
+
+    private ElectricityPaymentRequest generateElectricityPaymentRequest(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        ElectricityPaymentRequest electricityPaymentRequest = new ElectricityPaymentRequest();
+        electricityPaymentRequest.setClientReference(transactionId);
+        electricityPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        electricityPaymentRequest.setService(paymentRequest.getBillerId());
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if (CUSTOMER_PHONE_NUMBER.equals(paramNameValue.getName())){ electricityPaymentRequest.setCustomerPhoneNumber(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ electricityPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if (PRODUCT_CODE.equals(paramNameValue.getName())){ electricityPaymentRequest.setProductCode(paramNameValue.getValue()); }
+        });
+        return electricityPaymentRequest;
+    }
+
+    private AirtimePaymentRequest generateAirtimePaymentRequest(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        AirtimePaymentRequest airtimePaymentRequest = new AirtimePaymentRequest();
+        airtimePaymentRequest.setClientReference(transactionId);
+        airtimePaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        airtimePaymentRequest.setService(paymentRequest.getBillerId());
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if (PHONE.equals(paramNameValue.getName())){ airtimePaymentRequest.setPhone(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ airtimePaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if (AMOUNT.equals(paramNameValue.getName())){ airtimePaymentRequest.setAmount(paramNameValue.getValue()); }
+            if (CHANNEL.equals(paramNameValue.getName())){ airtimePaymentRequest.setChannel(paramNameValue.getValue()); }
+        });
+        return airtimePaymentRequest;
+    }
+
+    private DataPaymentRequest generateDataPaymentRequest(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        DataPaymentRequest dataPaymentRequest = new DataPaymentRequest();
+        dataPaymentRequest.setClientReference(transactionId);
+        dataPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        dataPaymentRequest.setService(paymentRequest.getBillerId());
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if (PHONE.equals(paramNameValue.getName())){ dataPaymentRequest.setPhone(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ dataPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if ("plan".equals(paramNameValue.getName())){ dataPaymentRequest.setCode(paramNameValue.getValue()); }
+        });
+        return dataPaymentRequest;
     }
 
     private Item getChannelsAsItem(){
@@ -153,7 +501,7 @@ public class ItexService implements IThirdPartyService {
             channelsSubList.add(new SubItem("LINUXPOS"));
         }
         Item itemChannel = new Item();
-        itemChannel.setParamName("channel");
+        itemChannel.setParamName(CHANNEL);
         itemChannel.getSubItems().addAll(channelsSubList);
         return itemChannel;
     }
@@ -164,7 +512,7 @@ public class ItexService implements IThirdPartyService {
             paymentMethodSubList.add(new SubItem("cash"));
         }
         Item itemPaymentMethod = new Item();
-        itemPaymentMethod.setParamName("paymentMethod");
+        itemPaymentMethod.setParamName(PAYMENT_METHOD);
         itemPaymentMethod.getSubItems().addAll(paymentMethodSubList);
         return itemPaymentMethod;
     }
@@ -173,10 +521,10 @@ public class ItexService implements IThirdPartyService {
         //get the params, then also get it sublist
         PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(categoryId, billerId);
         paymentItemsResponse.setIsValidationRequired(true);
-        paymentItemsResponse.getItems().add(new Item("meterNo"));
+        paymentItemsResponse.getItems().add(new Item(METER_NO));
         paymentItemsResponse.getItems().add(new Item(AMOUNT));
         Item itemAccountType = new Item();
-        itemAccountType.setParamName("accountType");
+        itemAccountType.setParamName(ACCOUNT_TYPE);
         itemAccountType.getSubItems().add(new SubItem("prepaid"));
         itemAccountType.getSubItems().add(new SubItem("postpaid"));
         itemAccountType.getSubItems().add(new SubItem("smartcard"));
@@ -247,6 +595,10 @@ public class ItexService implements IThirdPartyService {
         paymentItemsResponse.getItems().add(getChannelsAsItem());
         return paymentItemsResponse;
     }
+
+    private String getAmountInNaira(String amount){
+        return Objects.isNull(amount) ?  BigDecimal.ZERO.toString() :  new BigDecimal(amount).divide(new BigDecimal(100)).toString();
+    }
 }
 
 class BillerName {
@@ -262,4 +614,9 @@ class BillerName {
     private BillerName(){
 
     }
+}
+
+class ItexConstants{
+    static final String TOKEN = "token";
+    static final String SIGNATURE = "signature";
 }

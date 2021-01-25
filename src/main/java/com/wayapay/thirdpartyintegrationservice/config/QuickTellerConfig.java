@@ -19,6 +19,9 @@ public class QuickTellerConfig {
     @NotBlank(message = "app.config.quickteller.client-id is required")
     private String clientId;
 
+    @NotBlank(message = "app.config.quickteller.terminal-id is required")
+    private String terminalId;
+
     @NotBlank(message = "app.config.quickteller.secret is required")
     private String secret;
 
@@ -30,4 +33,13 @@ public class QuickTellerConfig {
 
     @NotBlank(message = "app.config.quickteller.biller-payment-item-url is required")
     private String billerPaymentItemUrl;
+
+    @NotBlank(message = "app.config.quickteller.customer-validation-url is required")
+    private String customerValidationUrl;
+
+    @NotBlank(message = "app.config.quickteller.send-payment-advice-url is required")
+    private String sendPaymentAdviceUrl;
+
+    @NotBlank(message = "app.config.quickteller.transaction-ref-code is required")
+    private String transactionRefCode;
 }

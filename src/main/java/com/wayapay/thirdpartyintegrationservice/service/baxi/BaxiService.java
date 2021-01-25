@@ -1,10 +1,7 @@
 package com.wayapay.thirdpartyintegrationservice.service.baxi;
 
 import com.wayapay.thirdpartyintegrationservice.config.AppConfig;
-import com.wayapay.thirdpartyintegrationservice.dto.BillerResponse;
-import com.wayapay.thirdpartyintegrationservice.dto.Item;
-import com.wayapay.thirdpartyintegrationservice.dto.PaymentItemsResponse;
-import com.wayapay.thirdpartyintegrationservice.dto.SubItem;
+import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
@@ -25,7 +22,7 @@ public class BaxiService implements IThirdPartyService {
 
     private AppConfig appConfig;
     private BaxiFeignClient feignClient;
-    private static final String SUCCESS_RESPONSE_CODE = "00";
+    private static final String SUCCESS_RESPONSE_CODE = "200";
     private static final String AMOUNT = "amount";
     private static final String PHONE = "phone";
 
@@ -52,6 +49,7 @@ public class BaxiService implements IThirdPartyService {
 
         CategoryResponse categoryResponse = categoryResponseOptional.get();
         if (categoryResponse.getCode().equals(SUCCESS_RESPONSE_CODE)) {
+            log.info("responding with list of categories");
             return categoryResponse.getData().parallelStream().map(category -> new com.wayapay.thirdpartyintegrationservice.dto.CategoryResponse(category.getService_type(), category.getName())).collect(Collectors.toList());
         }
 
@@ -113,13 +111,13 @@ public class BaxiService implements IThirdPartyService {
     }
 
     @Override
-    public void validateCustomerValidationFormByBiller() throws ThirdPartyIntegrationException {
-
+    public CustomerValidationResponse validateCustomerValidationFormByBiller(CustomerValidationRequest request) throws ThirdPartyIntegrationException {
+        return new CustomerValidationResponse();
     }
 
     @Override
-    public void processPayment() throws ThirdPartyIntegrationException {
-
+    public PaymentResponse processPayment(PaymentRequest request, String transactionId) throws ThirdPartyIntegrationException {
+        return new PaymentResponse();
     }
 
     private PaymentItemsResponse getAirtimePaymentItems(String categoryId, String billerId){

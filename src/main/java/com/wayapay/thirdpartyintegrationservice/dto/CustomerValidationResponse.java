@@ -12,13 +12,13 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @ToString
-public class PaymentItemsResponse {
+public class CustomerValidationResponse {
     private String categoryId;
     private String billerId;
     private List<Item> items = new ArrayList<>();
-    private Boolean isValidationRequired = Boolean.TRUE;
+    private List<ParamNameValue> data = new ArrayList<>();
 
-    public PaymentItemsResponse(String categoryId, String billerId) {
+    public CustomerValidationResponse(String categoryId, String billerId) {
         this.categoryId = categoryId;
         this.billerId = billerId;
     }

@@ -18,4 +18,7 @@ public class BaxiConfig {
 
     @NotBlank(message = "app.config.baxi.x-api-key is required")
     private String xApiKey;
+
+    @NotBlank(message = "app.config.baxi.agent-code is required")
+    private String agentCode;
 }

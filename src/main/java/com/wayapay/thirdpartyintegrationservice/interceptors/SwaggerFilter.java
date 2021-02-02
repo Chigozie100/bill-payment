@@ -1,7 +1,5 @@
 package com.wayapay.thirdpartyintegrationservice.interceptors;
 
-import org.apache.logging.log4j.util.Strings;
-
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -15,8 +13,8 @@ public class SwaggerFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
-        if (Strings.EMPTY.equals(request.getRequestURI()) || "/".equals(request.getRequestURI())){
-            response.sendRedirect("/swagger-ui.html");
+        if ("/billspay".equals(request.getRequestURI()) || "/billspay/".equals(request.getRequestURI())){
+            response.sendRedirect("/billspay/swagger-ui.html");
             return;
         }
 

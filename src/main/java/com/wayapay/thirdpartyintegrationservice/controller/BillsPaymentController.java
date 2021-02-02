@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.List;
 
+import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
+
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/billspay")
+@RequestMapping(API_V1)
 public class BillsPaymentController {
 
     private BillsPaymentService billsPaymentService;

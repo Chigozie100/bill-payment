@@ -41,7 +41,7 @@ pipeline {
     }
     stage ('Starting the deployment job') {
 	    steps {
-                build job: 'waya-2.0-bills-payment-deploy-dev', 
+                build job: 'waya-2.0-bills-payment-service-deploy-dev', 
 		parameters: [[$class: 'StringParameterValue', name: 'FROM_BUILD', value: "${BUILD_NUMBER}"]
 	        ]
 	    }	    

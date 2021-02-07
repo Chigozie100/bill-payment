@@ -5,7 +5,7 @@ pipeline {
     dockerImage = ''
     }
       /*	parameters {
-	    strings(name: 'FROM_BUILD' defaultValue: '', description: 'Build Source')
+	     strings(name: 'FROM_BUILD' defaultValue: '', description: 'Build Source')
 	} */
     agent any
 

@@ -5,8 +5,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,8 +25,10 @@ public class PaymentRequest {
     private String billerId;
 
     @NotBlank(message = "amount is required")
-    private String amount;
+    @DecimalMin(value = "0.01", message = "minimum amount required is 0.01")
+    private BigDecimal amount;
 
     @NotEmpty(message = "No item provided, AtLeast provide an item for validation")
     private List<ParamNameValue> data = new ArrayList<>();
+
 }

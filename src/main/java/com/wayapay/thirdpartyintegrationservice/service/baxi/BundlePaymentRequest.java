@@ -9,10 +9,7 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @ToString
-public class SuperResponse {
-
-    private String status;
-    private String message;
-    private String code;
-
+public class BundlePaymentRequest {
+    private String phone;
+    private String datacode;
 }

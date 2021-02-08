@@ -29,6 +29,18 @@ public interface ItexFeignClient {
     @PostMapping("/v1/vas/internet/bundles")
     InternetBundleResponse getInternetBundles(@RequestBody InternetValidationRequest dataValidationRequest, @RequestHeader(TOKEN) String token, @RequestHeader(SIGNATURE) String signature);
 
+    @PostMapping("/v1/vas/cabletv/validation")
+    CableTvValidationResponse cableTvValidation(@RequestBody CableTvValidationRequest dataValidationRequest, @RequestHeader(TOKEN) String token, @RequestHeader(SIGNATURE) String signature);
+
+    @PostMapping("/v1/vas/cabletv/bouquets")
+    MultiChoiceBouquetResponse getMultiChoiceBouquets(@RequestBody MultiChoiceBouquetRequest dataValidationRequest, @RequestHeader(TOKEN) String token, @RequestHeader(SIGNATURE) String signature);
+
+    @PostMapping("/v1/vas/remita/lookup")
+    RemitaValidationResponse remitaValidation(@RequestBody RemitaValidationRequest dataValidationRequest, @RequestHeader(TOKEN) String token, @RequestHeader(SIGNATURE) String signature);
+
+    @PostMapping("/v1/vas/lcc/validation")
+    LCCValidationResponse lccValidation(@RequestBody LCCValidationRequest dataValidationRequest, @RequestHeader(TOKEN) String token, @RequestHeader(SIGNATURE) String signature);
+
     @PostMapping("/v1/vas/electricity/payment")
     ElectricityPaymentResponse electricityPayment(@RequestBody ElectricityPaymentRequest electricityPaymentRequest, @RequestHeader(TOKEN) String token, @RequestHeader(SIGNATURE) String signature);
 
@@ -40,5 +52,14 @@ public interface ItexFeignClient {
 
     @PostMapping("/v1/vas/internet/subscription")
     InternetPaymentResponse internetPayment(@RequestBody InternetPaymentRequest internetPaymentRequest, @RequestHeader(TOKEN) String token, @RequestHeader(SIGNATURE) String signature);
+
+    @PostMapping("/v1/vas/cabletv/subscription")
+    CableTvPaymentResponse cableTvPayment(@RequestBody CableTvPaymentRequest dataValidationRequest, @RequestHeader(TOKEN) String token, @RequestHeader(SIGNATURE) String signature);
+
+    @PostMapping("/v1/vas/remita/payment")
+    RemitaPaymentResponse remitaPayment(@RequestBody RemitaPaymentRequest dataValidationRequest, @RequestHeader(TOKEN) String token, @RequestHeader(SIGNATURE) String signature);
+
+    @PostMapping("/v1/vas/lcc/payment")
+    LCCPaymentResponse lccPayment(@RequestBody LCCPaymentRequest dataValidationRequest, @RequestHeader(TOKEN) String token, @RequestHeader(SIGNATURE) String signature);
 
 }

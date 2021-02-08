@@ -9,10 +9,6 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @ToString
-public class SuperResponse {
-
-    private String status;
-    private String message;
-    private String code;
-
+public class CablePaymentResponse extends SuperResponse {
+    private PaymentDetail data;
 }

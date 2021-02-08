@@ -9,10 +9,7 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @ToString
-public class SuperResponse {
-
-    private String status;
-    private String message;
-    private String code;
-
+public class CablePaymentRequest {
+    private String smartcard_number;
+    private String product_code;
 }

@@ -7,14 +7,17 @@ import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,16 +43,22 @@ public class QuickTellerService implements IThirdPartyService {
     }
 
     private String getNonce(){
-        return UUID.randomUUID().toString();
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
+
     private String getTimeStamp(){
-        return String.valueOf(System.currentTimeMillis()).substring(0, 10);
+        return String.valueOf(new Timestamp(System.currentTimeMillis()).getTime()/1000);
     }
 
     private String getSignature(HttpMethod httpMethod, String url, String timeStamp, String nonce){
-        String signatureCipher = httpMethod.name() + "&" + url + "&" + timeStamp + "&" + nonce + "&" + appConfig.getQuickteller().getClientId() + "&" + appConfig.getQuickteller().getSecret();
-        return Base64.getEncoder().encodeToString(DigestUtils.sha1Hex(signatureCipher).getBytes());
+        String signatureCipher = Strings.EMPTY;
+        try {
+            signatureCipher = httpMethod.name() + "&" + URLEncoder.encode(url, StandardCharsets.UTF_8.toString()) + "&" + timeStamp + "&" + nonce + "&" + appConfig.getQuickteller().getClientId() + "&" + appConfig.getQuickteller().getSecret();
+        } catch (UnsupportedEncodingException e) {
+            log.info("Unable to encode url => ", e);
+        }
+        return Base64.getEncoder().encodeToString(org.apache.commons.codec.digest.DigestUtils.sha1Hex(signatureCipher).getBytes());
     }
 
     private String getSignatureMethod(){
@@ -188,7 +197,7 @@ public class QuickTellerService implements IThirdPartyService {
     private SendPaymentAdviceRequest generateRequest(PaymentRequest paymentRequest, BillerDetail billerDetail, String timeStamp){
         QuickTellerUserParam userParam = getUserParam(paymentRequest.getData(), billerDetail);
         SendPaymentAdviceRequest request = new SendPaymentAdviceRequest();
-        request.setAmount(getAmountInKobo(paymentRequest.getAmount()));
+        request.setAmount(getAmountInKobo(String.valueOf(paymentRequest.getAmount())));
         request.setCustomerId(userParam.getCustomerId1());
         request.setPaymentCode(userParam.getPaymentCode());
         request.setTerminalId(appConfig.getQuickteller().getTerminalId());

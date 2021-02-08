@@ -26,7 +26,28 @@ public interface BaxiFeignClient {
     @PostMapping("/services/epin/bundles")
     EPinBundleResponse getEpinBundles(@RequestHeader(X_API_KEY) String xApiKey, @RequestParam("service_type") String serviceType);
 
+    @PostMapping("/services/namefinder/query")
+    NameFinderQueryResponse nameFinderEnquiry(@RequestHeader(X_API_KEY) String xApiKey, @RequestParam("service_type") String serviceType, @RequestParam("account_number") String account_number);
+
+    @PostMapping("/services/multichoice/addons")
+    CableTvAddonsResponse getCableTvAddons(@RequestHeader(X_API_KEY) String xApiKey, @RequestParam("product_code") String productCode, @RequestParam("service_type") String serviceType);
+
     @PostMapping("/services/electricity/verify")
-    ElectricityVerificationResponse verifyCustomerElectrictyDetail(@RequestHeader(X_API_KEY) String xApiKey, @RequestBody ElectricityRequest electricityRequest);
+    ElectricityVerificationResponse verifyCustomerElectricityDetail(@RequestHeader(X_API_KEY) String xApiKey, @RequestBody ElectricityRequest electricityRequest);
+
+    @PostMapping("/services/airtime/request")
+    AirtimePaymentResponse airtimePayment(@RequestHeader(X_API_KEY) String xApiKey, @RequestParam("phone") String phone, @RequestParam("amount") String amount, @RequestParam("service_type") String serviceType, @RequestParam("plan") String plan, @RequestParam("agentId") String agentId, @RequestParam("agentReference") String agentReference);
+
+    @PostMapping("/services/databundle/request")
+    BundlePaymentResponse bundlePayment(@RequestHeader(X_API_KEY) String xApiKey, @RequestParam("phone") String phone, @RequestParam("amount") String amount, @RequestParam("service_type") String serviceType, @RequestParam("datacode") String datacode, @RequestParam("agentId") String agentId, @RequestParam("agentReference") String agentReference);
+
+    @PostMapping("/services/epin/request")
+    EPinPaymentResponse epinPayment(@RequestHeader(X_API_KEY) String xApiKey, @RequestParam("service_type") String serviceType, @RequestParam("numberOfPins") String numberOfPins, @RequestParam("pinValue") String pinValue, @RequestParam("amount") String amount, @RequestParam("agentId") String agentId, @RequestParam("agentReference") String agentReference);
+
+    @PostMapping("/services/multichoice/request")
+    CablePaymentResponse cableTvPayment(@RequestHeader(X_API_KEY) String xApiKey, @RequestParam("smartcard_number") String smartcard_number,  @RequestParam("total_amount") String total_amount, @RequestParam("product_code") String product_code, @RequestParam("product_monthsPaidFor") String product_monthsPaidFor, @RequestParam("addon_code") String addon_code, @RequestParam("addon_monthsPaidFor") String addon_monthsPaidFor, @RequestParam("service_type") String serviceType, @RequestParam("agentId") String agentId, @RequestParam("agentReference") String agentReference);
+
+    @PostMapping("/services/electricity/request")
+    ElectricPaymentResponse electricityPayment(@RequestHeader(X_API_KEY) String xApiKey, @RequestBody ElectricPaymentRequest electricPaymentRequest);
 
 }

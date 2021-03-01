@@ -7,6 +7,7 @@ import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -58,11 +59,23 @@ public class QuickTellerService implements IThirdPartyService {
         } catch (UnsupportedEncodingException e) {
             log.info("Unable to encode url => ", e);
         }
-        return Base64.getEncoder().encodeToString(org.apache.commons.codec.digest.DigestUtils.sha1Hex(signatureCipher).getBytes());
+
+        log.info("signatureCipher => {}", signatureCipher);
+        log.info("signatureCipher-> SHA1 => {}", org.apache.commons.codec.digest.DigestUtils.sha1Hex(signatureCipher));
+        log.info("signatureCipher-> SHA1 => HEX => {}", toHex(org.apache.commons.codec.digest.DigestUtils.sha1Hex(signatureCipher)));
+        log.info("signatureCipher-> SHA1 => HEX => BASE64 => {}", Base64.getEncoder().encodeToString(toHex(org.apache.commons.codec.digest.DigestUtils.sha1Hex(signatureCipher)).getBytes()));
+
+        return Base64.getEncoder().encodeToString(toHex(org.apache.commons.codec.digest.DigestUtils.sha1Hex(signatureCipher)).getBytes());
     }
 
     private String getSignatureMethod(){
         return "SHA1";
+    }
+
+    public String toHex(String arg) {
+//        return String.format("%040x", new BigInteger(1, arg.getBytes(/*YOUR_CHARSET?*/)));
+        char[] chars = Hex.encodeHex(arg.getBytes(StandardCharsets.UTF_8));
+        return String.valueOf(chars);
     }
 
     //todo cache the request and response

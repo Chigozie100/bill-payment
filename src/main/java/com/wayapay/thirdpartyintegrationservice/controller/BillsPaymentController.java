@@ -55,7 +55,7 @@ public class BillsPaymentController {
         }
     }
 
-    @GetMapping("/biller/validate")
+    @PostMapping("/biller/validate")
     public ResponseEntity<ResponseHelper> validateCustomerPaymentItem(@Valid @RequestBody CustomerValidationRequest customerValidationRequest){
         try {
             CustomerValidationResponse customerValidationResponse = billsPaymentService.getBillsPaymentService().validateCustomerValidationFormByBiller(customerValidationRequest);
@@ -65,7 +65,7 @@ public class BillsPaymentController {
         }
     }
 
-    @GetMapping("/biller/pay")
+    @PostMapping("/biller/pay")
     public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest){
         try {
             PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, "username", "useraccount");

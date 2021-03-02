@@ -24,6 +24,9 @@ public class PaymentRequest {
     @NotBlank(message = "billerId is required")
     private String billerId;
 
+    @NotBlank(message = "source wallet account number is required")
+    private String sourceWalletAccountNumber;
+
     @NotBlank(message = "amount is required")
     @DecimalMin(value = "0.01", message = "minimum amount required is 0.01")
     private BigDecimal amount;

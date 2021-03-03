@@ -8,6 +8,7 @@ import lombok.ToString;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,7 @@ public class PaymentRequest {
     @NotBlank(message = "source wallet account number is required")
     private String sourceWalletAccountNumber;
 
-    @NotBlank(message = "amount is required")
+    @NotNull(message = "amount is required")
     @DecimalMin(value = "0.01", message = "minimum amount required is 0.01")
     private BigDecimal amount;
 

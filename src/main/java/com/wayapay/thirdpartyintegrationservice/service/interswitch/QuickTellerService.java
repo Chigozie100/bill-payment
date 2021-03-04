@@ -306,7 +306,7 @@ public class QuickTellerService implements IThirdPartyService {
 
         getBillerPaymentItemResponse.getPaymentitems().forEach(paymentItem -> {
             if (paymentItem.getIsAmountFixed()) {
-                item.setIsAccountFixed(paymentItem.getIsAmountFixed());
+                item.setIsAmountFixed(paymentItem.getIsAmountFixed());
             }
             String amount = getAmount(paymentItem.getAmount(), paymentItem.getItemFee());
             item.getSubItems().add(new SubItem(paymentItem.getPaymentCode(), paymentItem.getPaymentitemname(), amount, amount));

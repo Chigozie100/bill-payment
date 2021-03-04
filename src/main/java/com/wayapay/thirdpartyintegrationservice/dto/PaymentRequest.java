@@ -26,6 +26,7 @@ public class PaymentRequest {
     private String billerId;
 
     @NotBlank(message = "source wallet account number is required")
+    //todo Ensure that it is only numbers
     private String sourceWalletAccountNumber;
 
     @NotNull(message = "amount is required")

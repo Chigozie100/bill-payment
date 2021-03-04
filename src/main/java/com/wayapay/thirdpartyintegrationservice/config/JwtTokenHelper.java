@@ -98,7 +98,7 @@ public class JwtTokenHelper implements Serializable {
     public String generateToken(Date expiration) {
         return Jwts.builder()
                 .setSubject("olutimedia@gmail.com")
-                .claim(ROLE, "user")
+                .claim(ROLE, "admin")
                 .signWith(SignatureAlgorithm.HS256, secret)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(expiration)

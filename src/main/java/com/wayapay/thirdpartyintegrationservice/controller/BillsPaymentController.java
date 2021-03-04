@@ -6,11 +6,13 @@ import com.wayapay.thirdpartyintegrationservice.responsehelper.ErrorResponse;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.BillsPaymentService;
+import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -66,9 +68,9 @@ public class BillsPaymentController {
     }
 
     @PostMapping("/biller/pay")
-    public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest){
+    public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username){
         try {
-            PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, "username", "useraccount");
+            PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, paymentRequest.getSourceWalletAccountNumber());
             return ResponseEntity.ok(new SuccessResponse(paymentResponse));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));

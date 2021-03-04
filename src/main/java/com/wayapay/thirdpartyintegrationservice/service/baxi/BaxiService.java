@@ -403,7 +403,7 @@ public class BaxiService implements IThirdPartyService {
         paymentItemsResponse.getItems().add(new Item(AMOUNT));
         Item itemBundles = new Item();
         itemBundles.setParamName("bundles");
-        itemBundles.setIsAccountFixed(Boolean.TRUE);
+        itemBundles.setIsAmountFixed(Boolean.TRUE);
         dataBundleResponse.getData().forEach(dataBundle -> itemBundles.getSubItems().add(new SubItem(dataBundle.getDatacode(), dataBundle.getName(), dataBundle.getPrice(), dataBundle.getPrice())));
         paymentItemsResponse.getItems().add(itemBundles);
         return paymentItemsResponse;
@@ -426,7 +426,7 @@ public class BaxiService implements IThirdPartyService {
         paymentItemsResponse.getItems().add(new Item("total_amount"));
         Item itemPlan = new Item();
         itemPlan.setParamName("plan");
-        itemPlan.setIsAccountFixed(Boolean.TRUE);
+        itemPlan.setIsAmountFixed(Boolean.TRUE);
         cableTvPlanResponse.getData().forEach(plan -> {
             Optional<Pricing> pricingOptional = plan.getAvailablePricingOptions().stream().filter(pricing -> pricing.getMonthsPaidFor().equals("1")).findFirst();
             String price = pricingOptional.orElse(new Pricing("0")).getPrice();
@@ -459,7 +459,7 @@ public class BaxiService implements IThirdPartyService {
         paymentItemsResponse.setIsValidationRequired(false);
         paymentItemsResponse.getItems().add(new Item("numberOfPins"));
         Item itemPinValues = new Item();
-        itemPinValues.setIsAccountFixed(Boolean.TRUE);
+        itemPinValues.setIsAmountFixed(Boolean.TRUE);
         itemPinValues.setParamName("pinValue");
         ePinBundleResponse.getData().forEach(ePinBundle -> itemPinValues.getSubItems().add(new SubItem(ePinBundle.getAmount(), ePinBundle.getDescription(), ePinBundle.getAmount(), ePinBundle.getAmount())));
         paymentItemsResponse.getItems().add(itemPinValues);

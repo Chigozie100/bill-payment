@@ -395,7 +395,7 @@ public class ItexService implements IThirdPartyService {
             customerValidationResponse.getData().add(new ParamNameValue(PRODUCT_CODE, dataValidationResponse.getData().getProductCode()));
 
             Item itemData = new Item("plan");
-            itemData.setIsAccountFixed(Boolean.TRUE);
+            itemData.setIsAmountFixed(Boolean.TRUE);
             dataValidationResponse.getData().getData().forEach(plan -> itemData.getSubItems().add(new SubItem(plan.getCode(), plan.getDescription(), plan.getAmount(), plan.getAmount())));
             customerValidationResponse.getItems().add(itemData);
             customerValidationResponse.getItems().add(getPaymentMethodAsItem());
@@ -843,7 +843,7 @@ public class ItexService implements IThirdPartyService {
         paymentItemsResponse.getItems().add(new Item(ACCOUNT));
         paymentItemsResponse.getItems().add(new Item(AMOUNT));
         Item itemType = new Item("type");
-        itemType.setIsAccountFixed(true);
+        itemType.setIsAmountFixed(true);
         itemType.getSubItems().add(new SubItem("DSTV"));
         itemType.getSubItems().add(new SubItem("GOTV"));
         itemType.getSubItems().add(new SubItem("default", "DEFAULT"));

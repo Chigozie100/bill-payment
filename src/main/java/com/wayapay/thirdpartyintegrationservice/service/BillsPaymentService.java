@@ -52,6 +52,7 @@ public class BillsPaymentService {
         }
     }
 
+    //todo fee needs to be considered while securing funds
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String userAccountNumber) throws ThirdPartyIntegrationException {
 
         //secure Payment
@@ -62,6 +63,7 @@ public class BillsPaymentService {
             log.error("Unable to generate transaction Id", e);
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
         }
+
         if (secureFund(paymentRequest.getAmount(), userName, userAccountNumber, transactionId)){
             PaymentResponse paymentResponse = getBillsPaymentService().processPayment(paymentRequest, transactionId);
             //store the transaction information

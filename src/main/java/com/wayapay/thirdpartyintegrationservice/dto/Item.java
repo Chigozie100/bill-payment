@@ -14,7 +14,7 @@ import java.util.List;
 @ToString
 public class Item {
     private String paramName;
-    private Boolean isAccountFixed = Boolean.FALSE;
+    private Boolean isAmountFixed = Boolean.FALSE;
     private List<SubItem> subItems = new ArrayList<>();
 
     public Item(String paramName) {

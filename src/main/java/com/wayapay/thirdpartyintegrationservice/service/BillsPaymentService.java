@@ -20,9 +20,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
+import java.util.Random;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -53,7 +55,13 @@ public class BillsPaymentService {
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String userAccountNumber) throws ThirdPartyIntegrationException {
 
         //secure Payment
-        String transactionId = generatePaymentTransactionId();
+        String transactionId = null;
+        try {
+            transactionId = generatePaymentTransactionId();
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
         if (secureFund(paymentRequest.getAmount(), userName, userAccountNumber, transactionId)){
             PaymentResponse paymentResponse = getBillsPaymentService().processPayment(paymentRequest, transactionId);
             //store the transaction information
@@ -65,24 +73,25 @@ public class BillsPaymentService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
-    //todo
+    //TODO
     public boolean secureFund(BigDecimal amount, String userName, String userAccountNumber, String transactionId){
         return true;
     }
 
-    private String generatePaymentTransactionId(){
+    private String generatePaymentTransactionId() throws NoSuchAlgorithmException {
         return new SimpleDateFormat("yyMMddHHmmss").format(new Date()) + generateRandomNumber();
     }
 
-    public String generateRandomNumber(){
+    public String generateRandomNumber() throws NoSuchAlgorithmException {
         int lengthOfNumbers = 18;
-        String numbers = "";
+        StringBuilder numbers = new StringBuilder("");
 
+        Random random = SecureRandom.getInstanceStrong();
         for (int i = 0; i < lengthOfNumbers; i++) {
-            numbers += (int)(Math.random() * (9 - 0) + 0);
+            numbers.append(random.nextInt() * 9);
         }
 
-        return numbers;
+        return numbers.toString();
     }
 
     private void saveTransactionDetail(PaymentRequest paymentRequest, PaymentResponse paymentResponse, String userName, String userAccountNumber, String transactionId) throws ThirdPartyIntegrationException {
@@ -90,8 +99,8 @@ public class BillsPaymentService {
         paymentTransactionDetail.setAmount(paymentRequest.getAmount());
         paymentTransactionDetail.setBiller(paymentRequest.getBillerId());
         paymentTransactionDetail.setCategory(paymentRequest.getCategoryId());
-        paymentTransactionDetail.setPaymentRequest(CommonUtils.ObjectToJson(paymentRequest).orElse(""));
-        paymentTransactionDetail.setPaymentResponse(CommonUtils.ObjectToJson(paymentResponse).orElse(""));
+        paymentTransactionDetail.setPaymentRequest(CommonUtils.objectToJson(paymentRequest).orElse(""));
+        paymentTransactionDetail.setPaymentResponse(CommonUtils.objectToJson(paymentResponse).orElse(""));
         paymentTransactionDetail.setSuccessful(true);
         paymentTransactionDetail.setThirdPartyName(configService.getActiveThirdParty());
         paymentTransactionDetail.setTransactionId(transactionId);

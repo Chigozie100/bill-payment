@@ -49,10 +49,12 @@ public class ItexService implements IThirdPartyService {
     private static final String NAME = "name";
     private static final String CODE = "code";
     private static final String RRR = "rrr";
+    private static final String TRANSACTION_ID = "transactionID";
+    private static final String UNKNOWN_BILLER_NAME_PROVIDED = "Unknown biller name provided";
     private static List<BillerResponse> categoryElectricity = Arrays.asList(new BillerResponse("ikedc", "IKEDC", ELECTRICITY), new BillerResponse("aedc", "AEDC", ELECTRICITY), new BillerResponse("phedc", "PHEDC", ELECTRICITY), new BillerResponse("eedc", "EEDC", ELECTRICITY), new BillerResponse("ibedc", "IBEDC", ELECTRICITY), new BillerResponse("ekedc", "EKEDC", ELECTRICITY), new BillerResponse("kedco", "KEDCO", ELECTRICITY));
     private static List<BillerResponse> categoryAirtime = Arrays.asList(new BillerResponse("mtnvtu", "MTN VTU", AIRTIME), new BillerResponse("9mobilevtu", "9MOBILE VTU", AIRTIME), new BillerResponse("glovtu", "GLO VTU", AIRTIME), new BillerResponse("glovot", "GLO VOT", AIRTIME), new BillerResponse("glovos", "GLO VOS", AIRTIME), new BillerResponse("airtelpin", "AIRTEL PIN", AIRTIME), new BillerResponse("airtelvtu", "AIRTEL VTU", AIRTIME));
     private static List<BillerResponse> categoryData = Arrays.asList(new BillerResponse( "mtndata","MTN DATA", DATA), new BillerResponse( "9mobiledata","9MOBILE DATA", DATA), new BillerResponse( "glodata","GLO DATA", DATA), new BillerResponse( "airteldata","AIRTEL DATA", DATA));
-    private static List<BillerResponse> categoryCableTv = Arrays.asList(new BillerResponse(MULTICHOICE, "multichoice", CABLE_TV), new BillerResponse(STARTIMES, "STARTIMES",CABLE_TV));
+    private static List<BillerResponse> categoryCableTv = Arrays.asList(new BillerResponse(MULTICHOICE, MULTICHOICE, CABLE_TV), new BillerResponse(STARTIMES, "STARTIMES",CABLE_TV));
     private static List<BillerResponse> categoryInternet = Collections.singletonList(new BillerResponse("smile", "SMILE", INTERNET));
     private static List<BillerResponse> categoryRemita = Collections.singletonList(new BillerResponse(REMITA, REMITA, REMITA));
     private static List<BillerResponse> categoryLcc = Collections.singletonList(new BillerResponse(LCC, LCC, LCC));
@@ -167,7 +169,7 @@ public class ItexService implements IThirdPartyService {
         } else if (categoryLcc.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(billerId))){
             return getLCCPaymentItems(billerId, categoryId);
         } else {
-           throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Unknown biller name provided");
+           throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, UNKNOWN_BILLER_NAME_PROVIDED);
         }
     }
 
@@ -197,7 +199,7 @@ public class ItexService implements IThirdPartyService {
         } else if (categoryLcc.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
             return validateLCC(request);
         } else {
-            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Unknown biller name provided");
+            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, UNKNOWN_BILLER_NAME_PROVIDED);
         }
 
     }
@@ -224,7 +226,7 @@ public class ItexService implements IThirdPartyService {
         } else if (categoryLcc.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
             return paymentLCC(request, transactionId);
         } else {
-            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Unknown biller name provided");
+            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, UNKNOWN_BILLER_NAME_PROVIDED);
         }
 
     }
@@ -233,7 +235,7 @@ public class ItexService implements IThirdPartyService {
         LCCValidationRequest lccValidationRequest = generateLCCValidationRequest(request);
         Optional<LCCValidationResponse> lccValidationResponseOptional = Optional.empty();
         try {
-            lccValidationResponseOptional = Optional.of(feignClient.lccValidation(lccValidationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(lccValidationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            lccValidationResponseOptional = Optional.of(feignClient.lccValidation(lccValidationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(lccValidationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to validate customer lcc detail via itex ", e);
         }
@@ -257,7 +259,7 @@ public class ItexService implements IThirdPartyService {
         RemitaValidationRequest remitaValidationRequest = generateRemitaValidationRequest(request);
         Optional<RemitaValidationResponse> remitaValidationResponseOptional = Optional.empty();
         try {
-            remitaValidationResponseOptional = Optional.of(feignClient.remitaValidation(remitaValidationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(remitaValidationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            remitaValidationResponseOptional = Optional.of(feignClient.remitaValidation(remitaValidationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(remitaValidationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to validate customer remita detail via itex ", e);
         }
@@ -293,7 +295,7 @@ public class ItexService implements IThirdPartyService {
 
         Optional<CableTvValidationResponse> cableTvValidationResponseOptional = Optional.empty();
         try {
-            cableTvValidationResponseOptional = Optional.of(feignClient.cableTvValidation(cableTvValidationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(cableTvValidationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            cableTvValidationResponseOptional = Optional.of(feignClient.cableTvValidation(cableTvValidationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(cableTvValidationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to validate customer cableTv detail via itex ", e);
         }
@@ -336,7 +338,7 @@ public class ItexService implements IThirdPartyService {
         InternetValidationRequest validationRequest = generateInternetValidationRequest(request);
         Optional<InternetValidationResponse> internetValidationResponseOptional = Optional.empty();
         try {
-            internetValidationResponseOptional = Optional.of(feignClient.internetValidation(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            internetValidationResponseOptional = Optional.of(feignClient.internetValidation(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to validate customer internet detail via itex ", e);
         }
@@ -363,7 +365,7 @@ public class ItexService implements IThirdPartyService {
     private Item getInternetBundles(InternetValidationRequest validationRequest) throws ThirdPartyIntegrationException {
         Optional<InternetBundleResponse> internetBundleResponseOptional = Optional.empty();
         try {
-            internetBundleResponseOptional = Optional.of(feignClient.getInternetBundles(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            internetBundleResponseOptional = Optional.of(feignClient.getInternetBundles(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to get customer internet bundles via itex ", e);
         }
@@ -382,7 +384,7 @@ public class ItexService implements IThirdPartyService {
         DataValidationRequest validationRequest = generateDataValidationRequest(request);
         Optional<DataValidationResponse> dataValidationResponseOptional = Optional.empty();
         try {
-            dataValidationResponseOptional = Optional.of(feignClient.dataValidation(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            dataValidationResponseOptional = Optional.of(feignClient.dataValidation(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to validate customer data detail via itex ", e);
         }
@@ -406,7 +408,7 @@ public class ItexService implements IThirdPartyService {
         ElectricityValidationRequest validationRequest = generateElectricityValidationRequest(request);
         Optional<ElectricityValidationResponse> electricityValidationResponseOptional = Optional.empty();
         try {
-            electricityValidationResponseOptional = Optional.of(feignClient.electricityValidation(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            electricityValidationResponseOptional = Optional.of(feignClient.electricityValidation(validationRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(validationRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to validate customer electricity detail via itex ", e);
         }
@@ -505,7 +507,7 @@ public class ItexService implements IThirdPartyService {
         LCCPaymentRequest lccPaymentRequest = generateLCCPaymentRequest(paymentRequest, transactionId);
         Optional<LCCPaymentResponse> lccPaymentResponseOptional = Optional.empty();
         try {
-            lccPaymentResponseOptional = Optional.of(feignClient.lccPayment(lccPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(lccPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            lccPaymentResponseOptional = Optional.of(feignClient.lccPayment(lccPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(lccPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to process customer lcc payment via itex ", e);
         }
@@ -515,7 +517,7 @@ public class ItexService implements IThirdPartyService {
                 && !Objects.isNull(lccPaymentResponse.getData()) && SUCCESS.equals(lccPaymentResponse.getData().getResponseCode())) {
             PaymentResponse paymentResponse = new PaymentResponse();
             paymentResponse.getData().add(new ParamNameValue(REFERENCE, lccPaymentResponse.getData().getReference()));
-            paymentResponse.getData().add(new ParamNameValue("transactionID", lccPaymentResponse.getData().getTransactionID()));
+            paymentResponse.getData().add(new ParamNameValue(TRANSACTION_ID, lccPaymentResponse.getData().getTransactionID()));
             paymentResponse.getData().add(new ParamNameValue("receipt_no", lccPaymentResponse.getData().getReceipt_no()));
             paymentResponse.getData().add(new ParamNameValue(SEQUENCE, lccPaymentResponse.getData().getSequence()));
             paymentResponse.getData().add(new ParamNameValue(CLIENT_REFERENCE, lccPaymentResponse.getData().getClientReference()));
@@ -530,7 +532,7 @@ public class ItexService implements IThirdPartyService {
         RemitaPaymentRequest remitaPaymentRequest = generateRemitaPaymentRequest(paymentRequest, transactionId);
         Optional<RemitaPaymentResponse> remitaPaymentResponseOptional = Optional.empty();
         try {
-            remitaPaymentResponseOptional = Optional.of(feignClient.remitaPayment(remitaPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(remitaPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            remitaPaymentResponseOptional = Optional.of(feignClient.remitaPayment(remitaPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(remitaPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to process customer cabletv payment via itex ", e);
         }
@@ -562,7 +564,7 @@ public class ItexService implements IThirdPartyService {
 
         Optional<CableTvPaymentResponse> cableTvPaymentResponseOptional = Optional.empty();
         try {
-            cableTvPaymentResponseOptional = Optional.of(feignClient.cableTvPayment(cableTvPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(cableTvPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            cableTvPaymentResponseOptional = Optional.of(feignClient.cableTvPayment(cableTvPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(cableTvPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to process customer cabletv payment via itex ", e);
         }
@@ -571,7 +573,7 @@ public class ItexService implements IThirdPartyService {
         if(SUCCESS.equals(cableTvPaymentResponse.getResponseCode())
                 && !Objects.isNull(cableTvPaymentResponse.getData()) && SUCCESS.equals(cableTvPaymentResponse.getData().getResponseCode())) {
             PaymentResponse paymentResponse = new PaymentResponse();
-            paymentResponse.getData().add(new ParamNameValue("transactionID", cableTvPaymentResponse.getData().getClientReference()));
+            paymentResponse.getData().add(new ParamNameValue(TRANSACTION_ID, cableTvPaymentResponse.getData().getClientReference()));
             paymentResponse.getData().add(new ParamNameValue(REFERENCE, cableTvPaymentResponse.getData().getReference()));
             return paymentResponse;
         }
@@ -583,7 +585,7 @@ public class ItexService implements IThirdPartyService {
         InternetPaymentRequest internetPaymentRequest = generateInternetPaymentRequest(paymentRequest, transactionId);
         Optional<InternetPaymentResponse> internetPaymentResponseOptional = Optional.empty();
         try {
-            internetPaymentResponseOptional = Optional.of(feignClient.internetPayment(internetPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(internetPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            internetPaymentResponseOptional = Optional.of(feignClient.internetPayment(internetPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(internetPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to process customer internet payment via itex ", e);
         }
@@ -592,7 +594,7 @@ public class ItexService implements IThirdPartyService {
         if(SUCCESS.equals(internetPaymentResponse.getResponseCode())
                 && !Objects.isNull(internetPaymentResponse.getData()) && SUCCESS.equals(internetPaymentResponse.getData().getResponseCode())) {
             PaymentResponse paymentResponse = new PaymentResponse();
-            paymentResponse.getData().add(new ParamNameValue("transactionID", internetPaymentResponse.getData().getTransactionID()));
+            paymentResponse.getData().add(new ParamNameValue(TRANSACTION_ID, internetPaymentResponse.getData().getTransactionID()));
             paymentResponse.getData().add(new ParamNameValue(REFERENCE, internetPaymentResponse.getData().getReference()));
             paymentResponse.getData().add(new ParamNameValue("bundle", internetPaymentResponse.getData().getBundle()));
             return paymentResponse;
@@ -605,7 +607,7 @@ public class ItexService implements IThirdPartyService {
         ElectricityPaymentRequest electricityPaymentRequest = generateElectricityPaymentRequest(paymentRequest, transactionId);
         Optional<ElectricityPaymentResponse> electricityPaymentResponseOptional = Optional.empty();
         try {
-            electricityPaymentResponseOptional = Optional.of(feignClient.electricityPayment(electricityPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(electricityPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            electricityPaymentResponseOptional = Optional.of(feignClient.electricityPayment(electricityPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(electricityPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to process customer electricity payment via itex ", e);
         }
@@ -614,7 +616,7 @@ public class ItexService implements IThirdPartyService {
         if(SUCCESS.equals(electricityPaymentResponse.getResponseCode())
                 && !Objects.isNull(electricityPaymentResponse.getData()) && SUCCESS.equals(electricityPaymentResponse.getData().getResponseCode())) {
             PaymentResponse paymentResponse = new PaymentResponse();
-            paymentResponse.getData().add(new ParamNameValue("token", electricityPaymentResponse.getData().getToken()));
+            paymentResponse.getData().add(new ParamNameValue(ItexConstants.TOKEN, electricityPaymentResponse.getData().getToken()));
             paymentResponse.getData().add(new ParamNameValue(REFERENCE, electricityPaymentResponse.getData().getReference()));
             return paymentResponse;
         }
@@ -626,7 +628,7 @@ public class ItexService implements IThirdPartyService {
         AirtimePaymentRequest airtimePaymentRequest = generateAirtimePaymentRequest(paymentRequest, transactionId);
         Optional<AirtimePaymentResponse> airtimePaymentResponseOptional = Optional.empty();
         try {
-            airtimePaymentResponseOptional = Optional.of(feignClient.airtimePayment(airtimePaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(airtimePaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            airtimePaymentResponseOptional = Optional.of(feignClient.airtimePayment(airtimePaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(airtimePaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to process customer electricity payment via itex ", e);
         }
@@ -646,7 +648,7 @@ public class ItexService implements IThirdPartyService {
         DataPaymentRequest dataPaymentRequest = generateDataPaymentRequest(paymentRequest, transactionId);
         Optional<DataPaymentResponse> dataPaymentResponseOptional = Optional.empty();
         try {
-            dataPaymentResponseOptional = Optional.of(feignClient.dataPayment(dataPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.ObjectToJson(dataPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+            dataPaymentResponseOptional = Optional.of(feignClient.dataPayment(dataPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(dataPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
             log.error("Unable to process customer data payment via itex ", e);
         }
@@ -821,7 +823,7 @@ public class ItexService implements IThirdPartyService {
     private PaymentItemsResponse getAirtimePaymentItems(String billerId, String categoryId){
         PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(categoryId, billerId);
         paymentItemsResponse.setIsValidationRequired(false);
-        paymentItemsResponse.getItems().add(new Item("phone"));
+        paymentItemsResponse.getItems().add(new Item(PHONE));
         paymentItemsResponse.getItems().add(new Item(AMOUNT));
         paymentItemsResponse.getItems().add(getPaymentMethodAsItem());
         paymentItemsResponse.getItems().add(getChannelsAsItem());
@@ -858,7 +860,7 @@ public class ItexService implements IThirdPartyService {
         paymentItemsResponse.setIsValidationRequired(true);
         paymentItemsResponse.getItems().add(new Item(ACCOUNT));
         Item itemType = new Item("type");
-        itemType.getSubItems().add(new SubItem("phone"));
+        itemType.getSubItems().add(new SubItem(PHONE));
         itemType.getSubItems().add(new SubItem("email"));
         itemType.getSubItems().add(new SubItem(ACCOUNT));
         paymentItemsResponse.getItems().add(getChannelsAsItem());
@@ -904,4 +906,7 @@ class BillerName {
 class ItexConstants{
     static final String TOKEN = "token";
     static final String SIGNATURE = "signature";
+
+    private ItexConstants() {
+    }
 }

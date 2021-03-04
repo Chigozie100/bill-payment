@@ -24,7 +24,7 @@ public class CommonUtils {
         return value != null && !value.isEmpty();
     }
 
-    public static Optional<String> ObjectToJson(Object object){
+    public static Optional<String> objectToJson(Object object){
         try {
             return Optional.of(new ObjectMapper().writeValueAsString(object));
         } catch (JsonProcessingException e) {

@@ -18,5 +18,6 @@ public class AppConfig {
     private ItexConfig itex;
     private BaxiConfig baxi;
     private QuickTellerConfig quickteller;
+    private DisputeServiceConfig dispute;
 
 }

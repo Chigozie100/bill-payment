@@ -7,6 +7,8 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
+import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeService;
+import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeServiceFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
 import com.wayapay.thirdpartyintegrationservice.service.itex.ItexService;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
@@ -36,6 +38,7 @@ public class BillsPaymentService {
     private final BaxiService baxiService;
     private final QuickTellerService quickTellerService;
     private final PaymentTransactionRepo paymentTransactionRepo;
+    private final DisputeService disputeService;
 
     public IThirdPartyService getBillsPaymentService() throws ThirdPartyIntegrationException {
 
@@ -65,10 +68,15 @@ public class BillsPaymentService {
         }
 
         if (secureFund(paymentRequest.getAmount(), userName, userAccountNumber, transactionId)){
-            PaymentResponse paymentResponse = getBillsPaymentService().processPayment(paymentRequest, transactionId);
-            //store the transaction information
-            saveTransactionDetail(paymentRequest, paymentResponse, userName, userAccountNumber, transactionId);
-            return paymentResponse;
+            try {
+                PaymentResponse paymentResponse = getBillsPaymentService().processPayment(paymentRequest, transactionId);
+                //store the transaction information
+                saveTransactionDetail(paymentRequest, paymentResponse, userName, userAccountNumber, transactionId);
+                return paymentResponse;
+            } catch (ThirdPartyIntegrationException e) {
+                disputeService.logTransactionAsDispute(userName, paymentRequest, configService.getActiveThirdParty(), paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), transactionId);
+                throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
+            }
         }
 
         log.error("Unable to secure fund from user's wallet");

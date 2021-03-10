@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -11,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 
 @Slf4j
 public class CommonUtils {
@@ -43,5 +47,21 @@ public class CommonUtils {
 
     public static String getDateAsString(LocalDateTime localDateTime){
         return localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+    }
+
+    public static String generatePaymentTransactionId() throws NoSuchAlgorithmException {
+        return new SimpleDateFormat("yyMMddHHmmss").format(new Date()) + generateRandomNumber();
+    }
+
+    private static String generateRandomNumber() throws NoSuchAlgorithmException {
+        int lengthOfNumbers = 18;
+        StringBuilder numbers = new StringBuilder("");
+
+        Random random = SecureRandom.getInstanceStrong();
+        for (int i = 0; i < lengthOfNumbers; i++) {
+            numbers.append(random.nextInt() * 9);
+        }
+
+        return numbers.toString();
     }
 }

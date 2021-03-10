@@ -35,10 +35,10 @@ public class PaymentTransactionDetail extends SuperModel {
 
     private String biller;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String paymentRequest;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String paymentResponse;
 
     private String username;

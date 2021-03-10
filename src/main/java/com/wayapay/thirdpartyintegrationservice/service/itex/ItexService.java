@@ -1,11 +1,14 @@
 package com.wayapay.thirdpartyintegrationservice.service.itex;
 
+import com.wayapay.thirdpartyintegrationservice.annotations.AuditPaymentOperation;
 import com.wayapay.thirdpartyintegrationservice.config.AppConfig;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
+import com.wayapay.thirdpartyintegrationservice.util.Stage;
+import com.wayapay.thirdpartyintegrationservice.util.Status;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -205,7 +208,8 @@ public class ItexService implements IThirdPartyService {
     }
 
     @Override
-    public PaymentResponse processPayment(PaymentRequest request, String transactionId) throws ThirdPartyIntegrationException {
+    @AuditPaymentOperation(stage = Stage.CONTACT_VENDOR_TO_PROVIDE_VALUE, status = Status.IN_PROGRESS)
+    public PaymentResponse processPayment(PaymentRequest request, String transactionId, String username) throws ThirdPartyIntegrationException {
 
         //ensure that the MONEY to be paid is secured alongside the FEE
         //Initiate Payment

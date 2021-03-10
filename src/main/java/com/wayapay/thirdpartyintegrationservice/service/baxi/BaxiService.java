@@ -1,12 +1,21 @@
 package com.wayapay.thirdpartyintegrationservice.service.baxi;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wayapay.thirdpartyintegrationservice.annotations.AuditPaymentOperation;
 import com.wayapay.thirdpartyintegrationservice.config.AppConfig;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
+import com.wayapay.thirdpartyintegrationservice.util.Stage;
+import com.wayapay.thirdpartyintegrationservice.util.Status;
 import feign.FeignException;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -135,7 +144,8 @@ public class BaxiService implements IThirdPartyService {
     }
 
     @Override
-    public PaymentResponse processPayment(PaymentRequest request, String transactionId) throws ThirdPartyIntegrationException {
+    @AuditPaymentOperation(stage = Stage.CONTACT_VENDOR_TO_PROVIDE_VALUE, status = Status.IN_PROGRESS)
+    public PaymentResponse processPayment(PaymentRequest request, String transactionId, String username) throws ThirdPartyIntegrationException {
 
         if (CommonUtils.isEmpty(request.getCategoryId()) || CommonUtils.isEmpty(request.getBillerId())){
             log.error("categoryId => {} or billerId => {} is empty/null ", request.getCategoryId(), request.getBillerId());
@@ -197,20 +207,23 @@ public class BaxiService implements IThirdPartyService {
 
         CablePaymentRequest cablePaymentRequest = new CablePaymentRequest();
         request.getData().forEach(paramNameValue -> {
-            if ("product_code".equals(paramNameValue.getName())){ cablePaymentRequest.setProduct_code(paramNameValue.getValue()); }
+            if ("plan".equals(paramNameValue.getName())){ cablePaymentRequest.setProduct_code(paramNameValue.getValue()); }
             if ("smartcard_number".equals(paramNameValue.getName())){ cablePaymentRequest.setSmartcard_number(paramNameValue.getValue()); }
         });
 
         String cableTvAddons = getCableTvAddons(request);
 
         Optional<CablePaymentResponse> cablePaymentResponseOptional = Optional.empty();
+        String errorMessage = null;
         try {
             cablePaymentResponseOptional = Optional.of(feignClient.cableTvPayment(appConfig.getBaxi().getXApiKey(), cablePaymentRequest.getSmartcard_number(), String.valueOf(request.getAmount()), cablePaymentRequest.getProduct_code(), "1", cableTvAddons, "0", request.getBillerId(), appConfig.getBaxi().getAgentCode(), transactionId));
         } catch (FeignException e) {
-            log.error("Unable to process customer epin payment via baxi ", e);
+            log.error("Unable to process customer cableTv payment via baxi ", e);
+            errorMessage = getErrorMessage(e.contentUTF8());
         }
 
-        CablePaymentResponse cablePaymentResponse = cablePaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        String finalErrorMessage = errorMessage;
+        CablePaymentResponse cablePaymentResponse = cablePaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Objects.isNull(finalErrorMessage) ? Constants.ERROR_MESSAGE : finalErrorMessage));
         if(SUCCESS_RESPONSE_CODE.equals(cablePaymentResponse.getCode()) && !Objects.isNull(cablePaymentResponse.getData())) {
             PaymentResponse paymentResponse = new PaymentResponse();
             paymentResponse.getData().add(new ParamNameValue("transactionReference", cablePaymentResponse.getData().getTransactionReference()));
@@ -421,7 +434,7 @@ public class BaxiService implements IThirdPartyService {
 
         //get the params, then also get it sublist
         PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(categoryId, billerId);
-        paymentItemsResponse.setIsValidationRequired(false);
+        paymentItemsResponse.setIsValidationRequired(true);
         paymentItemsResponse.getItems().add(new Item("smartcard_number"));
         paymentItemsResponse.getItems().add(new Item("total_amount"));
         Item itemPlan = new Item();
@@ -465,6 +478,17 @@ public class BaxiService implements IThirdPartyService {
         paymentItemsResponse.getItems().add(itemPinValues);
         return paymentItemsResponse;
     }
+
+    private String getErrorMessage(String errorInJson){
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            return objectMapper.readValue(errorInJson, ErrorResponse.class).getMessage();
+        } catch (JsonProcessingException e) {
+            log.error("[JsonProcessingException] : Unable to ", e);
+            return Constants.ERROR_MESSAGE;
+        }
+    }
 }
 
 class BillerCategoryName{
@@ -481,4 +505,13 @@ class BillerCategoryName{
 
 class BaxiConstants{
     static final String X_API_KEY = "x-api-key";
+}
+
+@Getter
+@Setter
+@NoArgsConstructor
+class ErrorResponse{
+    private String status;
+    private String message;
+    private String code;
 }

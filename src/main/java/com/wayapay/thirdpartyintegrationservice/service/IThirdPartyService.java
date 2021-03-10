@@ -11,6 +11,6 @@ public interface IThirdPartyService {
     List<BillerResponse> getAllBillersByCategory(String category) throws ThirdPartyIntegrationException;
     PaymentItemsResponse getCustomerValidationFormByBiller(String categoryId, String billerId) throws ThirdPartyIntegrationException;
     CustomerValidationResponse validateCustomerValidationFormByBiller(CustomerValidationRequest request) throws ThirdPartyIntegrationException;
-    PaymentResponse processPayment(PaymentRequest request, String transactionId) throws ThirdPartyIntegrationException;
+    PaymentResponse processPayment(PaymentRequest request, String transactionId, String username) throws ThirdPartyIntegrationException;
 
 }

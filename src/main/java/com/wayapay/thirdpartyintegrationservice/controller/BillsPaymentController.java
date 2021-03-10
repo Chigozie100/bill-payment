@@ -70,7 +70,7 @@ public class BillsPaymentController {
     @PostMapping("/biller/pay")
     public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username){
         try {
-            PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, paymentRequest.getSourceWalletAccountNumber());
+            PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username);
             return ResponseEntity.ok(new SuccessResponse(paymentResponse));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));

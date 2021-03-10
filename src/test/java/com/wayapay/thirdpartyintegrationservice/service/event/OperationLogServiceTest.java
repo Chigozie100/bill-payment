@@ -51,6 +51,7 @@ class OperationLogServiceTest {
     private final String userName = "testUserName";
     private final String sourceAccountNumber = "1111111111";
     private final BigDecimal amount = BigDecimal.ONE;
+    private final BigDecimal fee = BigDecimal.ZERO;
     private final String billerId = "TestBiller";
     private final String categoryId = "TestCategory";
     private PaymentRequest paymentRequest;
@@ -93,14 +94,14 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.START);
         when(annotationOperation.getAnnotation(joinPoint)).thenReturn(auditPaymentOperation);
 
-        Object[] objectsSecureFund = {amount, userName, sourceAccountNumber, CommonUtils.generatePaymentTransactionId()};
+        Object[] objectsSecureFund = {amount, fee, userName, sourceAccountNumber, CommonUtils.generatePaymentTransactionId()};
         when(joinPoint.getArgs()).thenReturn(objectsSecureFund);
         operationLogService.logOperation(joinPoint, true);
         assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsSecureFund[3]).equals(operationLog.getTransactionId())));
         operationLogRepo.deleteAll();
 
         //CONTACT_VENDOR_TO_PROVIDE_VALUE -> PaymentRequest request, String transactionId, String username
-        Object[] objectsContactVendor = {paymentRequest, CommonUtils.generatePaymentTransactionId(), userName};
+        Object[] objectsContactVendor = {paymentRequest, fee, CommonUtils.generatePaymentTransactionId(), userName};
         when(auditPaymentOperation.stage()).thenReturn(Stage.CONTACT_VENDOR_TO_PROVIDE_VALUE);
         when(auditPaymentOperation.status()).thenReturn(Status.IN_PROGRESS);
         when(joinPoint.getArgs()).thenReturn(objectsContactVendor);
@@ -109,7 +110,7 @@ class OperationLogServiceTest {
         operationLogRepo.deleteAll();
 
         //SAVE_TRANSACTION_DETAIL -> PaymentRequest paymentRequest, PaymentResponse paymentResponse, String userName, String transactionId
-        Object[] objectsSaveTransaction = {paymentRequest, paymentResponse, userName, CommonUtils.generatePaymentTransactionId()};
+        Object[] objectsSaveTransaction = {paymentRequest, fee, paymentResponse, userName, CommonUtils.generatePaymentTransactionId()};
         when(auditPaymentOperation.stage()).thenReturn(Stage.SAVE_TRANSACTION_DETAIL);
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsSaveTransaction);
@@ -119,7 +120,7 @@ class OperationLogServiceTest {
         operationLogRepo.deleteAll();
 
         //LOG_AS_DISPUTE -> String username, Object request, ThirdPartyNames thirdPartyName, String billerId, String categoryId, BigDecimal amount, String transactionId
-        Object[] objectsLogAsDispute = {userName, paymentRequest, ThirdPartyNames.BAXI, billerId, categoryId, amount, CommonUtils.generatePaymentTransactionId()};
+        Object[] objectsLogAsDispute = {userName, paymentRequest, ThirdPartyNames.BAXI, billerId, categoryId, amount, fee, CommonUtils.generatePaymentTransactionId()};
         when(auditPaymentOperation.stage()).thenReturn(Stage.LOG_AS_DISPUTE);
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsLogAsDispute);
@@ -142,7 +143,7 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.START);
         when(annotationOperation.getAnnotation(joinPoint)).thenReturn(auditPaymentOperation);
 
-        Object[] objectsSecureFund = {amount, userName, sourceAccountNumber, CommonUtils.generatePaymentTransactionId()};
+        Object[] objectsSecureFund = {amount, fee, userName, sourceAccountNumber, CommonUtils.generatePaymentTransactionId()};
         when(joinPoint.getArgs()).thenReturn(objectsSecureFund);
         operationLogService.logOperation(joinPoint, thirdPartyIntegrationException);
         Optional<OperationLog> operationLogSecureFund = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsSecureFund[3]).equals(operationLog.getTransactionId())).findFirst();
@@ -152,7 +153,7 @@ class OperationLogServiceTest {
         operationLogRepo.deleteAll();
 
         //CONTACT_VENDOR_TO_PROVIDE_VALUE -> PaymentRequest request, String transactionId, String username
-        Object[] objectsContactVendor = {paymentRequest, CommonUtils.generatePaymentTransactionId(), userName};
+        Object[] objectsContactVendor = {paymentRequest, fee, CommonUtils.generatePaymentTransactionId(), userName};
         when(auditPaymentOperation.stage()).thenReturn(Stage.CONTACT_VENDOR_TO_PROVIDE_VALUE);
         when(auditPaymentOperation.status()).thenReturn(Status.IN_PROGRESS);
         when(joinPoint.getArgs()).thenReturn(objectsContactVendor);
@@ -164,7 +165,7 @@ class OperationLogServiceTest {
         operationLogRepo.deleteAll();
 
         //SAVE_TRANSACTION_DETAIL -> PaymentRequest paymentRequest, PaymentResponse paymentResponse, String userName, String transactionId
-        Object[] objectsSaveTransaction = {paymentRequest, paymentResponse, userName, CommonUtils.generatePaymentTransactionId()};
+        Object[] objectsSaveTransaction = {paymentRequest, fee, paymentResponse, userName, CommonUtils.generatePaymentTransactionId()};
         when(auditPaymentOperation.stage()).thenReturn(Stage.SAVE_TRANSACTION_DETAIL);
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsSaveTransaction);
@@ -176,7 +177,7 @@ class OperationLogServiceTest {
         operationLogRepo.deleteAll();
 
         //LOG_AS_DISPUTE -> String username, Object request, ThirdPartyNames thirdPartyName, String billerId, String categoryId, BigDecimal amount, String transactionId
-        Object[] objectsLogAsDispute = {userName, paymentRequest, ThirdPartyNames.BAXI, billerId, categoryId, amount, CommonUtils.generatePaymentTransactionId()};
+        Object[] objectsLogAsDispute = {userName, paymentRequest, ThirdPartyNames.BAXI, billerId, categoryId, amount, fee, CommonUtils.generatePaymentTransactionId()};
         when(auditPaymentOperation.stage()).thenReturn(Stage.LOG_AS_DISPUTE);
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsLogAsDispute);

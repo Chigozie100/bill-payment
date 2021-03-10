@@ -3,6 +3,7 @@ package com.wayapay.thirdpartyintegrationservice.service;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface IThirdPartyService {
@@ -11,6 +12,6 @@ public interface IThirdPartyService {
     List<BillerResponse> getAllBillersByCategory(String category) throws ThirdPartyIntegrationException;
     PaymentItemsResponse getCustomerValidationFormByBiller(String categoryId, String billerId) throws ThirdPartyIntegrationException;
     CustomerValidationResponse validateCustomerValidationFormByBiller(CustomerValidationRequest request) throws ThirdPartyIntegrationException;
-    PaymentResponse processPayment(PaymentRequest request, String transactionId, String username) throws ThirdPartyIntegrationException;
+    PaymentResponse processPayment(PaymentRequest request, BigDecimal fee, String transactionId, String username) throws ThirdPartyIntegrationException;
 
 }

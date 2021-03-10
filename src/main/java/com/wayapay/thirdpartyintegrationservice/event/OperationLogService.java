@@ -30,9 +30,7 @@ public class OperationLogService {
     @Async
     @AfterReturning(value = "@annotation(com.wayapay.thirdpartyintegrationservice.annotations.AuditPaymentOperation)", returning = "response")
     public void logOperation(JoinPoint joinPoint, Object response){
-        log.info("Responding =>>>> ");
         Stage stage = getStage(joinPoint);
-        log.info("Stage => "+stage);
         switch (stage){
             case SECURE_FUND:
                 logSecureFund(joinPoint, response, stage, FinalStatus.COMPLETED);
@@ -85,16 +83,16 @@ public class OperationLogService {
     private void logSecureFund(JoinPoint joinPoint, Object response,
                                Stage stage, FinalStatus finalStatus){
 
-//        BigDecimal amount, String userName, String userAccountNumber, String transactionId
+//        BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId
         OperationLog operationLog = new OperationLog();
         operationLog.setAmount((BigDecimal)joinPoint.getArgs()[0]);
         operationLog.setFinalStatus(finalStatus);
-        operationLog.setSourceAccountNumber(String.valueOf(joinPoint.getArgs()[2]));
+        operationLog.setSourceAccountNumber(String.valueOf(joinPoint.getArgs()[3]));
         operationLog.setStage(stage);
         operationLog.setStatus(getStatus(joinPoint));
-        operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[3]));
+        operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[4]));
         operationLog.setTransactionType("BillPayment");
-        operationLog.setUserId(String.valueOf(joinPoint.getArgs()[1]));
+        operationLog.setUserId(String.valueOf(joinPoint.getArgs()[2]));
         operationLog.setResponse(String.valueOf(response));
         try {
             operationLogRepo.save(operationLog);
@@ -105,7 +103,7 @@ public class OperationLogService {
 
     private void logContactingVendorToProvideValue(JoinPoint joinPoint, Object response,
                                                    Stage stage, FinalStatus finalStatus){
-//        PaymentRequest request, String transactionId, String username
+//        PaymentRequest request, BigDecimal fee, String transactionId, String username
         PaymentRequest paymentRequest = (PaymentRequest) joinPoint.getArgs()[0];
         OperationLog operationLog = new OperationLog();
         operationLog.setAmount(paymentRequest.getAmount());
@@ -113,9 +111,9 @@ public class OperationLogService {
         operationLog.setSourceAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         operationLog.setStage(stage);
         operationLog.setStatus(getStatus(joinPoint));
-        operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[1]));
+        operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[2]));
         operationLog.setTransactionType("BillPayment - "+paymentRequest.getBillerId()+" - "+paymentRequest.getCategoryId());
-        operationLog.setUserId(String.valueOf(joinPoint.getArgs()[2]));
+        operationLog.setUserId(String.valueOf(joinPoint.getArgs()[3]));
         operationLog.setResponse(String.valueOf(response));
         try {
             operationLogRepo.save(operationLog);
@@ -126,7 +124,7 @@ public class OperationLogService {
 
     private void saveTransactionDetail(JoinPoint joinPoint, Object response,
                                                    Stage stage, FinalStatus finalStatus){
-//        PaymentRequest paymentRequest, PaymentResponse paymentResponse, String userName, String transactionId
+//        PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId
         PaymentRequest paymentRequest = (PaymentRequest) joinPoint.getArgs()[0];
         OperationLog operationLog = new OperationLog();
         operationLog.setAmount(paymentRequest.getAmount());
@@ -134,9 +132,9 @@ public class OperationLogService {
         operationLog.setSourceAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         operationLog.setStage(stage);
         operationLog.setStatus(getStatus(joinPoint));
-        operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[3]));
+        operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[4]));
         operationLog.setTransactionType("BillPayment - "+paymentRequest.getBillerId()+" - "+paymentRequest.getCategoryId());
-        operationLog.setUserId(String.valueOf(joinPoint.getArgs()[2]));
+        operationLog.setUserId(String.valueOf(joinPoint.getArgs()[3]));
         if (!Objects.isNull(response)){
             operationLog.setResponse(String.valueOf(response));
         }
@@ -152,7 +150,7 @@ public class OperationLogService {
                                  Stage stage, FinalStatus finalStatus){
 
 //        String username, Object request, ThirdPartyNames thirdPartyName,
-//                String billerId, String categoryId, BigDecimal amount, String transactionId
+//                String billerId, String categoryId, BigDecimal amount, BigDecimal fee, String transactionId
         PaymentRequest paymentRequest = (PaymentRequest) joinPoint.getArgs()[1];
         OperationLog operationLog = new OperationLog();
         operationLog.setAmount((BigDecimal) joinPoint.getArgs()[5]);
@@ -160,7 +158,7 @@ public class OperationLogService {
         operationLog.setSourceAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         operationLog.setStage(stage);
         operationLog.setStatus(getStatus(joinPoint));
-        operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[6]));
+        operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[7]));
         operationLog.setTransactionType("BillPayment - "+paymentRequest.getBillerId()+" - "+paymentRequest.getCategoryId());
         operationLog.setUserId(String.valueOf(joinPoint.getArgs()[0]));
         if (!Objects.isNull(response)) {

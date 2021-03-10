@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -19,6 +20,7 @@ import java.util.Date;
 @ToString
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
+@JsonIgnoreProperties(value = {"createdAt", "updatedAt"}, allowGetters = true)
 public class SuperModel implements Serializable {
 
     @Temporal(TemporalType.TIMESTAMP)

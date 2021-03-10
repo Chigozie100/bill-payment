@@ -169,7 +169,7 @@ public class QuickTellerService implements IThirdPartyService {
 
     @Override
     @AuditPaymentOperation(stage = Stage.CONTACT_VENDOR_TO_PROVIDE_VALUE, status = Status.IN_PROGRESS)
-    public PaymentResponse processPayment(PaymentRequest request, String transactionId, String username) throws ThirdPartyIntegrationException {
+    public PaymentResponse processPayment(PaymentRequest request, BigDecimal fee, String transactionId, String username) throws ThirdPartyIntegrationException {
 
         Optional<SendPaymentAdviceResponse> sendPaymentAdviceResponseOptional = Optional.empty();
         try {

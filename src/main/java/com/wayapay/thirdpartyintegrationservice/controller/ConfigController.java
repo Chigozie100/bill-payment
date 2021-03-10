@@ -18,7 +18,7 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping(API_V1+"/config")
+@RequestMapping(API_V1+"/config/thirdparty")
 public class ConfigController {
 
     private final ConfigService configService;

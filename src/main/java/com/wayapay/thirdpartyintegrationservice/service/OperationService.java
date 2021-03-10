@@ -24,16 +24,17 @@ public class OperationService {
     private final ConfigService configService;
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFund(BigDecimal amount, String userName, String userAccountNumber, String transactionId){
-        log.info("testing......{}, {}, {}, {}", amount, userName, userAccountNumber, transactionId);
+    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId){
+        log.info("testing......{}, {}, {}, {}, {}", amount, fee, userName, userAccountNumber, transactionId);
         return true;
     }
 
     @AuditPaymentOperation(stage = Stage.SAVE_TRANSACTION_DETAIL, status = Status.END)
-    public PaymentTransactionDetail saveTransactionDetail(PaymentRequest paymentRequest, PaymentResponse paymentResponse, String userName, String transactionId) throws ThirdPartyIntegrationException {
+    public PaymentTransactionDetail saveTransactionDetail(PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId) throws ThirdPartyIntegrationException {
         log.info("running this ........start");
         PaymentTransactionDetail paymentTransactionDetail = new PaymentTransactionDetail();
         paymentTransactionDetail.setAmount(paymentRequest.getAmount());
+        paymentTransactionDetail.setFee(fee);
         paymentTransactionDetail.setBiller(paymentRequest.getBillerId());
         paymentTransactionDetail.setCategory(paymentRequest.getCategoryId());
         paymentTransactionDetail.setPaymentRequest(CommonUtils.objectToJson(paymentRequest).orElse(""));

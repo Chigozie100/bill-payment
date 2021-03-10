@@ -28,6 +28,8 @@ public class PaymentTransactionDetail extends SuperModel {
     private ThirdPartyNames thirdPartyName;
 
     private BigDecimal amount;
+    
+    private BigDecimal fee;
 
     private Boolean successful;
 

@@ -12,6 +12,7 @@ public class DisputeRequest {
     private String extraDetails;
     private String narrationOfDispute;
     private String transactionAmount;
+    private String transactionFee;
     private String transactionDate;
     private String transactionId;
     private String userId;

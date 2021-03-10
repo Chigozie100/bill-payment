@@ -23,12 +23,13 @@ public class DisputeService {
     @Async
     @AuditPaymentOperation(stage = Stage.LOG_AS_DISPUTE, status = Status.END)
     public boolean logTransactionAsDispute(String username, Object request, ThirdPartyNames thirdPartyName,
-                                        String billerId, String categoryId, BigDecimal amount, String transactionId){
+                                        String billerId, String categoryId, BigDecimal amount, BigDecimal fee, String transactionId){
         DisputeRequest disputeRequest = new DisputeRequest();
         disputeRequest.setUserId(username);
         disputeRequest.setExtraDetails(CommonUtils.objectToJson(request).orElse(""));
         disputeRequest.setNarrationOfDispute("BIllsPayment via "+thirdPartyName+" for "+billerId+" in the category called "+categoryId);
         disputeRequest.setTransactionAmount(amount.toPlainString());
+        disputeRequest.setTransactionFee(fee.toPlainString());
         disputeRequest.setTransactionDate(CommonUtils.getDateAsString(LocalDateTime.now()));
         disputeRequest.setTransactionId(transactionId);
         try {

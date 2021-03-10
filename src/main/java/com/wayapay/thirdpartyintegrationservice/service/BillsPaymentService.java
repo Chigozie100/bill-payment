@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
 
 @Slf4j
@@ -33,6 +34,7 @@ public class BillsPaymentService {
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final DisputeService disputeService;
     private final OperationService operationService;
+    private final BillerConsumerFeeService billerConsumerFeeService;
 
     public IThirdPartyService getBillsPaymentService() throws ThirdPartyIntegrationException {
 
@@ -61,14 +63,15 @@ public class BillsPaymentService {
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
         }
 
-        if (operationService.secureFund(paymentRequest.getAmount(), userName, paymentRequest.getSourceWalletAccountNumber(), transactionId)){
+        BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), configService.getActiveThirdParty(), paymentRequest.getBillerId());
+        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId)){
             try {
-                PaymentResponse paymentResponse = getBillsPaymentService().processPayment(paymentRequest, transactionId, userName);
+                PaymentResponse paymentResponse = getBillsPaymentService().processPayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
-                operationService.saveTransactionDetail(paymentRequest, paymentResponse, userName, transactionId);
+                operationService.saveTransactionDetail(paymentRequest, fee, paymentResponse, userName, transactionId);
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
-                disputeService.logTransactionAsDispute(userName, paymentRequest, configService.getActiveThirdParty(), paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), transactionId);
+                disputeService.logTransactionAsDispute(userName, paymentRequest, configService.getActiveThirdParty(), paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
                 throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
             }
         }

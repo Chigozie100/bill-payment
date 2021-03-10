@@ -209,7 +209,7 @@ public class ItexService implements IThirdPartyService {
 
     @Override
     @AuditPaymentOperation(stage = Stage.CONTACT_VENDOR_TO_PROVIDE_VALUE, status = Status.IN_PROGRESS)
-    public PaymentResponse processPayment(PaymentRequest request, String transactionId, String username) throws ThirdPartyIntegrationException {
+    public PaymentResponse processPayment(PaymentRequest request, BigDecimal fee, String transactionId, String username) throws ThirdPartyIntegrationException {
 
         //ensure that the MONEY to be paid is secured alongside the FEE
         //Initiate Payment

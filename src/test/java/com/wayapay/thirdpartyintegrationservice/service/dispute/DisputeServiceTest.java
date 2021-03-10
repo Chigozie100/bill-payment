@@ -34,9 +34,9 @@ class DisputeServiceTest {
         disputeResponse.setStatus(true);
         disputeResponse.setTimestamp("2021-03-07T20:31:51.964799Z");
         Mockito.when(disputeServiceFeignClient.logTransactionAsDispute(Mockito.any(DisputeRequest.class))).thenReturn(disputeResponse);
-        Assertions.assertDoesNotThrow(() -> disputeService.logTransactionAsDispute("testUser", new PaymentRequest(), ThirdPartyNames.BAXI, "mtn", "airtime", BigDecimal.ONE, "testTransactionId"));
+        Assertions.assertDoesNotThrow(() -> disputeService.logTransactionAsDispute("testUser", new PaymentRequest(), ThirdPartyNames.BAXI, "mtn", "airtime", BigDecimal.ONE, BigDecimal.ZERO, "testTransactionId"));
 
         Mockito.when(disputeServiceFeignClient.logTransactionAsDispute(Mockito.any(DisputeRequest.class))).thenThrow(NullPointerException.class);
-        Assertions.assertDoesNotThrow(() -> disputeService.logTransactionAsDispute("testUser", new PaymentRequest(), ThirdPartyNames.BAXI, "mtn", "airtime", BigDecimal.ONE, "testTransactionId"));
+        Assertions.assertDoesNotThrow(() -> disputeService.logTransactionAsDispute("testUser", new PaymentRequest(), ThirdPartyNames.BAXI, "mtn", "airtime", BigDecimal.ONE, BigDecimal.ZERO, "testTransactionId"));
     }
 }

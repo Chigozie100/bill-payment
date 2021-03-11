@@ -81,6 +81,7 @@ pipeline {
         }
       }
     }
+	    
     stage ('Starting the deployment job') {
 	    steps {
                 build job: 'waya-2.0-bills-payment-service-deploy-dev', 

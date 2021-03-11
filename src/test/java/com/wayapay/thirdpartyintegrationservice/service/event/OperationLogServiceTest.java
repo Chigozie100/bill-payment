@@ -58,7 +58,8 @@ class OperationLogServiceTest {
     private PaymentResponse paymentResponse;
 
     @Container
-    private static ElasticsearchContainer elasticsearchContainer = new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.11.1"));
+    private static ElasticsearchContainer elasticsearchContainer = new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.11.1"))
+            .withEnv("discovery.type","single-node");
 
     @DynamicPropertySource
     static void elasticProperties(DynamicPropertyRegistry registry){
@@ -97,7 +98,7 @@ class OperationLogServiceTest {
         Object[] objectsSecureFund = {amount, fee, userName, sourceAccountNumber, CommonUtils.generatePaymentTransactionId()};
         when(joinPoint.getArgs()).thenReturn(objectsSecureFund);
         operationLogService.logOperation(joinPoint, true);
-        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsSecureFund[3]).equals(operationLog.getTransactionId())));
+        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsSecureFund[4]).equals(operationLog.getTransactionId())));
         operationLogRepo.deleteAll();
 
         //CONTACT_VENDOR_TO_PROVIDE_VALUE -> PaymentRequest request, String transactionId, String username
@@ -106,7 +107,7 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.IN_PROGRESS);
         when(joinPoint.getArgs()).thenReturn(objectsContactVendor);
         operationLogService.logOperation(joinPoint, paymentResponse);
-        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsContactVendor[1]).equals(operationLog.getTransactionId())));
+        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsContactVendor[2]).equals(operationLog.getTransactionId())));
         operationLogRepo.deleteAll();
 
         //SAVE_TRANSACTION_DETAIL -> PaymentRequest paymentRequest, PaymentResponse paymentResponse, String userName, String transactionId
@@ -116,7 +117,7 @@ class OperationLogServiceTest {
         when(joinPoint.getArgs()).thenReturn(objectsSaveTransaction);
         String response = null;
         operationLogService.logOperation(joinPoint, response);
-        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsSaveTransaction[3]).equals(operationLog.getTransactionId())));
+        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsSaveTransaction[4]).equals(operationLog.getTransactionId())));
         operationLogRepo.deleteAll();
 
         //LOG_AS_DISPUTE -> String username, Object request, ThirdPartyNames thirdPartyName, String billerId, String categoryId, BigDecimal amount, String transactionId
@@ -125,7 +126,7 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsLogAsDispute);
         operationLogService.logOperation(joinPoint, response);
-        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsLogAsDispute[6]).equals(operationLog.getTransactionId())));
+        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsLogAsDispute[7]).equals(operationLog.getTransactionId())));
         operationLogRepo.deleteAll();
 
     }
@@ -146,7 +147,7 @@ class OperationLogServiceTest {
         Object[] objectsSecureFund = {amount, fee, userName, sourceAccountNumber, CommonUtils.generatePaymentTransactionId()};
         when(joinPoint.getArgs()).thenReturn(objectsSecureFund);
         operationLogService.logOperation(joinPoint, thirdPartyIntegrationException);
-        Optional<OperationLog> operationLogSecureFund = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsSecureFund[3]).equals(operationLog.getTransactionId())).findFirst();
+        Optional<OperationLog> operationLogSecureFund = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsSecureFund[4]).equals(operationLog.getTransactionId())).findFirst();
         assertAll(message,
                 () -> assertTrue(operationLogSecureFund.isPresent()),
                 () -> assertEquals(Constants.ERROR_MESSAGE, operationLogSecureFund.orElseGet(OperationLog::new).getResponse()));
@@ -158,7 +159,7 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.IN_PROGRESS);
         when(joinPoint.getArgs()).thenReturn(objectsContactVendor);
         operationLogService.logOperation(joinPoint, thirdPartyIntegrationException);
-        Optional<OperationLog> operationLogContactVendor = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsContactVendor[1]).equals(operationLog.getTransactionId())).findFirst();
+        Optional<OperationLog> operationLogContactVendor = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsContactVendor[2]).equals(operationLog.getTransactionId())).findFirst();
         assertAll(message,
                 () -> assertTrue(operationLogContactVendor.isPresent()),
                 () -> assertEquals(Constants.ERROR_MESSAGE, operationLogContactVendor.orElseGet(OperationLog::new).getResponse()));
@@ -170,7 +171,7 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsSaveTransaction);
         operationLogService.logOperation(joinPoint, thirdPartyIntegrationException);
-        Optional<OperationLog> operationLogSaveTransaction = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsSaveTransaction[3]).equals(operationLog.getTransactionId())).findFirst();
+        Optional<OperationLog> operationLogSaveTransaction = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsSaveTransaction[4]).equals(operationLog.getTransactionId())).findFirst();
         assertAll(message,
                 () -> assertTrue(operationLogSaveTransaction.isPresent()),
                 () -> assertEquals(Constants.ERROR_MESSAGE, operationLogSaveTransaction.orElseGet(OperationLog::new).getResponse()));
@@ -182,7 +183,7 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsLogAsDispute);
         operationLogService.logOperation(joinPoint, thirdPartyIntegrationException);
-        Optional<OperationLog> operationLogLogAsDispute = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsLogAsDispute[6]).equals(operationLog.getTransactionId())).findFirst();
+        Optional<OperationLog> operationLogLogAsDispute = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsLogAsDispute[7]).equals(operationLog.getTransactionId())).findFirst();
         assertAll(message,
                 () -> assertTrue(operationLogLogAsDispute.isPresent()),
                 () -> assertEquals(Constants.ERROR_MESSAGE, operationLogLogAsDispute.orElseGet(OperationLog::new).getResponse()));

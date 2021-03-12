@@ -29,7 +29,6 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @SpringBootTest
-//@Testcontainers
 class OperationLogServiceTest {
 
     @Autowired

@@ -59,7 +59,11 @@ class OperationLogServiceTest {
 
     @Container
     private static ElasticsearchContainer elasticsearchContainer = new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.11.1"))
-            .withEnv("discovery.type","single-node");
+            .withExposedPorts(9200)
+            .withEnv("discovery.type", "single-node");
+    //DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.11.1")
+//            .withCommand("docker run -p 9200:9200 -e discovery.type=single-node docker.elastic.co/elasticsearch/elasticsearch:7.11.1")
+//            .withEnv("discovery.type", "single-node");
 
     @DynamicPropertySource
     static void elasticProperties(DynamicPropertyRegistry registry){

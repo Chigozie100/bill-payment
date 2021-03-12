@@ -62,6 +62,6 @@ public class CommonUtils {
             numbers.append(random.nextInt() * 9);
         }
 
-        return numbers.toString();
+        return numbers.substring(0, 40);
     }
 }

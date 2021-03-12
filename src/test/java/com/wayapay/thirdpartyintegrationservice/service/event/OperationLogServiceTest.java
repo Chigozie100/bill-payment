@@ -18,17 +18,10 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -36,7 +29,7 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @SpringBootTest
-@Testcontainers
+//@Testcontainers
 class OperationLogServiceTest {
 
     @Autowired
@@ -57,19 +50,6 @@ class OperationLogServiceTest {
     private PaymentRequest paymentRequest;
     private PaymentResponse paymentResponse;
 
-    @Container
-    private static ElasticsearchContainer elasticsearchContainer = new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.11.1"))
-            .withExposedPorts(9200)
-            .withEnv("discovery.type", "single-node");
-    //DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:7.11.1")
-//            .withCommand("docker run -p 9200:9200 -e discovery.type=single-node docker.elastic.co/elasticsearch/elasticsearch:7.11.1")
-//            .withEnv("discovery.type", "single-node");
-
-    @DynamicPropertySource
-    static void elasticProperties(DynamicPropertyRegistry registry){
-        registry.add("spring.elasticsearch.rest.uris", () -> "http://"+elasticsearchContainer.getHttpHostAddress());
-    }
-
     @BeforeEach
     void setUp() {
         operationLogService = new OperationLogService(operationLogRepo, annotationOperation);
@@ -86,7 +66,7 @@ class OperationLogServiceTest {
         paymentResponse.getData().add(paramNameValue);
 
         //clear all
-        operationLogRepo.deleteAll();
+//        operationLogRepo.deleteAll();
     }
 
     @Test
@@ -102,8 +82,9 @@ class OperationLogServiceTest {
         Object[] objectsSecureFund = {amount, fee, userName, sourceAccountNumber, CommonUtils.generatePaymentTransactionId()};
         when(joinPoint.getArgs()).thenReturn(objectsSecureFund);
         operationLogService.logOperation(joinPoint, true);
-        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsSecureFund[4]).equals(operationLog.getTransactionId())));
-        operationLogRepo.deleteAll();
+        Optional<OperationLog> optionalOperationLog = operationLogRepo.findByTransactionId(String.valueOf(objectsSecureFund[4]));
+        assertTrue(optionalOperationLog.isPresent());
+        optionalOperationLog.ifPresent(operationLog -> operationLogRepo.delete(operationLog));
 
         //CONTACT_VENDOR_TO_PROVIDE_VALUE -> PaymentRequest request, String transactionId, String username
         Object[] objectsContactVendor = {paymentRequest, fee, CommonUtils.generatePaymentTransactionId(), userName};
@@ -111,8 +92,10 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.IN_PROGRESS);
         when(joinPoint.getArgs()).thenReturn(objectsContactVendor);
         operationLogService.logOperation(joinPoint, paymentResponse);
-        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsContactVendor[2]).equals(operationLog.getTransactionId())));
-        operationLogRepo.deleteAll();
+        optionalOperationLog = operationLogRepo.findByTransactionId(String.valueOf(objectsContactVendor[2]));
+        assertTrue(optionalOperationLog.isPresent());
+        optionalOperationLog.ifPresent(operationLog -> operationLogRepo.delete(operationLog));
+
 
         //SAVE_TRANSACTION_DETAIL -> PaymentRequest paymentRequest, PaymentResponse paymentResponse, String userName, String transactionId
         Object[] objectsSaveTransaction = {paymentRequest, fee, paymentResponse, userName, CommonUtils.generatePaymentTransactionId()};
@@ -121,8 +104,9 @@ class OperationLogServiceTest {
         when(joinPoint.getArgs()).thenReturn(objectsSaveTransaction);
         String response = null;
         operationLogService.logOperation(joinPoint, response);
-        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsSaveTransaction[4]).equals(operationLog.getTransactionId())));
-        operationLogRepo.deleteAll();
+        optionalOperationLog = operationLogRepo.findByTransactionId(String.valueOf(objectsSaveTransaction[4]));
+        assertTrue(optionalOperationLog.isPresent());
+        optionalOperationLog.ifPresent(operationLog -> operationLogRepo.delete(operationLog));
 
         //LOG_AS_DISPUTE -> String username, Object request, ThirdPartyNames thirdPartyName, String billerId, String categoryId, BigDecimal amount, String transactionId
         Object[] objectsLogAsDispute = {userName, paymentRequest, ThirdPartyNames.BAXI, billerId, categoryId, amount, fee, CommonUtils.generatePaymentTransactionId()};
@@ -130,9 +114,9 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsLogAsDispute);
         operationLogService.logOperation(joinPoint, response);
-        assertTrue(StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).anyMatch(operationLog -> String.valueOf(objectsLogAsDispute[7]).equals(operationLog.getTransactionId())));
-        operationLogRepo.deleteAll();
-
+        optionalOperationLog = operationLogRepo.findByTransactionId(String.valueOf(objectsLogAsDispute[7]));
+        assertTrue(optionalOperationLog.isPresent());
+        optionalOperationLog.ifPresent(operationLog -> operationLogRepo.delete(operationLog));
     }
 
     @Test
@@ -151,11 +135,11 @@ class OperationLogServiceTest {
         Object[] objectsSecureFund = {amount, fee, userName, sourceAccountNumber, CommonUtils.generatePaymentTransactionId()};
         when(joinPoint.getArgs()).thenReturn(objectsSecureFund);
         operationLogService.logOperation(joinPoint, thirdPartyIntegrationException);
-        Optional<OperationLog> operationLogSecureFund = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsSecureFund[4]).equals(operationLog.getTransactionId())).findFirst();
+        Optional<OperationLog> operationLogSecureFund = operationLogRepo.findByTransactionId(String.valueOf(objectsSecureFund[4]));
         assertAll(message,
                 () -> assertTrue(operationLogSecureFund.isPresent()),
                 () -> assertEquals(Constants.ERROR_MESSAGE, operationLogSecureFund.orElseGet(OperationLog::new).getResponse()));
-        operationLogRepo.deleteAll();
+        operationLogSecureFund.ifPresent(operationLog -> operationLogRepo.delete(operationLog));
 
         //CONTACT_VENDOR_TO_PROVIDE_VALUE -> PaymentRequest request, String transactionId, String username
         Object[] objectsContactVendor = {paymentRequest, fee, CommonUtils.generatePaymentTransactionId(), userName};
@@ -163,11 +147,11 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.IN_PROGRESS);
         when(joinPoint.getArgs()).thenReturn(objectsContactVendor);
         operationLogService.logOperation(joinPoint, thirdPartyIntegrationException);
-        Optional<OperationLog> operationLogContactVendor = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsContactVendor[2]).equals(operationLog.getTransactionId())).findFirst();
+        Optional<OperationLog> operationLogContactVendor = operationLogRepo.findByTransactionId(String.valueOf(objectsContactVendor[2]));
         assertAll(message,
                 () -> assertTrue(operationLogContactVendor.isPresent()),
                 () -> assertEquals(Constants.ERROR_MESSAGE, operationLogContactVendor.orElseGet(OperationLog::new).getResponse()));
-        operationLogRepo.deleteAll();
+        operationLogContactVendor.ifPresent(operationLog -> operationLogRepo.delete(operationLog));
 
         //SAVE_TRANSACTION_DETAIL -> PaymentRequest paymentRequest, PaymentResponse paymentResponse, String userName, String transactionId
         Object[] objectsSaveTransaction = {paymentRequest, fee, paymentResponse, userName, CommonUtils.generatePaymentTransactionId()};
@@ -175,11 +159,11 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsSaveTransaction);
         operationLogService.logOperation(joinPoint, thirdPartyIntegrationException);
-        Optional<OperationLog> operationLogSaveTransaction = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsSaveTransaction[4]).equals(operationLog.getTransactionId())).findFirst();
+        Optional<OperationLog> operationLogSaveTransaction = operationLogRepo.findByTransactionId(String.valueOf(objectsSaveTransaction[4]));
         assertAll(message,
                 () -> assertTrue(operationLogSaveTransaction.isPresent()),
                 () -> assertEquals(Constants.ERROR_MESSAGE, operationLogSaveTransaction.orElseGet(OperationLog::new).getResponse()));
-        operationLogRepo.deleteAll();
+        operationLogSaveTransaction.ifPresent(operationLog -> operationLogRepo.delete(operationLog));
 
         //LOG_AS_DISPUTE -> String username, Object request, ThirdPartyNames thirdPartyName, String billerId, String categoryId, BigDecimal amount, String transactionId
         Object[] objectsLogAsDispute = {userName, paymentRequest, ThirdPartyNames.BAXI, billerId, categoryId, amount, fee, CommonUtils.generatePaymentTransactionId()};
@@ -187,11 +171,11 @@ class OperationLogServiceTest {
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsLogAsDispute);
         operationLogService.logOperation(joinPoint, thirdPartyIntegrationException);
-        Optional<OperationLog> operationLogLogAsDispute = StreamSupport.stream(operationLogRepo.findAll().spliterator(), false).filter(operationLog -> String.valueOf(objectsLogAsDispute[7]).equals(operationLog.getTransactionId())).findFirst();
+        Optional<OperationLog> operationLogLogAsDispute = operationLogRepo.findByTransactionId(String.valueOf(objectsLogAsDispute[7]));
         assertAll(message,
                 () -> assertTrue(operationLogLogAsDispute.isPresent()),
                 () -> assertEquals(Constants.ERROR_MESSAGE, operationLogLogAsDispute.orElseGet(OperationLog::new).getResponse()));
-        operationLogRepo.deleteAll();
+        operationLogLogAsDispute.ifPresent(operationLog -> operationLogRepo.delete(operationLog));
 
     }
 }

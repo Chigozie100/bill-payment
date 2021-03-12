@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.service;
 
+import com.wayapay.thirdpartyintegrationservice.config.AppConfig;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.ThirdPartyConfig;
 import com.wayapay.thirdpartyintegrationservice.repo.ThirdPartyConfigRepo;
@@ -19,6 +20,7 @@ import java.util.Optional;
 public class ConfigService {
 
     private final ThirdPartyConfigRepo thirdPartyConfigRepo;
+    private final AppConfig appConfig;
 
     public ThirdPartyNames getActiveThirdParty() throws ThirdPartyIntegrationException {
         List<ThirdPartyConfig> thirdPartyConfigs = thirdPartyConfigRepo.findAll();
@@ -40,6 +42,24 @@ public class ConfigService {
             log.error("Unable to update the thirdpartyservice", e);
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
         }
+    }
+
+    public String getThirdPartyAccountNumber() throws ThirdPartyIntegrationException {
+        ThirdPartyNames activeThirdParty = getActiveThirdParty();
+        switch (activeThirdParty){
+            case QUICKTELLER:
+                return appConfig.getQuickteller().getAccountNumber();
+
+            case ITEX:
+                return appConfig.getItex().getAccountNumber();
+
+            case BAXI:
+                return appConfig.getBaxi().getAccountNumber();
+
+            default:
+                return "";
+        }
+
     }
 
 }

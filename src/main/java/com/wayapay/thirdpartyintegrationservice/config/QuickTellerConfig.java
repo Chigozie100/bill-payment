@@ -25,6 +25,9 @@ public class QuickTellerConfig {
     @NotBlank(message = "app.config.quickteller.secret is required")
     private String secret;
 
+    @NotBlank(message = "app.config.quickteller.account-number is required")
+    private String accountNumber;
+
     @NotBlank(message = "app.config.quickteller.biller-category-url is required")
     private String billerCategoryUrl;
 

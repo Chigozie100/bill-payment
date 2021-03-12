@@ -25,6 +25,9 @@ public class ItexConfig {
     @NotBlank(message = "app.config.itex.password is required")
     private String password;
 
+    @NotBlank(message = "app.config.itex.account-number is required")
+    private String accountNumber;
+
     @NotBlank(message = "app.config.itex.unique-api-identifier is required")
     private String uniqueApiIdentifier;
 

@@ -21,4 +21,7 @@ public class BaxiConfig {
 
     @NotBlank(message = "app.config.baxi.agent-code is required")
     private String agentCode;
+
+    @NotBlank(message = "app.config.baxi.account-number is required")
+    private String accountNumber;
 }

@@ -26,6 +26,10 @@ public class OperationService {
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId){
         log.info("testing......{}, {}, {}, {}, {}", amount, fee, userName, userAccountNumber, transactionId);
+
+        //consume
+
+
         return true;
     }
 

@@ -57,7 +57,8 @@ public class ConfigService {
                 return appConfig.getBaxi().getAccountNumber();
 
             default:
-                return "";
+                log.error("Unable to fetch destination account number of the active third party");
+                throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch destination account ");
         }
 
     }

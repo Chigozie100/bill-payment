@@ -51,7 +51,6 @@ public class BillsPaymentService {
         }
     }
 
-    //todo fee needs to be considered while securing funds
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName) throws ThirdPartyIntegrationException {
 
         //secure Payment

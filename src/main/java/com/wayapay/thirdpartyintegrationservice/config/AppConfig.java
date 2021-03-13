@@ -19,5 +19,6 @@ public class AppConfig {
     private BaxiConfig baxi;
     private QuickTellerConfig quickteller;
     private DisputeServiceConfig dispute;
+    private WalletConfig wallet;
 
 }

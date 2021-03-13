@@ -1,6 +1,7 @@
 package com.wayapay.thirdpartyintegrationservice.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
@@ -63,5 +64,11 @@ public class CommonUtils {
         }
 
         return numbers.substring(0, 40);
+    }
+
+    public static ObjectMapper getObjectMapper(){
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return objectMapper;
     }
 }

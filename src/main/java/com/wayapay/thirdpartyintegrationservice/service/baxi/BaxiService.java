@@ -482,9 +482,7 @@ public class BaxiService implements IThirdPartyService {
 
     private String getErrorMessage(String errorInJson){
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            return objectMapper.readValue(errorInJson, ErrorResponse.class).getMessage();
+            return CommonUtils.getObjectMapper().readValue(errorInJson, ErrorResponse.class).getMessage();
         } catch (JsonProcessingException e) {
             log.error("[JsonProcessingException] : Unable to ", e);
             return Constants.ERROR_MESSAGE;

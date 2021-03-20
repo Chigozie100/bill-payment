@@ -1,8 +1,10 @@
 package com.wayapay.thirdpartyintegrationservice.event;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.wayapay.thirdpartyintegrationservice.config.AppConfig;
 import com.wayapay.thirdpartyintegrationservice.dto.PaymentRequest;
 import com.wayapay.thirdpartyintegrationservice.elasticsearch.OperationLog;
-import com.wayapay.thirdpartyintegrationservice.elasticsearch.OperationLogRepo;
+import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.FinalStatus;
 import com.wayapay.thirdpartyintegrationservice.util.Stage;
 import com.wayapay.thirdpartyintegrationservice.util.Status;
@@ -12,6 +14,7 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -24,8 +27,12 @@ import java.util.Objects;
 @Component
 public class OperationLogService {
 
-    private final OperationLogRepo operationLogRepo;
     private final AnnotationOperation annotationOperation;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final AppConfig appConfig;
+
+    private static final String BILLS_PAYMENT = "BILLS_PAYMENT";
+    private static final String TRANSACTION_TYPE = "BillPayment - ";
 
     @Async
     @AfterReturning(value = "@annotation(com.wayapay.thirdpartyintegrationservice.annotations.AuditPaymentOperation)", returning = "response")
@@ -41,7 +48,6 @@ public class OperationLogService {
                 break;
 
             case SAVE_TRANSACTION_DETAIL:
-                log.info("running this ........");
                 saveTransactionDetail(joinPoint, response, stage, FinalStatus.COMPLETED);
                 break;
 
@@ -94,10 +100,11 @@ public class OperationLogService {
         operationLog.setTransactionType("BillPayment");
         operationLog.setUserId(String.valueOf(joinPoint.getArgs()[2]));
         operationLog.setResponse(String.valueOf(response));
+        operationLog.setLogType(BILLS_PAYMENT);
         try {
-            operationLogRepo.save(operationLog);
+            sendToKafka(operationLog);
         } catch (Exception exception) {
-            log.error("[logSecureFund] : Unable to save payment operation into elasticsearch", exception);
+            log.error("[logSecureFund] : Unable to save payment operation into kafka", exception);
         }
     }
 
@@ -112,13 +119,14 @@ public class OperationLogService {
         operationLog.setStage(stage);
         operationLog.setStatus(getStatus(joinPoint));
         operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[2]));
-        operationLog.setTransactionType("BillPayment - "+paymentRequest.getBillerId()+" - "+paymentRequest.getCategoryId());
+        operationLog.setTransactionType(TRANSACTION_TYPE+paymentRequest.getBillerId()+" - "+paymentRequest.getCategoryId());
         operationLog.setUserId(String.valueOf(joinPoint.getArgs()[3]));
         operationLog.setResponse(String.valueOf(response));
+        operationLog.setLogType(BILLS_PAYMENT);
         try {
-            operationLogRepo.save(operationLog);
+            sendToKafka(operationLog);
         } catch (Exception exception) {
-            log.error("[logContactingVendorToProvideValue] : Unable to save payment operation into elasticsearch", exception);
+            log.error("[logContactingVendorToProvideValue] : Unable to save payment operation into kafka", exception);
         }
     }
 
@@ -133,16 +141,17 @@ public class OperationLogService {
         operationLog.setStage(stage);
         operationLog.setStatus(getStatus(joinPoint));
         operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[4]));
-        operationLog.setTransactionType("BillPayment - "+paymentRequest.getBillerId()+" - "+paymentRequest.getCategoryId());
+        operationLog.setTransactionType(TRANSACTION_TYPE+paymentRequest.getBillerId()+" - "+paymentRequest.getCategoryId());
+        operationLog.setLogType(BILLS_PAYMENT);
         operationLog.setUserId(String.valueOf(joinPoint.getArgs()[3]));
         if (!Objects.isNull(response)){
             operationLog.setResponse(String.valueOf(response));
         }
 
         try {
-            operationLogRepo.save(operationLog);
+            sendToKafka(operationLog);
         } catch (Exception exception) {
-            log.error("[saveTransactionDetail] : Unable to save payment operation into elasticsearch", exception);
+            log.error("[saveTransactionDetail] : Unable to save payment operation into kafka", exception);
         }
     }
 
@@ -159,15 +168,16 @@ public class OperationLogService {
         operationLog.setStage(stage);
         operationLog.setStatus(getStatus(joinPoint));
         operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[7]));
-        operationLog.setTransactionType("BillPayment - "+paymentRequest.getBillerId()+" - "+paymentRequest.getCategoryId());
+        operationLog.setTransactionType(TRANSACTION_TYPE+paymentRequest.getBillerId()+" - "+paymentRequest.getCategoryId());
+        operationLog.setLogType(BILLS_PAYMENT);
         operationLog.setUserId(String.valueOf(joinPoint.getArgs()[0]));
         if (!Objects.isNull(response)) {
             operationLog.setResponse(String.valueOf(response));
         }
         try {
-            operationLogRepo.save(operationLog);
+            sendToKafka(operationLog);
         } catch (Exception exception) {
-            log.error("[logAsDispute] : Unable to save payment operation into elasticsearch", exception);
+            log.error("[logAsDispute] : Unable to save payment operation into kafka", exception);
         }
     }
 
@@ -177,6 +187,10 @@ public class OperationLogService {
 
     private Stage getStage(JoinPoint joinPoint){
         return annotationOperation.getAnnotation(joinPoint).stage();
+    }
+
+    private void sendToKafka(OperationLog operationLog) throws JsonProcessingException {
+        kafkaTemplate.send(appConfig.getKafka().getTransactionTopic(), CommonUtils.getObjectMapper().writeValueAsString(operationLog));
     }
 
 }

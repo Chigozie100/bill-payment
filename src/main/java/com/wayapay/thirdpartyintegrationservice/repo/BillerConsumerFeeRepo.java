@@ -22,4 +22,7 @@ public interface BillerConsumerFeeRepo extends JpaRepository<BillerConsumerFee, 
 
     @Query("select new com.wayapay.thirdpartyintegrationservice.dto.BillerConsumerFeeResponse(b.id, b.thirdPartyName, b.biller, b.feeType, b.value, b.maxFixedValueWhenPercentage, b.active) from BillerConsumerFee b")
     List<BillerConsumerFeeResponse> findAllConfigurations();
+
+    @Query("select b from BillerConsumerFee b where b.biller = ?1 ")
+    BillerConsumerFee findByBiller(String billerName);
 }

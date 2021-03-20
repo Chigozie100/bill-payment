@@ -18,6 +18,26 @@
         <java.version>1.8</java.version>
         <spring-cloud.version>2020.0.0</spring-cloud.version>
         <testcontainers.version>1.15.1</testcontainers.version>
+        <sonar.projectKey>BillsPayment Service</sonar.projectKey>
+        <sonar.organization>waya-pay</sonar.organization>
+        <sonar.host.url>https://sonarqube.waya-pay.com/</sonar.host.url>
+        <sonar.exclusions>
+            src/main/java/com/wayapay/thirdpartyintegrationservice/annotations/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/config/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/controller/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/dto/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/elasticsearch/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/event/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/exceptionhandling/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/interceptors/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/model/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/repo/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/responsehelper/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/service/baxi/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/service/interswitch/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/service/itex/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/util/**/*
+        </sonar.exclusions>
     </properties>
 
     <dependencies>
@@ -151,6 +171,44 @@
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
                         </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <excludes>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/annotations/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/config/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/controller/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/dto/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/elasticsearch/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/event/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/exceptionhandling/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/interceptors/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/model/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/repo/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/responsehelper/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/service/baxi/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/service/interswitch/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/service/itex/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/util/**/*</exclude>
                     </excludes>
                 </configuration>
             </plugin>

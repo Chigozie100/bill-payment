@@ -7,8 +7,8 @@ import com.wayapay.thirdpartyintegrationservice.dto.PaymentResponse;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
-import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferRequest;
+import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
@@ -37,12 +37,14 @@ public class OperationService {
         //consume
         FundTransferRequest fundTransferRequest = new FundTransferRequest();
         fundTransferRequest.setAmount(amount.add(fee));
-        fundTransferRequest.setFromAccount(userAccountNumber);
-        fundTransferRequest.setId(transactionId);
-        fundTransferRequest.setToAccount(configService.getThirdPartyAccountNumber());
+        fundTransferRequest.setId(0L);
+        fundTransferRequest.setAccountNo(userAccountNumber);
+        fundTransferRequest.setDescription("Billspayment -> "+transactionId);
+        fundTransferRequest.setTransactionType("DEBIT");
         try {
-            walletFeignClient.wallet2wallet(fundTransferRequest);
+            walletFeignClient.doTransaction(fundTransferRequest);
         } catch (FeignException exception) {
+            log.error("FeignException => {}", exception.getCause());
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, getErrorMessage(exception.contentUTF8()));
         }
 
@@ -68,7 +70,8 @@ public class OperationService {
 
     public String getErrorMessage(String errorInJson){
         try {
-            return CommonUtils.getObjectMapper().readValue(errorInJson, ResponseHelper.class).getMessage();
+            log.info("JsonObject => {}", errorInJson);
+            return CommonUtils.getObjectMapper().readValue(errorInJson, FundTransferResponse.class).getMessage();
         } catch (JsonProcessingException e) {
             log.error("[JsonProcessingException] : Unable to ", e);
             return Constants.ERROR_MESSAGE;

@@ -12,10 +12,11 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @ToString
 public class FundTransferRequest {
-    
+
+    private String accountNo;
     private BigDecimal amount;
-    private String fromAccount;
-    private String id;
-    private String toAccount;
-    
+    private String description;
+    private Long id;
+    private String transactionType;
+
 }

@@ -7,6 +7,7 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferRequest;
+import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
@@ -27,8 +28,7 @@ import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -53,17 +53,17 @@ class OperationServiceTest {
 
         String sourceUserAccount = "111111111";
         when(configService.getThirdPartyAccountNumber()).thenReturn("222233333");
-        when(walletFeignClient.wallet2wallet(Mockito.any(FundTransferRequest.class))).thenReturn(new ResponseHelper(true, "test", ""));
+        when(walletFeignClient.doTransaction(Mockito.any(FundTransferRequest.class))).thenReturn(new FundTransferResponse(true, "test", ""));
         assertTrue(operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId()));
 
-        when(walletFeignClient.wallet2wallet(Mockito.any(FundTransferRequest.class))).thenThrow(new FeignException.FeignClientException(HttpStatus.BAD_GATEWAY.value(), Constants.ERROR_MESSAGE, Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), "body".getBytes(), Charset.defaultCharset(), new RequestTemplate()), CommonUtils.getObjectMapper().writeValueAsString(new ResponseHelper(false, "test", "")).getBytes()));
+        when(walletFeignClient.doTransaction(Mockito.any(FundTransferRequest.class))).thenThrow(new FeignException.FeignClientException(HttpStatus.BAD_GATEWAY.value(), Constants.ERROR_MESSAGE, Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), "body".getBytes(), Charset.defaultCharset(), new RequestTemplate()), CommonUtils.getObjectMapper().writeValueAsString(new ResponseHelper(false, "test", "")).getBytes()));
         assertThrows(ThirdPartyIntegrationException.class, () -> operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId()));
 
     }
 
     @Test
-    void saveTransactionDetail() throws NoSuchAlgorithmException, ThirdPartyIntegrationException {
+    void saveTransactionDetail() throws ThirdPartyIntegrationException {
         when(configService.getActiveThirdParty()).thenReturn(ThirdPartyNames.BAXI);
-        operationService.saveTransactionDetail(new PaymentRequest(), BigDecimal.ZERO, new PaymentResponse(), testUserName, CommonUtils.generatePaymentTransactionId());
+        assertDoesNotThrow(() -> operationService.saveTransactionDetail(new PaymentRequest(), BigDecimal.ZERO, new PaymentResponse(), testUserName, CommonUtils.generatePaymentTransactionId()));
     }
 }

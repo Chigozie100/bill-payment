@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -129,7 +130,7 @@ public class BillerConsumerFeeService {
             return billerConsumerFee.getValue();
         }
 
-        BigDecimal multiplyAmount = billerConsumerFee.getValue().multiply(amount);
+        BigDecimal multiplyAmount = billerConsumerFee.getValue().multiply(amount).divide(BigDecimal.valueOf(100),2,  RoundingMode.UNNECESSARY);
         return isGreaterThan(multiplyAmount, billerConsumerFee.getMaxFixedValueWhenPercentage()) ? billerConsumerFee.getMaxFixedValueWhenPercentage() : multiplyAmount;
     }
 

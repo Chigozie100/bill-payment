@@ -78,8 +78,8 @@ public class BillsPaymentController {
     }
 
     @GetMapping("/biller/report")
-    public ResponseEntity<ResponseHelper> customerTransactionReport(@RequestParam(required = false, defaultValue = "0") String pageNumber,  @RequestParam(required = false, defaultValue = "10") String pageSize){
-        Page<TransactionDetail> transactionDetailPage = billsPaymentService.search(null, Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
+    public ResponseEntity<ResponseHelper> customerTransactionReport(@RequestParam(required = false, defaultValue = "0") String pageNumber,  @RequestParam(required = false, defaultValue = "10") String pageSize, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username){
+        Page<TransactionDetail> transactionDetailPage = billsPaymentService.search(username, Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 }

@@ -74,7 +74,7 @@ public class ItexService implements IThirdPartyService {
             if(SUCCESS.equals(authApiTokenResponse.getResponseCode())
                 && !Objects.isNull(authApiTokenResponse.getData())
                 && SUCCESS.equals(authApiTokenResponse.getData().getResponseCode())){
-                return Optional.of(authApiTokenResponse.getData().getToken());
+                return Optional.of(authApiTokenResponse.getData().getApiToken());
             }
             return Optional.empty();
         } catch (FeignException e) {
@@ -799,7 +799,7 @@ public class ItexService implements IThirdPartyService {
 
     private Item getPaymentMethodAsItem(){
         if (paymentMethodSubList.isEmpty()) {
-            paymentMethodSubList.add(new SubItem("card"));
+//            paymentMethodSubList.add(new SubItem("card"));
             paymentMethodSubList.add(new SubItem("cash"));
         }
         Item itemPaymentMethod = new Item();

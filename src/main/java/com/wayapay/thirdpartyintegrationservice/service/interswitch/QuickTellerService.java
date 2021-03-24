@@ -9,6 +9,7 @@ import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Stage;
 import com.wayapay.thirdpartyintegrationservice.util.Status;
 import feign.FeignException;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.util.Strings;

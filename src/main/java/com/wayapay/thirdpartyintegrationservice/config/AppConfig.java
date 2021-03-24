@@ -20,6 +20,7 @@ public class AppConfig {
     private QuickTellerConfig quickteller;
     private DisputeServiceConfig dispute;
     private WalletConfig wallet;
+    private AuthConfig auth;
     private KafkaConfig kafka;
 
 }

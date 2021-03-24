@@ -1,5 +1,7 @@
 package com.wayapay.thirdpartyintegrationservice.config;
 
+import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
+import com.wayapay.thirdpartyintegrationservice.service.auth.UserDetail;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -54,8 +56,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private Optional<String> getAuthToken(String header){
         log.info("Token is {}", jwtTokenUtil.generateToken(CommonUtils.convertToDate(LocalDate.now().plusDays(30))));
         if (!Objects.isNull(header) && header.startsWith(Constants.TOKEN_PREFIX)) {
-            String[] authTokenArray = header.split("\\s+");
-            return Optional.of(authTokenArray.length == 2 ? authTokenArray[1] : authTokenArray[0]);
+//            String[] authTokenArray = header.split("\\s+");
+//            return Optional.of(authTokenArray.length == 2 ? authTokenArray[1] : authTokenArray[0]);
+            return Optional.of(header);
         }
         return Optional.ofNullable(header);
     }
@@ -64,7 +67,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (!Objects.isNull(authToken)){
             try {
-                return Optional.of(jwtTokenUtil.getUsernameFromToken(authToken));
+                Optional<UserDetail> userDetailOptional = jwtTokenUtil.getUserDetail(authToken);
+                return userDetailOptional.map(userDetail -> jwtTokenUtil.getUsernameFromToken(userDetail));
             } catch (IllegalArgumentException e) {
                 log.error("an error occurred during getting username fromUser token", e);
             } catch (ExpiredJwtException e) {

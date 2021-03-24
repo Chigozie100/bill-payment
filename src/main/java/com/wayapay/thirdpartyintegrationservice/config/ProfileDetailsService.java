@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.config;
 
+import com.wayapay.thirdpartyintegrationservice.service.auth.UserDetail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,12 +17,15 @@ import java.util.Objects;
 public class ProfileDetailsService implements UserDetailsService {
 
     private final JwtTokenHelper jwtTokenHelper;
+    private static final String MESSAGE = "Invalid Token provided";
 
     public UserDetails loadUserByUsername(String token) {
+
         if (Objects.isNull(token)){
-            throw new UsernameNotFoundException("Invalid Token provided");
+            throw new UsernameNotFoundException(MESSAGE);
         }
-        return new ProfileDetails(Collections.singletonList(jwtTokenHelper.getRoleFromToken(token)), jwtTokenHelper.getUsernameFromToken(token));
+        UserDetail userDetail = jwtTokenHelper.getUserDetail(token).orElseThrow(() -> new UsernameNotFoundException(MESSAGE));
+        return new ProfileDetails(Collections.singletonList(jwtTokenHelper.getRoleFromToken(userDetail)), jwtTokenHelper.getUsernameFromToken(userDetail));
     }
 
 }

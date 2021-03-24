@@ -21,5 +21,5 @@ class AuthApiToken {
     private String responseCode;
     private String error;
     private String message;
-    private String token;
+    private String apiToken;
 }

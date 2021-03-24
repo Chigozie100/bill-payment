@@ -1,4 +1,4 @@
-package com.wayapay.thirdpartyintegrationservice.elasticsearch;
+package com.wayapay.thirdpartyintegrationservice.kafka;
 
 import com.wayapay.thirdpartyintegrationservice.util.FinalStatus;
 import com.wayapay.thirdpartyintegrationservice.util.Stage;

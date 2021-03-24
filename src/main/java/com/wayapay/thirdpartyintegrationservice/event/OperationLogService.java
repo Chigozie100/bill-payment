@@ -3,7 +3,7 @@ package com.wayapay.thirdpartyintegrationservice.event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wayapay.thirdpartyintegrationservice.config.AppConfig;
 import com.wayapay.thirdpartyintegrationservice.dto.PaymentRequest;
-import com.wayapay.thirdpartyintegrationservice.elasticsearch.OperationLog;
+import com.wayapay.thirdpartyintegrationservice.kafka.OperationLog;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.FinalStatus;
 import com.wayapay.thirdpartyintegrationservice.util.Stage;

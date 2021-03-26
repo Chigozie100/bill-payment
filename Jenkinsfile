@@ -15,6 +15,19 @@ pipeline {
     }
 
     stages {
+	    
+	    stages {
+		
+		 stage('Checkout') {
+            		steps {
+				cleanWs()
+				checkout([$class: 'GitSCM', branches: [[name: '*/dev']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'odenigbo-github-credentials', url: 'https://github.com/WAYA-MULTI-LINK/WAYA-PAY-CHAT-2.0-BILLSPAYMENT-MODEL.git']]])
+				sh "git branch"
+                		sh "ls -lart ./*"
+            		}
+        	}     
+		
+	    
         stage('compile') {
             steps {
                sh "mvn clean install"

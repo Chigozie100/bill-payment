@@ -13,9 +13,6 @@ pipeline {
         jdk 'jdk-11'
         maven 'mvn3.6.3'
     }
-
-    stages {
-	    
 	    stages {
 		
 		 stage('Checkout') {

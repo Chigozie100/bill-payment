@@ -27,7 +27,7 @@ pipeline {
 	    
         stage('compile') {
             steps {
-               sh "mvn clean install"
+               sh "mvn clean install -DskipTests"
             }
                 
         }

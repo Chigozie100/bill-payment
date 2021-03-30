@@ -41,7 +41,6 @@ Billspayment Service is dependent on
 ### Setup 
 - clone source code
 - cd to root directory
-- Establish access to NIBSS environment
 - run -> mvn -U clean install
 - run -> mvn spring-boot:run
 

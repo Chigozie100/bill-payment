@@ -73,7 +73,7 @@ class BillsPaymentServiceTest {
 
         //INTERSWITCH
 //        assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.QUICKTELLER));
-//        processBillsPayment("airtime");
+//        processBillsPayment("Mobile Recharge");
 
         assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.BAXI));
     }
@@ -81,7 +81,7 @@ class BillsPaymentServiceTest {
     private ParamNameValue convert(Item item){
 
         if (item.getSubItems().isEmpty()){
-            return new ParamNameValue(item.getParamName(), "08011111111");
+            return (Objects.isNull(item.getParamName()) || "null".equalsIgnoreCase(item.getParamName())) ? new ParamNameValue() : new ParamNameValue(item.getParamName(), "08011111111");
         }else {
             SubItem subItem = item.getSubItems().stream().findFirst().orElseThrow(RuntimeCryptoException::new);
             return new ParamNameValue(item.getParamName(), subItem.getId());

@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.service.interswitch;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,20 +14,8 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 public class QuickTellerCustomerValidationResponse {
-    private List<ValidationResponse> Customers = new ArrayList<>();
-}
 
-@Getter
-@Setter
-@NoArgsConstructor
-@ToString
-class ValidationResponse {
-    private String paymentCode;
-    private String customerId;
-    private String responseCode;
-    private String fullName;
-    private String amount;
-    private String amountType;
-    private String amountTypeDescription;
-    private String responseDescription;
+    @JsonProperty("Customers")
+    private List<ValidationResponse> Customers = new ArrayList<>();
+
 }

@@ -20,6 +20,6 @@ public interface QuickTellerFeignClient {
     @PostMapping("${app.config.quickteller.customer-validation-url}")
     QuickTellerCustomerValidationResponse validateCustomerInfo(@RequestBody QuickTellerCustomerValidationRequest request, @RequestHeader(AUTHORIZATION) String authorisation, @RequestHeader(SIGNATURE) String signature, @RequestHeader(NONCE) String nonce, @RequestHeader(TIMESTAMP) String timestamp, @RequestHeader(SIGNATURE_METHOD) String signatureMethod, @RequestHeader(TERMINAL_ID) String terminalId);
 
-    @PostMapping("${app.config.quickteller.customer-validation-url}")
+    @PostMapping("${app.config.quickteller.send-payment-advice-url}")
     SendPaymentAdviceResponse sendPaymentAdvice(@RequestBody SendPaymentAdviceRequest request, @RequestHeader(AUTHORIZATION) String authorisation, @RequestHeader(SIGNATURE) String signature, @RequestHeader(NONCE) String nonce, @RequestHeader(TIMESTAMP) String timestamp, @RequestHeader(SIGNATURE_METHOD) String signatureMethod, @RequestHeader(TERMINAL_ID) String terminalId);
 }

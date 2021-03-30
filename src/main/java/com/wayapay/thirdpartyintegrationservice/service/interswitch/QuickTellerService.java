@@ -9,20 +9,14 @@ import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Stage;
 import com.wayapay.thirdpartyintegrationservice.util.Status;
 import feign.FeignException;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,43 +37,34 @@ public class QuickTellerService implements IThirdPartyService {
         this.feignClient = feignClient;
     }
 
-    private String getAuthorisation(){
-        return "InterswitchAuth "+Base64.getEncoder().encodeToString(appConfig.getQuickteller().getClientId().getBytes());
-    }
-
-    private String getNonce(){
-        return UUID.randomUUID().toString().replace("-", "");
-    }
-
-
-    private String getTimeStamp(){
-        return String.valueOf(new Timestamp(System.currentTimeMillis()).getTime()/1000);
-    }
-
-    private String getSignature(HttpMethod httpMethod, String url, String timeStamp, String nonce){
-        String signatureCipher = Strings.EMPTY;
+    private Map<String, String> generateHeader(HttpMethod httpMethod, String url){
         try {
-            signatureCipher = httpMethod.name() + "&" + URLEncoder.encode(url, StandardCharsets.UTF_8.toString()) + "&" + timeStamp + "&" + nonce + "&" + appConfig.getQuickteller().getClientId() + "&" + appConfig.getQuickteller().getSecret();
-        } catch (UnsupportedEncodingException e) {
-            log.info("Unable to encode url => ", e);
+            RequestHeaders requestHeaders = new RequestHeaders();
+            return requestHeaders.getISWAuthSecurityHeaders(appConfig.getQuickteller().getClientId(), appConfig.getQuickteller().getSecret(), url, httpMethod.toString());
+        } catch (Exception exception) {
+            log.error("Exception occurred while trying to fetch the header : ", exception);
         }
-
-        log.info("signatureCipher => {}", signatureCipher);
-        log.info("signatureCipher-> SHA1 => {}", org.apache.commons.codec.digest.DigestUtils.sha1Hex(signatureCipher));
-        log.info("signatureCipher-> SHA1 => HEX => {}", toHex(org.apache.commons.codec.digest.DigestUtils.sha1Hex(signatureCipher)));
-        log.info("signatureCipher-> SHA1 => HEX => BASE64 => {}", Base64.getEncoder().encodeToString(toHex(org.apache.commons.codec.digest.DigestUtils.sha1Hex(signatureCipher)).getBytes()));
-
-        return Base64.getEncoder().encodeToString(toHex(org.apache.commons.codec.digest.DigestUtils.sha1Hex(signatureCipher)).getBytes());
+        return new HashMap<>();
     }
 
-    private String getSignatureMethod(){
-        return "SHA1";
+    private String getAuthorisation(Map<String, String> headers){
+        return headers.get("AUTHORIZATION");
     }
 
-    public String toHex(String arg) {
-//        return String.format("%040x", new BigInteger(1, arg.getBytes(/*YOUR_CHARSET?*/)));
-        char[] chars = Hex.encodeHex(arg.getBytes(StandardCharsets.UTF_8));
-        return String.valueOf(chars);
+    private String getNonce(Map<String, String> headers){
+        return headers.get("NONCE");
+    }
+
+    private String getTimeStamp(Map<String, String> headers){
+        return headers.get("TIMESTAMP");
+    }
+
+    private String getSignature(Map<String, String> headers){
+        return headers.get("SIGNATURE");
+    }
+
+    private String getSignatureMethod(Map<String, String> headers){
+        return headers.get("SIGNATURE_METHOD");
     }
 
     //todo cache the request and response
@@ -89,9 +74,8 @@ public class QuickTellerService implements IThirdPartyService {
         Optional<CategoryResponse> categoryResponseOptional = Optional.empty();
 
         try {
-            String nonce = getNonce();
-            String timeStamp = getTimeStamp();
-            categoryResponseOptional = Optional.of(feignClient.getCategory(getAuthorisation(), getSignature(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getBillerCategoryUrl(), timeStamp, nonce), nonce, timeStamp, getSignatureMethod()));
+            Map<String, String> headers = generateHeader(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getBillerCategoryUrl());
+            categoryResponseOptional = Optional.of(feignClient.getCategory(getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers)));
         } catch (FeignException e) {
             log.error("Unable to fetch categories from Interswitch", e);
         }
@@ -113,9 +97,8 @@ public class QuickTellerService implements IThirdPartyService {
 
         Optional<GetAllBillersResponse> billersResponseOptional = Optional.empty();
         try {
-            String nonce = getNonce();
-            String timeStamp = getTimeStamp();
-            billersResponseOptional = Optional.of(feignClient.getAllBillers(getAuthorisation(), getSignature(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getBillerCategoryUrl(), timeStamp, nonce), nonce, timeStamp, getSignatureMethod()));
+            Map<String, String> headers = generateHeader(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getBillersUrl());
+            billersResponseOptional = Optional.of(feignClient.getAllBillers(getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers)));
         } catch (FeignException e) {
             log.error("Unable to fetch billers by category => {} from interswitch ", categoryId, e);
         }
@@ -135,9 +118,8 @@ public class QuickTellerService implements IThirdPartyService {
 
         Optional<GetBillerPaymentItemResponse> billerPaymentItemsResponseOptional = Optional.empty();
         try {
-            String nonce = getNonce();
-            String timeStamp = getTimeStamp();
-            billerPaymentItemsResponseOptional = Optional.of(feignClient.getBillerPaymentItems(billerId, getAuthorisation(), getSignature(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getBillerPaymentItemUrl().replace("{billerId}", billerId), timeStamp, nonce), nonce, timeStamp, getSignatureMethod()));
+            Map<String, String> headers = generateHeader(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getBillerPaymentItemUrl().replace("{billerId}", billerId));
+            billerPaymentItemsResponseOptional = Optional.of(feignClient.getBillerPaymentItems(billerId, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers)));
         } catch (FeignException e) {
             log.error("Unable to fetch billers paymentitems, billerId is => {} from interswitch ", billerId, e);
         }
@@ -156,10 +138,11 @@ public class QuickTellerService implements IThirdPartyService {
                 throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
             }
 
+            log.info("Request is {}", request);
+
             QuickTellerCustomerValidationRequest validationRequest = generateValidationRequest(request, new QuickTellerCustomerValidationRequest(), billerDetail);
-            String nonce = getNonce();
-            String timeStamp = getTimeStamp();
-            quickTellerCustomerValidationResponseOptional = Optional.of(feignClient.validateCustomerInfo(validationRequest, getAuthorisation(), getSignature(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getCustomerValidationUrl(), timeStamp, nonce), nonce, timeStamp, getSignatureMethod(), appConfig.getQuickteller().getTerminalId()));
+            Map<String, String> headers = generateHeader(HttpMethod.POST, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getCustomerValidationUrl());
+            quickTellerCustomerValidationResponseOptional = Optional.of(feignClient.validateCustomerInfo(validationRequest, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
         } catch (FeignException e) {
             log.error("Unable to process customer validation against interswitch ", e);
         }
@@ -179,10 +162,9 @@ public class QuickTellerService implements IThirdPartyService {
                 throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
             }
 
-            String nonce = getNonce();
-            String timeStamp = getTimeStamp();
-            SendPaymentAdviceRequest sendPaymentAdviceRequest = generateRequest(request, billerDetail, timeStamp);
-            sendPaymentAdviceResponseOptional = Optional.of(feignClient.sendPaymentAdvice(sendPaymentAdviceRequest, getAuthorisation(), getSignature(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getSendPaymentAdviceUrl(), timeStamp, nonce), nonce, timeStamp, getSignatureMethod(), appConfig.getQuickteller().getTerminalId()));
+            Map<String, String> headers = generateHeader(HttpMethod.POST, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getSendPaymentAdviceUrl());
+            SendPaymentAdviceRequest sendPaymentAdviceRequest = generateRequest(request, billerDetail, getTimeStamp(headers));
+            sendPaymentAdviceResponseOptional = Optional.of(feignClient.sendPaymentAdvice(sendPaymentAdviceRequest, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
         } catch (FeignException e) {
             log.error("Unable to process payment against interswitch ", e);
         }
@@ -238,7 +220,15 @@ public class QuickTellerService implements IThirdPartyService {
         String customerId2 = Strings.EMPTY;
         String paymentCode = Strings.EMPTY;
 
+        log.info("Data => {}", data);
+        log.info("BillerDetail => {}", billerDetail);
+
         for (ParamNameValue paramNameValue : data) {
+
+            if (Objects.isNull(paramNameValue.getName())){
+                continue;
+            }
+
             if (paramNameValue.getName().equals(billerDetail.getCustomerfield1())){
                 customerId1 = paramNameValue.getValue();
             }
@@ -257,7 +247,8 @@ public class QuickTellerService implements IThirdPartyService {
 
     private CustomerValidationResponse getCustomerValidationResponse(String categoryId, String billerId, QuickTellerCustomerValidationResponse validationResponse) throws ThirdPartyIntegrationException {
         CustomerValidationResponse customerValidationResponse = new CustomerValidationResponse(categoryId, billerId);
-        ValidationResponse validationResponse1 = validationResponse.getCustomers().get(0);
+        log.info("validation response is {}", validationResponse);
+        ValidationResponse validationResponse1 = validationResponse.getCustomers().stream().findFirst().orElse(new ValidationResponse());
         if(validationResponse1.getResponseCode().equals(SUCCESSFUL)) {
             customerValidationResponse.getData().add(new ParamNameValue("Amount", getCustomerValidationAmount(validationResponse1.getAmount(), validationResponse1.getAmountType())));
             customerValidationResponse.getData().add(new ParamNameValue("full Name", validationResponse1.getFullName()));
@@ -293,7 +284,7 @@ public class QuickTellerService implements IThirdPartyService {
     }
 
     private String getAmountInKobo(String amount){
-        return new BigDecimal(amount).multiply(BigDecimal.valueOf(100)).toString();
+        return new BigDecimal(amount).multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.UNNECESSARY).toString();
     }
 
     private PaymentItemsResponse getPaymentItemResponse(String categoryId, String billerId, GetBillerPaymentItemResponse getBillerPaymentItemResponse) throws ThirdPartyIntegrationException {
@@ -334,5 +325,5 @@ class QuickTellerConstants {
     static final String TIMESTAMP = "Timestamp";
     static final String SIGNATURE_METHOD = "SignatureMethod";
     static final String TERMINAL_ID = "TerminalId";
-    static final String SUCCESSFUL = "9000";
+    static final String SUCCESSFUL = "90000";
 }

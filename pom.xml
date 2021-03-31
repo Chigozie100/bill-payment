@@ -26,7 +26,7 @@
             src/main/java/com/wayapay/thirdpartyintegrationservice/config/**/*,
             src/main/java/com/wayapay/thirdpartyintegrationservice/controller/**/*,
             src/main/java/com/wayapay/thirdpartyintegrationservice/dto/**/*,
-            src/main/java/com/wayapay/thirdpartyintegrationservice/elasticsearch/**/*,
+            src/main/java/com/wayapay/thirdpartyintegrationservice/kafka/**/*,
             src/main/java/com/wayapay/thirdpartyintegrationservice/event/**/*,
             src/main/java/com/wayapay/thirdpartyintegrationservice/exceptionhandling/**/*,
             src/main/java/com/wayapay/thirdpartyintegrationservice/interceptors/**/*,
@@ -206,7 +206,7 @@
                         <exclude>com/wayapay/thirdpartyintegrationservice/config/**/*</exclude>
                         <exclude>com/wayapay/thirdpartyintegrationservice/controller/**/*</exclude>
                         <exclude>com/wayapay/thirdpartyintegrationservice/dto/**/*</exclude>
-                        <exclude>com/wayapay/thirdpartyintegrationservice/elasticsearch/**/*</exclude>
+                        <exclude>com/wayapay/thirdpartyintegrationservice/kafka/**/*</exclude>
                         <exclude>com/wayapay/thirdpartyintegrationservice/event/**/*</exclude>
                         <exclude>com/wayapay/thirdpartyintegrationservice/exceptionhandling/**/*</exclude>
                         <exclude>com/wayapay/thirdpartyintegrationservice/interceptors/**/*</exclude>

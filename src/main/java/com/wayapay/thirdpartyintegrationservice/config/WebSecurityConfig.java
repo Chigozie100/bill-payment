@@ -47,7 +47,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(SWAGGER_WHITELIST).permitAll()
                 .antMatchers(HttpMethod.PUT, API_V1+"/config/**").hasRole("ADMIN")
                 .antMatchers(HttpMethod.POST, API_V1+"/config/**").hasRole("ADMIN")
-                .antMatchers(HttpMethod.GET, API_V1+"/config/**").hasRole("ADMIN")
+//                .antMatchers(HttpMethod.GET, API_V1+"/config/**").hasRole("ADMIN")
                 .anyRequest().authenticated().and().exceptionHandling()
                 .authenticationEntryPoint(unauthorizedHandler).and().sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);

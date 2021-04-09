@@ -45,7 +45,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         httpSecurity.cors().and().csrf().disable().authorizeRequests()
                 .antMatchers("/","/actuator/**").permitAll()
                 .antMatchers(SWAGGER_WHITELIST).permitAll()
-                .antMatchers(HttpMethod.PUT, API_V1+"/config/**").hasRole("ADMIN")
+//                .antMatchers(HttpMethod.PUT, API_V1+"/config/**").hasRole("ADMIN")
                 .antMatchers(HttpMethod.POST, API_V1+"/config/**").hasRole("ADMIN")
 //                .antMatchers(HttpMethod.GET, API_V1+"/config/**").hasRole("ADMIN")
                 .anyRequest().authenticated().and().exceptionHandling()

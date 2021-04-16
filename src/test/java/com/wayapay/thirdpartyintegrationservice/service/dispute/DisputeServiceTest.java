@@ -9,11 +9,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.math.BigDecimal;
 
 @Slf4j
+@DirtiesContext
 @SpringBootTest
 class DisputeServiceTest {
 

@@ -66,16 +66,16 @@ class BillsPaymentServiceTest {
         ThirdPartyNames activeThirdParty = configService.getActiveThirdParty();
 
         //ITEX
-//        assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.ITEX));
-//        processBillsPayment("Airtime");
+        assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.ITEX));
+        processBillsPayment("Airtime");
 
         //BAXI
         assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.BAXI));
         processBillsPayment("Airtime Recharge");
 
         //INTERSWITCH
-//        assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.QUICKTELLER));
-//        processBillsPayment("Mobile Recharge");
+        assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.QUICKTELLER));
+        processBillsPayment("Mobile Recharge");
 
         assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.BAXI));
     }

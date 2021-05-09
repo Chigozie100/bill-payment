@@ -7,6 +7,7 @@ import com.wayapay.thirdpartyintegrationservice.model.BillerConsumerFee;
 import com.wayapay.thirdpartyintegrationservice.repo.BillerConsumerFeeRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
+import com.wayapay.thirdpartyintegrationservice.util.FeeBearer;
 import com.wayapay.thirdpartyintegrationservice.util.FeeType;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,7 @@ class BillerConsumerFeeServiceTest {
 
         BillerConsumerFeeRequest billerConsumerFeeRequest = new BillerConsumerFeeRequest();
         billerConsumerFeeRequest.setBiller(BILLER_NAME);
+        billerConsumerFeeRequest.setFeeBearer(FeeBearer.CONSUMER.name());
         billerConsumerFeeRequest.setFeeType(FeeType.FIXED.toString());
         billerConsumerFeeRequest.setMaxFixedValueWhenPercentage(new BigDecimal("10.00"));
         billerConsumerFeeRequest.setThirdPartyName(ThirdPartyNames.BAXI.toString());
@@ -147,6 +149,24 @@ class BillerConsumerFeeServiceTest {
         if (!Objects.isNull(billerConsumerFee)){
             billerConsumerFeeRepo.delete(billerConsumerFee);
         }
+    }
+
+    @Test
+    void testGetFeeBearer() throws ThirdPartyIntegrationException {
+
+        //save FeeBiller
+        BillerConsumerFee billerConsumerFee = new BillerConsumerFee();
+        billerConsumerFee.setValue(BigDecimal.ONE);
+        billerConsumerFee.setThirdPartyName(ThirdPartyNames.BAXI);
+        billerConsumerFee.setBiller("testBiller");
+        billerConsumerFee.setFeeBearer(FeeBearer.CONSUMER);
+        billerConsumerFee.setFeeType(FeeType.FIXED);
+        billerConsumerFee = billerConsumerFeeRepo.save(billerConsumerFee);
+
+        assertEquals(FeeBearer.CONSUMER, billerConsumerFeeService.getFeeBearer(ThirdPartyNames.BAXI, billerConsumerFee.getBiller()));
+
+        billerConsumerFeeRepo.delete(billerConsumerFee);
+
     }
 
 }

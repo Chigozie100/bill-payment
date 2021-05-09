@@ -3,7 +3,9 @@ package com.wayapay.thirdpartyintegrationservice.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -70,5 +72,14 @@ public class CommonUtils {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return objectMapper;
+    }
+
+    public static long validateAndFetchIdAsLong(String id) throws ThirdPartyIntegrationException {
+        try {
+            return Long.parseLong(id);
+        } catch (NumberFormatException e) {
+            log.error("Invalid Id provided => {}", id, e);
+            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.ID_IS_INVALID);
+        }
     }
 }

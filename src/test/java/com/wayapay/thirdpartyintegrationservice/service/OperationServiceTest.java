@@ -11,6 +11,7 @@ import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferRespo
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
+import com.wayapay.thirdpartyintegrationservice.util.FeeBearer;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import feign.FeignException;
 import feign.Request;
@@ -28,8 +29,10 @@ import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @DirtiesContext
@@ -39,7 +42,7 @@ class OperationServiceTest {
     @Mock
     private PaymentTransactionRepo paymentTransactionRepo;
     @MockBean
-    private ConfigService configService;
+    private CategoryService categoryService;
     @Mock
     private WalletFeignClient walletFeignClient;
     private OperationService operationService;
@@ -47,25 +50,30 @@ class OperationServiceTest {
 
     @BeforeEach
     void setUp() {
-        operationService = new OperationService(paymentTransactionRepo, configService, walletFeignClient);
+        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService);
     }
 
     @Test
     void secureFund() throws ThirdPartyIntegrationException, NoSuchAlgorithmException, JsonProcessingException {
 
         String sourceUserAccount = "111111111";
-        when(configService.getThirdPartyAccountNumber()).thenReturn("222233333");
+        when(categoryService.findThirdPartyByCategoryAggregatorCode(anyString())).thenReturn(Optional.of(ThirdPartyNames.BAXI));
         when(walletFeignClient.doTransaction(Mockito.any(FundTransferRequest.class))).thenReturn(new FundTransferResponse(true, "test", ""));
-        assertTrue(operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId()));
+        assertTrue(operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.BILLER));
 
         when(walletFeignClient.doTransaction(Mockito.any(FundTransferRequest.class))).thenThrow(new FeignException.FeignClientException(HttpStatus.BAD_GATEWAY.value(), Constants.ERROR_MESSAGE, Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), "body".getBytes(), Charset.defaultCharset(), new RequestTemplate()), CommonUtils.getObjectMapper().writeValueAsString(new ResponseHelper(false, "test", "")).getBytes()));
-        assertThrows(ThirdPartyIntegrationException.class, () -> operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId()));
+        assertThrows(ThirdPartyIntegrationException.class, () -> operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.CONSUMER));
 
     }
 
     @Test
     void saveTransactionDetail() throws ThirdPartyIntegrationException {
-        when(configService.getActiveThirdParty()).thenReturn(ThirdPartyNames.BAXI);
-        assertDoesNotThrow(() -> operationService.saveTransactionDetail(new PaymentRequest(), BigDecimal.ZERO, new PaymentResponse(), testUserName, CommonUtils.generatePaymentTransactionId()));
+        when(categoryService.findThirdPartyByCategoryAggregatorCode(anyString())).thenReturn(Optional.of(ThirdPartyNames.BAXI));
+        PaymentRequest paymentRequest = new PaymentRequest();
+        paymentRequest.setAmount(new BigDecimal("100.00"));
+        paymentRequest.setBillerId("testBillerId");
+        paymentRequest.setCategoryId("testCategoryId");
+        paymentRequest.setSourceWalletAccountNumber("testAccountNumber");
+        assertDoesNotThrow(() -> operationService.saveTransactionDetail(paymentRequest, BigDecimal.ZERO, new PaymentResponse(), testUserName, CommonUtils.generatePaymentTransactionId()));
     }
 }

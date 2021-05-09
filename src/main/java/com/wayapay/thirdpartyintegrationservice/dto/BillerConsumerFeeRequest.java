@@ -1,6 +1,7 @@
 package com.wayapay.thirdpartyintegrationservice.dto;
 
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.EnumConstraint;
+import com.wayapay.thirdpartyintegrationservice.util.FeeBearer;
 import com.wayapay.thirdpartyintegrationservice.util.FeeType;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import lombok.Getter;
@@ -31,6 +32,10 @@ public class BillerConsumerFeeRequest {
     @NotNull
     @EnumConstraint(message = "Invalid feeType provided, feeType is either FIXED or PERCENTAGE ", enumClass = FeeType.class)
     private String feeType;
+
+    @NotNull
+    @EnumConstraint(message = "Invalid feeBearer provided, feeBearer is either BILLER or CONSUMER ", enumClass = FeeBearer.class)
+    private String feeBearer;
 
     @NotNull(message = "value is required ")
     @DecimalMin(value = "0.00", message = "Minimum commission value is 0.00")

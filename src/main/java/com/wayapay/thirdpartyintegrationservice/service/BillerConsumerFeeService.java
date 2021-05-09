@@ -8,6 +8,7 @@ import com.wayapay.thirdpartyintegrationservice.repo.BillerConsumerFeeRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
+import com.wayapay.thirdpartyintegrationservice.util.FeeBearer;
 import com.wayapay.thirdpartyintegrationservice.util.FeeType;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import lombok.RequiredArgsConstructor;
@@ -132,6 +133,15 @@ public class BillerConsumerFeeService {
 
         BigDecimal multiplyAmount = billerConsumerFee.getValue().multiply(amount).divide(BigDecimal.valueOf(100),2,  RoundingMode.UNNECESSARY);
         return isGreaterThan(multiplyAmount, billerConsumerFee.getMaxFixedValueWhenPercentage()) ? billerConsumerFee.getMaxFixedValueWhenPercentage() : multiplyAmount;
+    }
+
+    public FeeBearer getFeeBearer(ThirdPartyNames thirdPartyNames, String biller) throws ThirdPartyIntegrationException {
+        try {
+            return billerConsumerFeeRepo.findFeeBearerByThirdPartyNameAndBiller(thirdPartyNames, biller);
+        } catch (Exception exception) {
+            log.error("Unable to fetch FeeBearer", exception);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
     }
 
     private boolean isGreaterThan(BigDecimal amount1, BigDecimal amount2){

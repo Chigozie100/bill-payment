@@ -10,8 +10,10 @@ import com.wayapay.thirdpartyintegrationservice.service.itex.ItexService;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Page;
 import org.springframework.test.annotation.DirtiesContext;
 import org.testcontainers.shaded.org.bouncycastle.crypto.RuntimeCryptoException;
@@ -19,6 +21,7 @@ import org.testcontainers.shaded.org.bouncycastle.crypto.RuntimeCryptoException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,9 +29,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @DirtiesContext
 @SpringBootTest
 class BillsPaymentServiceTest {
-
-    @Autowired
-    private ConfigService configService;
 
     @Autowired
     private ItexService itexService;
@@ -51,33 +51,40 @@ class BillsPaymentServiceTest {
     @Autowired
     private BillerConsumerFeeService billerConsumerFeeService;
 
+    @SpyBean
+    private CategoryService categoryService;
+
+    @Autowired
+    private BillerService billerService;
+
+    @Autowired
+    private ThirdPartyService thirdPartyService;
+
     private BillsPaymentService billsPaymentService;
 
     private static final String username = "testUserName";
 
     @BeforeEach
     void setUp() {
-        billsPaymentService = new BillsPaymentService(configService, itexService, baxiService, quickTellerService, paymentTransactionRepo, disputeService, operationService, billerConsumerFeeService);
+        billsPaymentService = new BillsPaymentService(itexService, baxiService, quickTellerService, paymentTransactionRepo, disputeService, operationService, billerConsumerFeeService, categoryService, billerService, thirdPartyService);
     }
 
     @Test
     void getBillsPaymentService() throws ThirdPartyIntegrationException {
 
-        ThirdPartyNames activeThirdParty = configService.getActiveThirdParty();
-
         //ITEX
-        assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.ITEX));
-        processBillsPayment("Airtime");
+        Mockito.when(categoryService.findThirdPartyByCategoryAggregatorCode(Mockito.anyString())).thenReturn(Optional.of(ThirdPartyNames.ITEX));
+        processBillsPayment("Airtime", ThirdPartyNames.ITEX);
+
 
         //BAXI
-        assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.BAXI));
-        processBillsPayment("Airtime Recharge");
+        Mockito.when(categoryService.findThirdPartyByCategoryAggregatorCode(Mockito.anyString())).thenReturn(Optional.of(ThirdPartyNames.BAXI));
+        processBillsPayment("Airtime Recharge", ThirdPartyNames.BAXI);
 
         //INTERSWITCH
-        assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.QUICKTELLER));
-        processBillsPayment("Mobile Recharge");
+        Mockito.when(categoryService.findThirdPartyByCategoryAggregatorCode(Mockito.anyString())).thenReturn(Optional.of(ThirdPartyNames.QUICKTELLER));
+        processBillsPayment("Mobile Recharge", ThirdPartyNames.QUICKTELLER);
 
-        assertDoesNotThrow(() -> configService.setActiveThirdParty(ThirdPartyNames.BAXI));
     }
 
     private ParamNameValue convert(Item item){
@@ -98,22 +105,22 @@ class BillsPaymentServiceTest {
         return bigDecimal;
     }
 
-    private void processBillsPayment(String airtime) throws ThirdPartyIntegrationException {
+    private void processBillsPayment(String airtime, ThirdPartyNames thirdPartyName) throws ThirdPartyIntegrationException {
 
         //confirm that get all categories is fine
-        List<CategoryResponse> categoryResponses = billsPaymentService.getBillsPaymentService().getCategory();
+        List<CategoryResponse> categoryResponses = billsPaymentService.getBillsPaymentService(thirdPartyName).getCategory();
         assertFalse(categoryResponses.isEmpty());
         CategoryResponse categoryResponse = categoryResponses.stream().filter(cResponse -> airtime.equalsIgnoreCase(cResponse.getCategoryName())).findFirst().orElseThrow(RuntimeException::new);
         assertNotNull(categoryResponse);
 
         //confirm that get all billers is fine
-        List<BillerResponse> allBillersByCategory = billsPaymentService.getBillsPaymentService().getAllBillersByCategory(categoryResponse.getCategoryId());
+        List<BillerResponse> allBillersByCategory = billsPaymentService.getBillsPaymentService(thirdPartyName).getAllBillersByCategory(categoryResponse.getCategoryId());
         assertFalse(allBillersByCategory.isEmpty());
         BillerResponse billerResponse = allBillersByCategory.stream().findFirst().orElseThrow(RuntimeException::new);
         assertNotNull(billerResponse);
 
         //confirm that get payment Item is fine
-        PaymentItemsResponse customerValidationFormByBiller = billsPaymentService.getBillsPaymentService().getCustomerValidationFormByBiller(billerResponse.getCategoryId(), billerResponse.getBillerId());
+        PaymentItemsResponse customerValidationFormByBiller = billsPaymentService.getBillsPaymentService(thirdPartyName).getCustomerValidationFormByBiller(billerResponse.getCategoryId(), billerResponse.getBillerId());
         assertNotNull(customerValidationFormByBiller);
         List<Item> items = customerValidationFormByBiller.getItems();
         List<ParamNameValue> paramNameValueList = items.stream().map(this::convert).collect(Collectors.toList());
@@ -124,7 +131,7 @@ class BillsPaymentServiceTest {
             customerValidationRequest.setBillerId(customerValidationFormByBiller.getBillerId());
             customerValidationRequest.setCategoryId(customerValidationFormByBiller.getCategoryId());
             customerValidationRequest.setData(paramNameValueList);
-            CustomerValidationResponse customerValidationResponse = billsPaymentService.getBillsPaymentService().validateCustomerValidationFormByBiller(customerValidationRequest);
+            CustomerValidationResponse customerValidationResponse = billsPaymentService.getBillsPaymentService(thirdPartyName).validateCustomerValidationFormByBiller(customerValidationRequest);
             assertNotNull(customerValidationResponse);
             items.addAll(customerValidationResponse.getItems());
             paramNameValueList.addAll(items.stream().map(this::convert).collect(Collectors.toList()));

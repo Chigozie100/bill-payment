@@ -12,6 +12,12 @@ public class Constants {
     public static final String USERNAME = "username";
     public static final String ROLE = "role";
 
+    public static final String ID_IS_REQUIRED = "Id is required";
+    public static final String ID_IS_UNKNOWN = "Unknown Id provided";
+    public static final String ID_IS_INVALID = "Invalid Id provided";
+    public static final String SYNCED_SUCCESSFULLY = "Synced successfully";
+    public static final String SYNCED_IN_PROGRESS = "Syncing... it should take a long time";
+
     private Constants() {
     }
 }

@@ -30,7 +30,7 @@ public class BillsPaymentController {
     @GetMapping("/category")
     public ResponseEntity<ResponseHelper> getAllCategories(){
         try {
-            List<CategoryResponse> categoryResponseList = billsPaymentService.getBillsPaymentService().getCategory();
+            List<CategoryResponse> categoryResponseList = billsPaymentService.getAllCategories();
             return ResponseEntity.ok(new SuccessResponse(categoryResponseList));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));
@@ -40,7 +40,7 @@ public class BillsPaymentController {
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<ResponseHelper> getBillersByCategory(@PathVariable("categoryId") String categoryId){
         try {
-            List<BillerResponse> allBillersByCategory = billsPaymentService.getBillsPaymentService().getAllBillersByCategory(categoryId);
+            List<BillerResponse> allBillersByCategory = billsPaymentService.getAllBillers(categoryId);
             return ResponseEntity.ok(new SuccessResponse(allBillersByCategory));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));
@@ -50,7 +50,7 @@ public class BillsPaymentController {
     @GetMapping("/category/{categoryId}/biller/{billerId}")
     public ResponseEntity<ResponseHelper> getBillerPaymentItem(@PathVariable("categoryId") String categoryId, @PathVariable("billerId") String billerId){
         try {
-            PaymentItemsResponse customerValidationFormByBiller = billsPaymentService.getBillsPaymentService().getCustomerValidationFormByBiller(categoryId, billerId);
+            PaymentItemsResponse customerValidationFormByBiller = billsPaymentService.getBillsPaymentService(categoryId).getCustomerValidationFormByBiller(categoryId, billerId);
             return ResponseEntity.ok(new SuccessResponse(customerValidationFormByBiller));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));
@@ -60,7 +60,7 @@ public class BillsPaymentController {
     @PostMapping("/biller/validate")
     public ResponseEntity<ResponseHelper> validateCustomerPaymentItem(@Valid @RequestBody CustomerValidationRequest customerValidationRequest){
         try {
-            CustomerValidationResponse customerValidationResponse = billsPaymentService.getBillsPaymentService().validateCustomerValidationFormByBiller(customerValidationRequest);
+            CustomerValidationResponse customerValidationResponse = billsPaymentService.getBillsPaymentService(customerValidationRequest.getCategoryId()).validateCustomerValidationFormByBiller(customerValidationRequest);
             return ResponseEntity.ok(new SuccessResponse(customerValidationResponse));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));

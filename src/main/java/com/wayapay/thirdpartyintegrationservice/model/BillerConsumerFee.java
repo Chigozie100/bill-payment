@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.model;
 
+import com.wayapay.thirdpartyintegrationservice.util.FeeBearer;
 import com.wayapay.thirdpartyintegrationservice.util.FeeType;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import lombok.Getter;
@@ -28,6 +29,9 @@ public class BillerConsumerFee extends SuperModel {
 
     @Column(name = "biller", nullable = false)
     private String biller;
+
+    @Column(name = "fee_bearer")
+    private FeeBearer feeBearer;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "fee_type", nullable = false)

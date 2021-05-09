@@ -44,7 +44,6 @@ public class BaxiService implements IThirdPartyService {
         this.feignClient = feignClient;
     }
 
-    //todo cache the request and response
     @Override
     public List<com.wayapay.thirdpartyintegrationservice.dto.CategoryResponse> getCategory() throws ThirdPartyIntegrationException {
 
@@ -70,7 +69,6 @@ public class BaxiService implements IThirdPartyService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, categoryResponse.getMessage());
     }
 
-    //todo cache the request and response
     @Override
     public List<BillerResponse> getAllBillersByCategory(String categoryId) throws ThirdPartyIntegrationException {
 

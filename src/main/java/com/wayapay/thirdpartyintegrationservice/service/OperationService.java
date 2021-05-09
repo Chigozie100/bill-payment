@@ -10,10 +10,7 @@ import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferRequest;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
-import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
-import com.wayapay.thirdpartyintegrationservice.util.Constants;
-import com.wayapay.thirdpartyintegrationservice.util.Stage;
-import com.wayapay.thirdpartyintegrationservice.util.Status;
+import com.wayapay.thirdpartyintegrationservice.util.*;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,15 +25,15 @@ import java.math.BigDecimal;
 public class OperationService {
 
     private final PaymentTransactionRepo paymentTransactionRepo;
-    private final ConfigService configService;
     private final WalletFeignClient walletFeignClient;
+    private final CategoryService categoryService;
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId) throws ThirdPartyIntegrationException {
+    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer) throws ThirdPartyIntegrationException {
 
         //consume
         FundTransferRequest fundTransferRequest = new FundTransferRequest();
-        fundTransferRequest.setAmount(amount.add(fee));
+        fundTransferRequest.setAmount(FeeBearer.CONSUMER.equals(feeBearer) ? amount.add(fee) : amount);
         fundTransferRequest.setId(0L);
         fundTransferRequest.setAccountNo(userAccountNumber);
         fundTransferRequest.setDescription("Billspayment -> "+transactionId);
@@ -61,7 +58,7 @@ public class OperationService {
         paymentTransactionDetail.setPaymentRequest(CommonUtils.objectToJson(paymentRequest).orElse(""));
         paymentTransactionDetail.setPaymentResponse(CommonUtils.objectToJson(paymentResponse).orElse(""));
         paymentTransactionDetail.setSuccessful(true);
-        paymentTransactionDetail.setThirdPartyName(configService.getActiveThirdParty());
+        paymentTransactionDetail.setThirdPartyName(categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE)));
         paymentTransactionDetail.setTransactionId(transactionId);
         paymentTransactionDetail.setUserAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         paymentTransactionDetail.setUsername(userName);

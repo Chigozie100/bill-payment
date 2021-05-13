@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,5 +15,5 @@ public class TransferFromWalletPojo {
 
 	  private Long customerWalletId;
 	  private String paymentReference;
-	  private Double amount;
+	  private BigDecimal amount;
 }

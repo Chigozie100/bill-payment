@@ -22,7 +22,7 @@ public class DisputeService {
 
     @Async
     @AuditPaymentOperation(stage = Stage.LOG_AS_DISPUTE, status = Status.END)
-    public boolean logTransactionAsDispute(String username, Object request, ThirdPartyNames thirdPartyName,
+    public Boolean logTransactionAsDispute(String username, Object request, ThirdPartyNames thirdPartyName,
                                         String billerId, String categoryId, BigDecimal amount, BigDecimal fee, String transactionId){
         DisputeRequest disputeRequest = new DisputeRequest();
         disputeRequest.setUserId(username);

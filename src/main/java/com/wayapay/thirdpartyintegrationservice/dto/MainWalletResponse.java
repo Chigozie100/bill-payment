@@ -27,4 +27,8 @@ public class MainWalletResponse {
     private WalletTimeLine timeline;
     private WalletCurrency currency;
     private WalletSummary summary;
+
+    public MainWalletResponse(Long id) {
+        this.id = id;
+    }
 }

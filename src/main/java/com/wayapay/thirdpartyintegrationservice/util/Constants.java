@@ -11,6 +11,7 @@ public class Constants {
     public static final String AUTHORITIES_KEY = "scopes";
     public static final String USERNAME = "username";
     public static final String ROLE = "role";
+    public static final String TOKEN = "token";
 
     public static final String ID_IS_REQUIRED = "Id is required";
     public static final String ID_IS_UNKNOWN = "Unknown Id provided";

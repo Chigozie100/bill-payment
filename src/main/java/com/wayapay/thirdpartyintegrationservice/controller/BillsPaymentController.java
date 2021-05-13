@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
+
+import java.net.URISyntaxException;
 import java.util.List;
 
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
@@ -68,9 +70,9 @@ public class BillsPaymentController {
     }
 
     @PostMapping("/biller/pay")
-    public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username){
+    public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws URISyntaxException{
         try {
-            PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username);
+            PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, token);
             return ResponseEntity.ok(new SuccessResponse(paymentResponse));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));

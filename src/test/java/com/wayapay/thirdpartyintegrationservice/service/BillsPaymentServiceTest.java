@@ -19,6 +19,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.testcontainers.shaded.org.bouncycastle.crypto.RuntimeCryptoException;
 
 import java.math.BigDecimal;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -70,7 +71,7 @@ class BillsPaymentServiceTest {
     }
 
     @Test
-    void getBillsPaymentService() throws ThirdPartyIntegrationException {
+    void getBillsPaymentService() throws ThirdPartyIntegrationException, URISyntaxException {
 
         //ITEX
         Mockito.when(categoryService.findThirdPartyByCategoryAggregatorCode(Mockito.anyString())).thenReturn(Optional.of(ThirdPartyNames.ITEX));
@@ -105,7 +106,7 @@ class BillsPaymentServiceTest {
         return bigDecimal;
     }
 
-    private void processBillsPayment(String airtime, ThirdPartyNames thirdPartyName) throws ThirdPartyIntegrationException {
+    private void processBillsPayment(String airtime, ThirdPartyNames thirdPartyName) throws ThirdPartyIntegrationException, URISyntaxException {
 
         //confirm that get all categories is fine
         List<CategoryResponse> categoryResponses = billsPaymentService.getBillsPaymentService(thirdPartyName).getCategory();
@@ -144,7 +145,7 @@ class BillsPaymentServiceTest {
         paymentRequest.setCategoryId(customerValidationFormByBiller.getCategoryId());
         paymentRequest.setBillerId(customerValidationFormByBiller.getBillerId());
         paymentRequest.setAmount(getAmount(items));
-        PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username);
+        PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjZWNpbGlha25kQGdtYWlsLmNvbSIsImV4cCI6MTY1MjI3MTc0NH0.31hPp08wDKB7HiJMtSkI-gX0ppjm2QJx0SXhO2WsK_g");
         assertNotNull(paymentResponse);
 
         //confirm that search is fine

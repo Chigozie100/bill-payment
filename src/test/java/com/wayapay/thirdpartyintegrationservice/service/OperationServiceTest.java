@@ -26,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.math.BigDecimal;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -54,15 +55,15 @@ class OperationServiceTest {
     }
 
     @Test
-    void secureFund() throws ThirdPartyIntegrationException, NoSuchAlgorithmException, JsonProcessingException {
+    void secureFund() throws ThirdPartyIntegrationException, NoSuchAlgorithmException, JsonProcessingException, URISyntaxException {
 
         String sourceUserAccount = "111111111";
         when(categoryService.findThirdPartyByCategoryAggregatorCode(anyString())).thenReturn(Optional.of(ThirdPartyNames.BAXI));
         when(walletFeignClient.doTransaction(Mockito.any(FundTransferRequest.class))).thenReturn(new FundTransferResponse(true, "test", ""));
-        assertTrue(operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.BILLER));
+        assertTrue(operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.BILLER,"serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjZWNpbGlha25kQGdtYWlsLmNvbSIsImV4cCI6MTY1MjI3MTc0NH0.31hPp08wDKB7HiJMtSkI-gX0ppjm2QJx0SXhO2WsK_g"));
 
         when(walletFeignClient.doTransaction(Mockito.any(FundTransferRequest.class))).thenThrow(new FeignException.FeignClientException(HttpStatus.BAD_GATEWAY.value(), Constants.ERROR_MESSAGE, Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), "body".getBytes(), Charset.defaultCharset(), new RequestTemplate()), CommonUtils.getObjectMapper().writeValueAsString(new ResponseHelper(false, "test", "")).getBytes()));
-        assertThrows(ThirdPartyIntegrationException.class, () -> operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.CONSUMER));
+        assertThrows(ThirdPartyIntegrationException.class, () -> operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.CONSUMER, "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjZWNpbGlha25kQGdtYWlsLmNvbSIsImV4cCI6MTY1MjI3MTc0NH0.31hPp08wDKB7HiJMtSkI-gX0ppjm2QJx0SXhO2WsK_g"));
 
     }
 

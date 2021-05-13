@@ -44,6 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.info("authenticated user " + username + ", setting security context");
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 req.setAttribute(Constants.USERNAME, username);
+                req.setAttribute(Constants.TOKEN, authToken);
             }
         }
 

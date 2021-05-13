@@ -33,15 +33,20 @@ public class OperationService {
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token) throws ThirdPartyIntegrationException {
 
+        log.info("Step 8");
     	//Get user default wallet
     	MainWalletResponse defaultWallet = walletFeignClient.getDefaultWallet(token);
+        log.info("Step 9");
+
         //consume
     	TransferFromWalletPojo trans = new TransferFromWalletPojo();
     	trans.setAmount(FeeBearer.CONSUMER.equals(feeBearer) ? amount.add(fee) : amount);
     	trans.setCustomerWalletId(defaultWallet.getId());
     	trans.setPaymentReference("BILLS-PAYMENT-TRANSACTION");
         try {
+            log.info("Step 10");
             walletFeignClient.transferToUser(trans,token);
+            log.info("Step 11");
             return true;
         } catch (FeignException exception) {
             log.error("FeignException => {}", exception.getCause());

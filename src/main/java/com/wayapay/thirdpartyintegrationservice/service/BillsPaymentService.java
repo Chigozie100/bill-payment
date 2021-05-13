@@ -170,23 +170,33 @@ public class BillsPaymentService {
 
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
+        log.info("Step 1");
         //secure Payment
         String transactionId = null;
         try {
+            log.info("Step 2");
             transactionId = CommonUtils.generatePaymentTransactionId();
+            log.info("Step 3");
         } catch (NoSuchAlgorithmException e) {
             log.error("Unable to generate transaction Id", e);
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
         }
 
+        log.info("Step 4");
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        log.info("Step 5");
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
+        log.info("Step 6");
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
+        log.info("Step 7");
         if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token)){
             try {
+                log.info("Step 12");
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
+                log.info("Step 13");
                 //store the transaction information
                 operationService.saveTransactionDetail(paymentRequest, fee, paymentResponse, userName, transactionId);
+                log.info("Step 14");
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
                 disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);

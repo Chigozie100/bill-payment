@@ -14,7 +14,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import java.math.BigDecimal;
 
 @Slf4j
-@DirtiesContext
+//@DirtiesContext
 @SpringBootTest
 class DisputeServiceTest {
 

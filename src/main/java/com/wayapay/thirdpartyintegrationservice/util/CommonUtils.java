@@ -53,7 +53,8 @@ public class CommonUtils {
     }
 
     public static String generatePaymentTransactionId() throws NoSuchAlgorithmException {
-        return new SimpleDateFormat("yyMMddHHmmss").format(new Date()) + generateRandomNumber();
+//        return new SimpleDateFormat("yyMMddHHmmss").format(new Date()) + generateRandomNumber();
+        return new SimpleDateFormat("yyMMddHHmmss").format(new Date()); //+ generateRandomNumber();
     }
 
     private static String generateRandomNumber() throws NoSuchAlgorithmException {

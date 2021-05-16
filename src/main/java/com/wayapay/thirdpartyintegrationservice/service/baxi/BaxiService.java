@@ -132,7 +132,7 @@ public class BaxiService implements IThirdPartyService {
             case AIRTIME:
             case DATABUNDLE:
             case EPIN:
-                return new CustomerValidationResponse();
+                return new CustomerValidationResponse(request.getCategoryId(), request.getBillerId());
             case CABLETV:
                 return validateCableTv(request);
             case ELECTRICITY:

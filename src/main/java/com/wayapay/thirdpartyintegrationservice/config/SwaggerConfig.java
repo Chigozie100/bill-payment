@@ -40,7 +40,7 @@ public class SwaggerConfig {
     private ApiInfo getApiInfo(){
         return new ApiInfoBuilder()
                 .title("WayaPay Bills Payment Service")
-                .description("This is a service enable clients to perform payment collection transaction across three third-party service. ITEX, BAXI AND QUICKTELLER")
+                .description("This is a service that enables clients to perform payment collection transaction across any of the three third-party/aggregator service. ITEX, BAXI AND QUICKTELLER. \n The process flow (Core Bills Payment API) : \n 1. Get Categories \n 2. Get Billers Based on the selected Category \n 3. Get Payment Items based on the selected biller. \n 4. Validate Provided Payment Item. \n 5. Make Payment.")
                 .version("1.0.0")
                 .build();
     }

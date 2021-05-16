@@ -190,7 +190,7 @@ public class ItexService implements IThirdPartyService {
             return validateElectricity(request);
         } else if (categoryAirtime.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
             //Validation is not required
-            return new CustomerValidationResponse();
+            return new CustomerValidationResponse(request.getCategoryId(), request.getBillerId());
         } else if (categoryData.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
             return validateData(request);
         } else if (categoryInternet.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){

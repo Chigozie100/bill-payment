@@ -18,6 +18,9 @@ public class Constants {
     public static final String ID_IS_INVALID = "Invalid Id provided";
     public static final String SYNCED_SUCCESSFULLY = "Synced successfully";
     public static final String SYNCED_IN_PROGRESS = "Syncing... it should take a long time";
+    public static final String DATE_FORMAT = "yyyy-MM-dd";
+    public static final String INAPP_TYPE = "IN-APP";
+    public static final String INSUFFICIENT_FUND = "Insufficient fund";
 
     private Constants() {
     }

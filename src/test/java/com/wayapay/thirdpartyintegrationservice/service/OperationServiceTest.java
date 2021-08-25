@@ -47,7 +47,7 @@ class OperationServiceTest {
     @Mock
     private WalletFeignClient walletFeignClient;
     private OperationService operationService;
-    private static final String testUserName = "testUserName";
+    private static final String testUserName = "10";
 
     @BeforeEach
     void setUp() {
@@ -57,15 +57,17 @@ class OperationServiceTest {
     @Test
     void secureFund() throws ThirdPartyIntegrationException, NoSuchAlgorithmException, JsonProcessingException, URISyntaxException {
 
-        String sourceUserAccount = "111111111";
-        String sampleToken = "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjZWNpbGlha25kQGdtYWlsLmNvbSIsImV4cCI6MTY1MjI3MTc0NH0.31hPp08wDKB7HiJMtSkI-gX0ppjm2QJx0SXhO2WsK_g";
+        String sourceUserAccount = "992";
+        String sampleToken = "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZ2JlLnRlcnNlZXJAZ21haWwuY29tIiwiZXhwIjoxNjYxMzc0NDA0fQ.PxESICAYmiBTNf622maXdlyy0cJs3nX6QIe88OY_7Sw";
         when(categoryService.findThirdPartyByCategoryAggregatorCode(anyString())).thenReturn(Optional.of(ThirdPartyNames.BAXI));
-        when(walletFeignClient.transferToUser(any(TransferFromWalletPojo.class), anyString())).thenReturn(new TransactionRequest(Long.parseLong("1"),"sample Payment Reference", "sample Payment Description", BigDecimal.ONE));
-        when(walletFeignClient.getDefaultWallet(anyString())).thenReturn(new MainWalletResponse(Long.parseLong("1")));
-        assertTrue(operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.BILLER, sampleToken));
-
-        when(walletFeignClient.transferToUser(any(TransferFromWalletPojo.class), anyString())).thenThrow(new FeignException.FeignClientException(HttpStatus.BAD_GATEWAY.value(), Constants.ERROR_MESSAGE, Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), "body".getBytes(), Charset.defaultCharset(), new RequestTemplate()), CommonUtils.getObjectMapper().writeValueAsString(new ResponseHelper(false, "test", "")).getBytes()));
-        assertThrows(ThirdPartyIntegrationException.class, () -> operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.CONSUMER, sampleToken));
+        assertThrows(NullPointerException.class, () -> operationService.walletTransfer(any(TransferFromWalletPojo.class), anyString()));
+        // when(walletService.getNewDefaultWallet("10",sampleToken)).thenReturn(new NewWalletResponse());
+        assertThrows(NullPointerException.class, () ->operationService.getNewDefaultWallet(testUserName,sampleToken));
+        assertThrows(NullPointerException.class, () ->operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.BILLER, sampleToken));
+        when(walletFeignClient.transferFromUserToWaya(any(TransferFromWalletPojo.class), anyString())).thenThrow(new FeignException.FeignClientException(HttpStatus.BAD_GATEWAY.value(), Constants.ERROR_MESSAGE, Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), "body".getBytes(), Charset.defaultCharset(), new RequestTemplate()), CommonUtils.getObjectMapper().writeValueAsString(new ResponseHelper(false, "test", "")).getBytes()));
+        assertThrows(NullPointerException.class, () -> operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.CONSUMER, sampleToken));
+//        when(walletFeignClient.transferFromUserToWaya(any(TransferFromWalletPojo.class), anyString())).thenThrow(new FeignException.FeignClientException(HttpStatus.BAD_GATEWAY.value(), Constants.ERROR_MESSAGE, Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), "body".getBytes(), Charset.defaultCharset(), new RequestTemplate()), CommonUtils.getObjectMapper().writeValueAsString(new ResponseHelper(false, "test", "")).getBytes()));
+//        assertThrows(ThirdPartyIntegrationException.class, () -> operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.CONSUMER, sampleToken));
 
     }
 

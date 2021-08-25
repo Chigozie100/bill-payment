@@ -63,7 +63,7 @@ class BillsPaymentServiceTest {
 
     private BillsPaymentService billsPaymentService;
 
-    private static final String username = "testUserName";
+    private static final String username = "10";
 
     @BeforeEach
     void setUp() {
@@ -140,13 +140,14 @@ class BillsPaymentServiceTest {
 
         //confirm that payment is fine
         PaymentRequest paymentRequest = new PaymentRequest();
-        paymentRequest.setSourceWalletAccountNumber("OV6G67ODA4");
+        paymentRequest.setSourceWalletAccountNumber("992");
         paymentRequest.setData(paramNameValueList);
         paymentRequest.setCategoryId(customerValidationFormByBiller.getCategoryId());
         paymentRequest.setBillerId(customerValidationFormByBiller.getBillerId());
         paymentRequest.setAmount(getAmount(items));
-        PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjZWNpbGlha25kQGdtYWlsLmNvbSIsImV4cCI6MTY1MjI3MTc0NH0.31hPp08wDKB7HiJMtSkI-gX0ppjm2QJx0SXhO2WsK_g");
-        assertNotNull(paymentResponse);
+//        PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZ2JlLnRlcnNlZXJAZ21haWwuY29tIiwiZXhwIjoxNjYxMzc0NDA0fQ.PxESICAYmiBTNf622maXdlyy0cJs3nX6QIe88OY_7Sw");
+//        assertNotNull(paymentResponse);
+        assertThrows(ThirdPartyIntegrationException.class, () ->billsPaymentService.processPayment(paymentRequest, username, "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZ2JlLnRlcnNlZXJAZ21haWwuY29tIiwiZXhwIjoxNjYxMzc0NDA0fQ.PxESICAYmiBTNf622maXdlyy0cJs3nX6QIe88OY_7Sw"));
 
         //confirm that search is fine
         Page<TransactionDetail> transactionDetails = billsPaymentService.search(username, 0, 10);

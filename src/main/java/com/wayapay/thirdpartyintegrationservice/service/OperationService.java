@@ -37,12 +37,18 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class OperationService {
 
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final WalletFeignClient walletFeignClient;
     private final CategoryService categoryService;
+
+    public OperationService(PaymentTransactionRepo paymentTransactionRepo, WalletFeignClient walletFeignClient, CategoryService categoryService) {
+    this.paymentTransactionRepo = paymentTransactionRepo;
+    this.walletFeignClient = walletFeignClient;
+    this.categoryService = categoryService;
+    }
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token) throws ThirdPartyIntegrationException {

@@ -1,5 +1,7 @@
 package com.wayapay.thirdpartyintegrationservice.service.profile;
 
+import com.wayapay.thirdpartyintegrationservice.dto.InfoResponse;
+import com.wayapay.thirdpartyintegrationservice.dto.ProfileResponseObject;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,5 +17,5 @@ public interface ProfileFeignClient {
     List<UserProfileResponse> findAllUserReferral(@PathVariable("userId") String userId, String page);
 
     @GetMapping("/api/v1/profile/{userId}")
-    UserProfileResponse getUserProfile(@PathVariable("userId") String userId,  @RequestHeader("Authorization") String token);
+    ResponseEntity<ProfileResponseObject> getUserProfile(@PathVariable("userId") String userId, @RequestHeader("Authorization") String token);
 }

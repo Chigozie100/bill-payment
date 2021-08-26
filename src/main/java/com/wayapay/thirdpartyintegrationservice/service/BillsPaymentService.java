@@ -18,7 +18,6 @@ import com.wayapay.thirdpartyintegrationservice.util.FeeBearer;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -51,7 +50,6 @@ public class BillsPaymentService {
     private final CategoryService categoryService;
     private final BillerService billerService;
     private final ThirdPartyService thirdPartyService;
-    private final ProfileFeignClient profileFeignClient;
 
     //getAllCategories
     public List<CategoryResponse> getAllCategories() throws ThirdPartyIntegrationException {
@@ -173,18 +171,22 @@ public class BillsPaymentService {
         }
     }
 
-    public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException, JSONException {
+    public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
-        UserProfileResponse userProfileResponse = null;
-        try {
-            ResponseEntity<ProfileResponseObject> responseEntity = profileFeignClient.getUserProfile(userName, token);
-            ProfileResponseObject infoResponse = (ProfileResponseObject) responseEntity.getBody();
-            userProfileResponse = infoResponse.data;
-            log.info("userProfileResponse :: " +userProfileResponse);
-        } catch (Exception e) {
-            log.error("Unable to generate transaction Id", e);
-            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-        }
+        UserProfileResponse userProfileResponse = new UserProfileResponse();
+        userProfileResponse.setEmail("agbe.terseer@gmail.com");
+        userProfileResponse.setReferenceCode("000000");
+        userProfileResponse.setFirstName("flints11");
+        userProfileResponse.setPhoneNumber("09993484233");
+//        try {
+//            ResponseEntity<ProfileResponseObject> responseEntity = profileFeignClient.getUserProfile(userName, token);
+//            ProfileResponseObject infoResponse = (ProfileResponseObject) responseEntity.getBody();
+//            userProfileResponse = infoResponse.data;
+//            log.info("userProfileResponse :: " +userProfileResponse);
+//        } catch (Exception e) {
+//            log.error("Unable to generate transaction Id", e);
+//            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+//        }
         //secure Payment
         String transactionId = null;
         try {

@@ -115,9 +115,6 @@ public class BillsPaymentController {
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));
         }
-        catch (JSONException e) {
-            return ResponseEntity.status(e.hashCode()).body(new ErrorResponse(e.getMessage()));
-        }
     }
 
     @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 5)

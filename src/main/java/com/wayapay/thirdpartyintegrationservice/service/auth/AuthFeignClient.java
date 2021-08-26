@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 @FeignClient(name = "auth-feign-client", url = "${app.config.auth.base-url}")
 public interface AuthFeignClient {
 
-    @PostMapping("/auth/validate-user")
+    @PostMapping("/api/v1/auth/validate-user")
     AuthResponse userTokenValidation(@RequestHeader String authorization);
 
 }

@@ -45,6 +45,14 @@ public class PaymentTransactionDetail extends SuperModel {
 
     private String username;
 
+    private String phoneNumber;
+
+    private String referralCode;
+
+    private String email;
+
+    private String channel;
+
     private String userAccountNumber;
 
 }

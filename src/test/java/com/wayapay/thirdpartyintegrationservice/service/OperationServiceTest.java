@@ -5,6 +5,7 @@ import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
+import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferRequest;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
@@ -76,6 +77,9 @@ class OperationServiceTest {
         paymentRequest.setBillerId("testBillerId");
         paymentRequest.setCategoryId("testCategoryId");
         paymentRequest.setSourceWalletAccountNumber("testAccountNumber");
-        assertDoesNotThrow(() -> operationService.saveTransactionDetail(paymentRequest, BigDecimal.ZERO, new PaymentResponse(), testUserName, CommonUtils.generatePaymentTransactionId()));
+        UserProfileResponse userProfileResponse = new UserProfileResponse();
+        userProfileResponse.setFirstName("Terseer");
+        userProfileResponse.setUserId("10");
+        assertDoesNotThrow(() -> operationService.saveTransactionDetail(userProfileResponse, paymentRequest, BigDecimal.ZERO, new PaymentResponse(), testUserName, CommonUtils.generatePaymentTransactionId()));
     }
 }

@@ -132,18 +132,18 @@ public class OperationLogService {
 
     private void saveTransactionDetail(JoinPoint joinPoint, Object response,
                                                    Stage stage, FinalStatus finalStatus){
-//        PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId
-        PaymentRequest paymentRequest = (PaymentRequest) joinPoint.getArgs()[0];
+//      UserProfileResponse  PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId
+        PaymentRequest paymentRequest = (PaymentRequest) joinPoint.getArgs()[1];
         OperationLog operationLog = new OperationLog();
         operationLog.setAmount(paymentRequest.getAmount());
         operationLog.setFinalStatus(finalStatus);
         operationLog.setSourceAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         operationLog.setStage(stage);
         operationLog.setStatus(getStatus(joinPoint));
-        operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[4]));
+        operationLog.setTransactionId(String.valueOf(joinPoint.getArgs()[5]));
         operationLog.setTransactionType(TRANSACTION_TYPE+paymentRequest.getBillerId()+" - "+paymentRequest.getCategoryId());
         operationLog.setLogType(BILLS_PAYMENT);
-        operationLog.setUserId(String.valueOf(joinPoint.getArgs()[3]));
+        operationLog.setUserId(String.valueOf(joinPoint.getArgs()[4]));
         if (!Objects.isNull(response)){
             operationLog.setResponse(String.valueOf(response));
         }

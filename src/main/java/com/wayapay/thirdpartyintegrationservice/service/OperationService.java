@@ -35,22 +35,36 @@ public class OperationService {
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token) throws ThirdPartyIntegrationException {
         //Get user default wallet
 
-        NewWalletResponse mainWalletResponse = walletFeignClient.getDefaultWallet(userName, token);
-
-        if (mainWalletResponse.getClr_bal_amt().doubleValue() < amount.doubleValue())
-            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.INSUFFICIENT_FUND);
-
+//        NewWalletResponse mainWalletResponse = walletFeignClient.getDefaultWallet(userName, token);
+//
+//        if (mainWalletResponse.getClr_bal_amt().doubleValue() < amount.doubleValue())
+//            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.INSUFFICIENT_FUND);
+//
+//        //consume
+//        TransferFromWalletPojo trans = new TransferFromWalletPojo();
+//        trans.setAmount(FeeBearer.CONSUMER.equals(feeBearer) ? amount.add(fee) : amount);
+//
+//        trans.setCustomerAccountNumber(mainWalletResponse.getAccountNo());
+//        trans.setEventId(EventCharges.AITCOL.name());
+//        trans.setPaymentReference(transactionId);
+//        trans.setTranCrncy("NGN");
+//        trans.setTranNarration(TransactionType.BILLS_PAYMENT.name());
+//        try {
+//            walletFeignClient.transferFromUserToWaya(trans,token);
+//            return true;
+//        } catch (FeignException exception) {
+//            log.error("FeignException => {}", exception.getCause());
+//            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, getErrorMessage(exception.contentUTF8()));
+//        }
+        //Get user default wallet
+        MainWalletResponse defaultWallet = walletFeignClient.getDefaultWallet(token);
         //consume
         TransferFromWalletPojo trans = new TransferFromWalletPojo();
         trans.setAmount(FeeBearer.CONSUMER.equals(feeBearer) ? amount.add(fee) : amount);
-
-        trans.setCustomerAccountNumber(mainWalletResponse.getAccountNo());
-        trans.setEventId(EventCharges.AITCOL.name());
-        trans.setPaymentReference(transactionId);
-        trans.setTranCrncy("NGN");
-        trans.setTranNarration(TransactionType.BILLS_PAYMENT.name());
+        trans.setCustomerWalletId(defaultWallet.getId());
+        trans.setPaymentReference("BILLS-PAYMENT-TRANSACTION");
         try {
-            walletFeignClient.transferFromUserToWaya(trans,token);
+            walletFeignClient.transferToUser(trans,token);
             return true;
         } catch (FeignException exception) {
             log.error("FeignException => {}", exception.getCause());

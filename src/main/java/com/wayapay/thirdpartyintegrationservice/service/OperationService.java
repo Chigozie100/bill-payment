@@ -77,6 +77,29 @@ public class OperationService {
         }
     }
 
+    private NewWalletResponse transposeData(String userName, String token) throws ThirdPartyIntegrationException {
+
+        ResponseEntity<String> response = walletFeignClient.getDefaultWallet(userName, token);
+        log.info("mainWalletResponse :: {} " + response);
+
+        String user;
+        if (response.getStatusCode().isError()) {
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, response.getStatusCode().toString());
+        }
+        NewWalletResponse mainWalletResponse = null;
+        try {
+            user = response.getBody();
+            JSONObject jsonpObject = new JSONObject(user);
+            String json = jsonpObject.getJSONObject("data").toString();
+            System.out.println("inside json " + json);
+            mainWalletResponse = GsonUtils.cast(json, NewWalletResponse.class);
+        } catch (FeignException | JSONException exception) {
+            log.error("FeignException => {}", exception.getCause());
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Error in get user wallet");
+        }
+        return mainWalletResponse;
+    }
+
     @AuditPaymentOperation(stage = Stage.SAVE_TRANSACTION_DETAIL, status = Status.END)
     public PaymentTransactionDetail saveTransactionDetail(UserProfileResponse userProfileResponse, PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId) throws ThirdPartyIntegrationException {
 

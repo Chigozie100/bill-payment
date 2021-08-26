@@ -30,30 +30,30 @@ public class OperationService {
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final WalletFeignClient walletFeignClient;
     private final CategoryService categoryService;
-    private final WalletService walletService;
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token) throws ThirdPartyIntegrationException {
         String user;
     	//Get user default wallet
     	//MainWalletResponse defaultWallet = walletFeignClient.getDefaultWallet(token);
-        NewWalletResponse mainWalletResponse = walletService.getNewDefaultWallet(userName, token);
-        log.info("mainWalletResponse :: {} " + mainWalletResponse);
-//        NewWalletResponse mainWalletResponse = walletService.getNewDefaultWallet(userName, token);
-//        if (response.getStatusCode().isError()) {
-//            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, response.getStatusCode().toString());
-//        }
-//        NewWalletResponse mainWalletResponse = null;
-//        try {
-//            user = response.getBody();
-//            JSONObject jsonpObject = new JSONObject(user);
-//            String json = jsonpObject.getJSONObject("data").toString();
-//            System.out.println("inside json " + json);
-//            mainWalletResponse = GsonUtils.cast(json, NewWalletResponse.class);
-//        } catch (FeignException | JSONException exception) {
-//            log.error("FeignException => {}", exception.getCause());
-//            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Error in get user wallet");
-//        }
+        //NewWalletResponse mainWalletResponse = walletFeignClient.getNewDefaultWallet(userName, token);
+
+        ResponseEntity<String> response = walletFeignClient.getDefaultWallet(userName, token);
+        log.info("mainWalletResponse :: {} " + response);
+        if (response.getStatusCode().isError()) {
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, response.getStatusCode().toString());
+        }
+        NewWalletResponse mainWalletResponse = null;
+        try {
+            user = response.getBody();
+            JSONObject jsonpObject = new JSONObject(user);
+            String json = jsonpObject.getJSONObject("data").toString();
+            System.out.println("inside json " + json);
+            mainWalletResponse = GsonUtils.cast(json, NewWalletResponse.class);
+        } catch (FeignException | JSONException exception) {
+            log.error("FeignException => {}", exception.getCause());
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Error in get user wallet");
+        }
 
         if (mainWalletResponse.getClr_bal_amt().doubleValue() < amount.doubleValue())
             throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.INSUFFICIENT_FUND);

@@ -5,9 +5,11 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ErrorResponse;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
+import com.wayapay.thirdpartyintegrationservice.sample.response.*;
 import com.wayapay.thirdpartyintegrationservice.service.BillerService;
 import com.wayapay.thirdpartyintegrationservice.service.BillsPaymentService;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
+import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,7 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.SYNCED_IN_
 @Slf4j
 @RequiredArgsConstructor
 @RestController
+@Api(tags = "Manage Biller", description = "This is the controller containing all the api to manage billers", position = 3)
 @RequestMapping(API_V1+"/config/biller")
 public class BillerManagementController {
 
@@ -29,6 +32,13 @@ public class BillerManagementController {
     private final BillsPaymentService billsPaymentService;
 
     //createBiller
+    @ApiOperation(value = "Create Biller : This API is used to create biller.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful", response = SampleBillerManagementResponse.class),
+            @ApiResponse(code = 201, message = "Successful", response = SampleBillerManagementResponse.class),
+            @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
+            @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
+    })
     @PostMapping
     public ResponseEntity<ResponseHelper> createBiller(@Valid @RequestBody BillerManagementRequest request){
         try {
@@ -39,6 +49,12 @@ public class BillerManagementController {
     }
 
     //UpdateBiller
+    @ApiOperation(value = "Update Biller : This API is used to update biller.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful", response = SampleBillerManagementResponse.class),
+            @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
+            @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
+    })
     @PutMapping
     public ResponseEntity<ResponseHelper> updateBiller(@Valid @RequestBody BillerManagementRequest request){
         try {
@@ -49,8 +65,14 @@ public class BillerManagementController {
     }
 
     //getOne
+    @ApiOperation(value = "Get Biller : This API is used to get biller by the provided id.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful", response = SampleBillerManagementResponse.class),
+            @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
+            @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<ResponseHelper> getById(@PathVariable String id){
+    public ResponseEntity<ResponseHelper> getById(@ApiParam(example = "1") @PathVariable String id){
         try {
             long billerId = CommonUtils.validateAndFetchIdAsLong(id);
             return ResponseEntity.ok(billerService.get(billerId));
@@ -60,6 +82,12 @@ public class BillerManagementController {
     }
 
     //getAll
+    @ApiOperation(value = "Get All Billers : This API is used to get all billers.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful", response = SampleListBillerManagementResponse.class),
+            @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
+            @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
+    })
     @GetMapping
     public ResponseEntity<ResponseHelper> getAll(){
         try {
@@ -70,8 +98,14 @@ public class BillerManagementController {
     }
 
     //toggle
+    @ApiOperation(value = "Toggle Biller : This API is used to enable/disable or on/off a biller.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful", response = SampleToggleBillerResponse.class),
+            @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
+            @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
+    })
     @PutMapping("/toggle/{id}")
-    public ResponseEntity<ResponseHelper> toggle(@PathVariable String id){
+    public ResponseEntity<ResponseHelper> toggle(@ApiParam(example = "1") @PathVariable String id){
         try {
             long billerId = CommonUtils.validateAndFetchIdAsLong(id);
             return ResponseEntity.ok(billerService.toggle(billerId));
@@ -81,6 +115,12 @@ public class BillerManagementController {
     }
 
     //SyncBillers
+    @ApiOperation(value = "Sync Biller : This API is used to ensure that billers on all aggregators are same as on the database.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful", response = SampleSyncInProgressResponse.class),
+            @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
+            @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
+    })
     @PutMapping("/sync")
     public ResponseEntity<ResponseHelper> sync(){
         try {

@@ -1,9 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.service.wallet;
 
-import com.wayapay.thirdpartyintegrationservice.dto.MainWalletResponse;
-import com.wayapay.thirdpartyintegrationservice.dto.TransactionRequest;
-import com.wayapay.thirdpartyintegrationservice.dto.TransferFromWalletPojo;
-import com.wayapay.thirdpartyintegrationservice.dto.TransferFromWalletToWallet;
+import com.wayapay.thirdpartyintegrationservice.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +22,7 @@ public interface WalletFeignClient {
 
 
     @GetMapping("/api/v1/wallet/default/{userId}") //  ===> returns single
-    ResponseEntity<String> getDefaultWallet(@PathVariable("userId") String userId, @RequestHeader("Authorization") String token);
+    NewWalletResponse getDefaultWallet(@PathVariable("userId") String userId, @RequestHeader("Authorization") String token);
 
     ///api/v1/wallet/event/charge/payment /api/v1/wallet/event/charge/payment
     @PostMapping(path="/api/v1/wallet/event/charge/payment")

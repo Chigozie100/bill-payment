@@ -60,8 +60,8 @@ class OperationServiceTest {
         String sourceUserAccount = "992";
         String sampleToken = "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZ2JlLnRlcnNlZXJAZ21haWwuY29tIiwiZXhwIjoxNjYxMzc0NDA0fQ.PxESICAYmiBTNf622maXdlyy0cJs3nX6QIe88OY_7Sw";
         when(categoryService.findThirdPartyByCategoryAggregatorCode(anyString())).thenReturn(Optional.of(ThirdPartyNames.BAXI));
-        assertThrows(NullPointerException.class, () -> operationService.walletTransfer(any(TransferFromWalletPojo.class), anyString()));
-        assertThrows(NullPointerException.class, () ->operationService.getNewDefaultWallet(testUserName,sampleToken));
+        assertDoesNotThrow(() -> walletFeignClient.transferToUser(any(TransferFromWalletPojo.class), anyString()));
+        assertDoesNotThrow(() ->walletFeignClient.getDefaultWallet(testUserName,sampleToken));
         assertThrows(NullPointerException.class, () ->operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.BILLER, sampleToken));
         when(walletFeignClient.transferFromUserToWaya(any(TransferFromWalletPojo.class), anyString())).thenThrow(new FeignException.FeignClientException(HttpStatus.BAD_GATEWAY.value(), Constants.ERROR_MESSAGE, Request.create(Request.HttpMethod.GET, "url", new HashMap<>(), "body".getBytes(), Charset.defaultCharset(), new RequestTemplate()), CommonUtils.getObjectMapper().writeValueAsString(new ResponseHelper(false, "test", "")).getBytes()));
         assertThrows(NullPointerException.class, () -> operationService.secureFund(BigDecimal.ONE, BigDecimal.ZERO, testUserName, sourceUserAccount, CommonUtils.generatePaymentTransactionId(), FeeBearer.CONSUMER, sampleToken));

@@ -18,6 +18,7 @@ import com.wayapay.thirdpartyintegrationservice.util.FeeBearer;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -171,7 +172,7 @@ public class BillsPaymentService {
         }
     }
 
-    public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+    public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException, JSONException {
 
         UserProfileResponse userProfileResponse = null;
         try {

@@ -11,8 +11,10 @@ import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -31,6 +33,7 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 public class BillsPaymentController {
 
     private final BillsPaymentService billsPaymentService;
+
 
     @ApiOperation(value = "Get Categories : This API is used to get all categories.", position = 1)
     @ApiResponses(value = {
@@ -103,12 +106,17 @@ public class BillsPaymentController {
             @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
     })
     @PostMapping("/biller/pay")
-    public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws URISyntaxException{
+    public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, Authentication authentication) throws URISyntaxException{
         try {
+            System.out.println("##### Username ##### " + username);
+            System.out.println("##### authorization ##### " + authentication);
             PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, token);
             return ResponseEntity.ok(new SuccessResponse(paymentResponse));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));
+        }
+        catch (JSONException e) {
+            return ResponseEntity.status(e.hashCode()).body(new ErrorResponse(e.getMessage()));
         }
     }
 
@@ -120,6 +128,7 @@ public class BillsPaymentController {
     })
     @GetMapping("/biller/report")
     public ResponseEntity<ResponseHelper> customerTransactionReport(@RequestParam(required = false, defaultValue = "0") String pageNumber,  @RequestParam(required = false, defaultValue = "10") String pageSize, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username){
+
         Page<TransactionDetail> transactionDetailPage = billsPaymentService.search(username, Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }

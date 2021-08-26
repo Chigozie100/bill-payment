@@ -13,7 +13,10 @@ import com.wayapay.thirdpartyintegrationservice.util.*;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -30,12 +33,27 @@ public class OperationService {
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token) throws ThirdPartyIntegrationException {
-
+        String user;
     	//Get user default wallet
     	//MainWalletResponse defaultWallet = walletFeignClient.getDefaultWallet(token);
-        NewWalletResponse defaultWallet2  = walletFeignClient.getDefaultWallet(userName, token);
+        ResponseEntity<String>  response  = walletFeignClient.getDefaultWallet(userName, token);
+        if (response.getStatusCode().isError()) {
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, response.getStatusCode().toString());
+        }
+        NewWalletResponse mainWalletResponse = null;
+        try {
+            user = response.getBody();
+            JSONObject jsonpObject = new JSONObject(user);
+            String json = jsonpObject.getJSONObject("data").toString();
+            System.out.println("inside json " + json);
+            mainWalletResponse = GsonUtils.cast(json, NewWalletResponse.class);
+        } catch (FeignException | JSONException exception) {
+            log.error("FeignException => {}", exception.getCause());
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Error in get user wallet");
+        }
 
-        if (defaultWallet2.getClr_bal_amt().doubleValue() < amount.doubleValue())
+
+        if (mainWalletResponse.getClr_bal_amt().doubleValue() < amount.doubleValue())
             throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.INSUFFICIENT_FUND);
 
 
@@ -43,14 +61,13 @@ public class OperationService {
         TransferFromWalletPojo trans = new TransferFromWalletPojo();
         trans.setAmount(FeeBearer.CONSUMER.equals(feeBearer) ? amount.add(fee) : amount);
 
-        trans.setCustomerAccountNumber(defaultWallet2.getAccountNo());
+        trans.setCustomerAccountNumber(mainWalletResponse.getAccountNo());
         trans.setEventId(EventCharges.AITCOL.name());
         trans.setPaymentReference(transactionId);
         trans.setTranCrncy("NGN");
         trans.setTranNarration(TransactionType.BILLS_PAYMENT.name());
         try {
-            walletFeignClient.transferToUser(trans,token);
-            // walletFeignClient.transferFromUserToWaya(transfer,token);
+            walletFeignClient.transferFromUserToWaya(trans,token);
             return true;
         } catch (FeignException exception) {
             log.error("FeignException => {}", exception.getCause());

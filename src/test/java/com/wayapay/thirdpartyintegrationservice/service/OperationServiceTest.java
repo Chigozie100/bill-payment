@@ -48,12 +48,12 @@ class OperationServiceTest {
     @Mock
     private WalletFeignClient walletFeignClient;
     private OperationService operationService;
-    private WalletService walletService;
     private static final String testUserName = "10";
+    private  WalletService walletService;
 
     @BeforeEach
     void setUp() {
-        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService,walletService);
+        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService, walletService);
     }
 
     @Test

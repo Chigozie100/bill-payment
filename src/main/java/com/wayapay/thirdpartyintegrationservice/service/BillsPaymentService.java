@@ -10,6 +10,8 @@ import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
 import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
 import com.wayapay.thirdpartyintegrationservice.service.itex.ItexService;
+import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
+import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import com.wayapay.thirdpartyintegrationservice.util.FeeBearer;
@@ -47,6 +49,7 @@ public class BillsPaymentService {
     private final CategoryService categoryService;
     private final BillerService billerService;
     private final ThirdPartyService thirdPartyService;
+    private final ProfileFeignClient profileFeignClient;
 
     //getAllCategories
     public List<CategoryResponse> getAllCategories() throws ThirdPartyIntegrationException {
@@ -170,6 +173,13 @@ public class BillsPaymentService {
 
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
+        UserProfileResponse userProfileResponse = null;
+        try {
+            userProfileResponse = profileFeignClient.getUserProfile(userName, token);
+        } catch (Exception e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
         //secure Payment
         String transactionId = null;
         try {
@@ -186,9 +196,11 @@ public class BillsPaymentService {
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
-                operationService.saveTransactionDetail(paymentRequest, fee, paymentResponse, userName, transactionId);
+                operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
+                operationService.saveFailedTransactionDetail(userProfileResponse,paymentRequest, fee, null, userName, null);
+
                 disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
                 throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
             }

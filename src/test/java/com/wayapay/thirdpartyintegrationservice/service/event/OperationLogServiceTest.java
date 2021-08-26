@@ -8,6 +8,7 @@ import com.wayapay.thirdpartyintegrationservice.dto.PaymentResponse;
 import com.wayapay.thirdpartyintegrationservice.event.AnnotationOperation;
 import com.wayapay.thirdpartyintegrationservice.event.OperationLogService;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
+import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 import com.wayapay.thirdpartyintegrationservice.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -54,6 +55,9 @@ class OperationLogServiceTest {
     private final String categoryId = "TestCategory";
     private PaymentRequest paymentRequest;
     private PaymentResponse paymentResponse;
+    private UserProfileResponse userProfileResponse;
+    private final String firstName = "TestName";
+    private final String userId = "TestUserId";
 
     @BeforeEach
     void setUp() {
@@ -69,6 +73,10 @@ class OperationLogServiceTest {
 
         paymentResponse = new PaymentResponse();
         paymentResponse.getData().add(paramNameValue);
+
+        userProfileResponse = new UserProfileResponse();
+        userProfileResponse.setFirstName(firstName);
+        userProfileResponse.setUserId(userId);
 
     }
 
@@ -95,7 +103,7 @@ class OperationLogServiceTest {
 
 
         //SAVE_TRANSACTION_DETAIL -> PaymentRequest paymentRequest, PaymentResponse paymentResponse, String userName, String transactionId
-        Object[] objectsSaveTransaction = {paymentRequest, fee, paymentResponse, userName, CommonUtils.generatePaymentTransactionId()};
+        Object[] objectsSaveTransaction = {userProfileResponse, paymentRequest, fee, paymentResponse, userName, CommonUtils.generatePaymentTransactionId()};
         when(auditPaymentOperation.stage()).thenReturn(Stage.SAVE_TRANSACTION_DETAIL);
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsSaveTransaction);
@@ -135,7 +143,7 @@ class OperationLogServiceTest {
         assertDoesNotThrow(() -> operationLogService.logOperation(joinPoint, thirdPartyIntegrationException));
 
         //SAVE_TRANSACTION_DETAIL -> PaymentRequest paymentRequest, PaymentResponse paymentResponse, String userName, String transactionId
-        Object[] objectsSaveTransaction = {paymentRequest, fee, paymentResponse, userName, CommonUtils.generatePaymentTransactionId()};
+        Object[] objectsSaveTransaction = {userProfileResponse, paymentRequest, fee, paymentResponse, userName, CommonUtils.generatePaymentTransactionId()};
         when(auditPaymentOperation.stage()).thenReturn(Stage.SAVE_TRANSACTION_DETAIL);
         when(auditPaymentOperation.status()).thenReturn(Status.END);
         when(joinPoint.getArgs()).thenReturn(objectsSaveTransaction);

@@ -7,6 +7,7 @@ import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
 import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
 import com.wayapay.thirdpartyintegrationservice.service.itex.ItexService;
+import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,13 +62,16 @@ class BillsPaymentServiceTest {
     @Autowired
     private ThirdPartyService thirdPartyService;
 
+    @Autowired
+    private ProfileFeignClient profileFeignClient;
+
     private BillsPaymentService billsPaymentService;
 
     private static final String username = "10";
 
     @BeforeEach
     void setUp() {
-        billsPaymentService = new BillsPaymentService(itexService, baxiService, quickTellerService, paymentTransactionRepo, disputeService, operationService, billerConsumerFeeService, categoryService, billerService, thirdPartyService);
+        billsPaymentService = new BillsPaymentService(itexService, baxiService, quickTellerService, paymentTransactionRepo, disputeService, operationService, billerConsumerFeeService, categoryService, billerService, thirdPartyService, profileFeignClient);
     }
 
     @Test

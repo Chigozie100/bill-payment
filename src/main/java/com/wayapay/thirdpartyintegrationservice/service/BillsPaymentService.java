@@ -22,6 +22,7 @@ import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -176,7 +177,10 @@ public class BillsPaymentService {
 
         UserProfileResponse userProfileResponse = null;
         try {
-            userProfileResponse = profileFeignClient.getUserProfile(userName, token);
+            ResponseEntity<ProfileResponseObject> responseEntity = profileFeignClient.getUserProfile(userName, token);
+            ProfileResponseObject infoResponse = (ProfileResponseObject) responseEntity.getBody();
+            userProfileResponse = infoResponse.data;
+            log.info("userProfileResponse :: " +userProfileResponse);
         } catch (Exception e) {
             log.error("Unable to generate transaction Id", e);
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);

@@ -23,7 +23,7 @@ public interface WalletFeignClient {
 
 
     @GetMapping("/api/v1/wallet/default/{userId}") //  ===> returns single
-    NewWalletResponse getDefaultWallet(@PathVariable("userId") String userId, @RequestHeader("Authorization") String token);
+    ResponseEntity<InfoResponse> getDefaultWallet(@PathVariable("userId") String userId, @RequestHeader("Authorization") String token);
 
     ///api/v1/wallet/event/charge/payment /api/v1/wallet/event/charge/payment
     @PostMapping(path="/api/v1/wallet/event/charge/payment")

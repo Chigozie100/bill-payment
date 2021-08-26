@@ -6,6 +6,7 @@ import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
+import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
@@ -28,6 +29,22 @@ public class OperationService {
     private final PaymentTransactionRepo paymentTransactionRepo;
     private final WalletFeignClient walletFeignClient;
     private final CategoryService categoryService;
+    private final ProfileFeignClient profileFeignClient;
+
+
+    public UserProfileResponse getUserProfile(String userName, String token) throws ThirdPartyIntegrationException {
+        UserProfileResponse userProfileResponse = null;
+      try {
+            ResponseEntity<ProfileResponseObject> responseEntity = profileFeignClient.getUserProfile(userName, token);
+            ProfileResponseObject infoResponse = (ProfileResponseObject) responseEntity.getBody();
+            userProfileResponse = infoResponse.data;
+            log.info("userProfileResponse :: " +userProfileResponse);
+        } catch (Exception e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
+      return userProfileResponse;
+    }
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token) throws ThirdPartyIntegrationException {

@@ -173,20 +173,8 @@ public class BillsPaymentService {
 
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
-        UserProfileResponse userProfileResponse = new UserProfileResponse();
-        userProfileResponse.setEmail("agbe.terseer@gmail.com");
-        userProfileResponse.setReferenceCode("000000");
-        userProfileResponse.setFirstName("flints11");
-        userProfileResponse.setPhoneNumber("09993484233");
-//        try {
-//            ResponseEntity<ProfileResponseObject> responseEntity = profileFeignClient.getUserProfile(userName, token);
-//            ProfileResponseObject infoResponse = (ProfileResponseObject) responseEntity.getBody();
-//            userProfileResponse = infoResponse.data;
-//            log.info("userProfileResponse :: " +userProfileResponse);
-//        } catch (Exception e) {
-//            log.error("Unable to generate transaction Id", e);
-//            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-//        }
+        UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
+
         //secure Payment
         String transactionId = null;
         try {

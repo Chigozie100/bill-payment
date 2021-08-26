@@ -49,11 +49,10 @@ class OperationServiceTest {
     private WalletFeignClient walletFeignClient;
     private OperationService operationService;
     private static final String testUserName = "10";
-    private  WalletService walletService;
 
     @BeforeEach
     void setUp() {
-        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService, walletService);
+        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService);
     }
 
     @Test

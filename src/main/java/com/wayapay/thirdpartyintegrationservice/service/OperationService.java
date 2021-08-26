@@ -37,8 +37,9 @@ public class OperationService {
         String user;
     	//Get user default wallet
     	//MainWalletResponse defaultWallet = walletFeignClient.getDefaultWallet(token);
-        //ResponseEntity<String> response = walletFeignClient.getDefaultWallet(userName, token);
         NewWalletResponse mainWalletResponse = walletService.getNewDefaultWallet(userName, token);
+        log.info("mainWalletResponse :: {} " + mainWalletResponse);
+//        NewWalletResponse mainWalletResponse = walletService.getNewDefaultWallet(userName, token);
 //        if (response.getStatusCode().isError()) {
 //            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, response.getStatusCode().toString());
 //        }

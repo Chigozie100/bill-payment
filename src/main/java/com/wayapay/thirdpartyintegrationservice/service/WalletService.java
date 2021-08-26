@@ -1,7 +1,7 @@
 package com.wayapay.thirdpartyintegrationservice.service;
 
 import com.google.gson.JsonSyntaxException;
-import com.wayapay.thirdpartyintegrationservice.dto.NewWalletResponse;
+import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
 import com.wayapay.thirdpartyintegrationservice.util.GsonUtils;
@@ -14,10 +14,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
+import java.util.List;
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class WalletService {
+public class WalletService implements WalletFeignClient {
 
     private final WalletFeignClient walletFeignClient;
 
@@ -48,4 +50,54 @@ public class WalletService {
         }
     }
 
+    @Override
+    public TransactionRequest transferToUser(TransferFromWalletPojo transfer, String token) {
+        return null;
+    }
+
+    @Override
+    public List<MainWalletResponse> getWalletById(Long userId, String token) {
+        return null;
+    }
+
+    @Override
+    public MainWalletResponse getDefaultWallet(String token) {
+        return null;
+    }
+
+    @Override
+    public ResponseEntity<String> getDefaultWallet(String userId, String token) {
+
+        return null;
+    }
+
+    @Override
+    public ResponseEntity<String> transferFromUserToWaya(TransferFromWalletPojo transfer, String token) {
+        return null;
+    }
+
+    @Override
+    public ResponseEntity<String> getUserCommissionWallet(String userId, String token) {
+        return null;
+    }
+
+    @Override
+    public ResponseEntity<String> getWayaCommissionWallet(String token) {
+        return null;
+    }
+
+    @Override
+    public ResponseEntity<String> getWayaOfficialWallet(String token) {
+        return null;
+    }
+
+    @Override
+    public ResponseEntity<String> wayaAdminAddCommissionWalletToCoUser(String token) {
+        return null;
+    }
+
+    @Override
+    public TransactionRequest adminReversFundToUser(TransferFromWalletToWallet transfer, String token) {
+        return null;
+    }
 }

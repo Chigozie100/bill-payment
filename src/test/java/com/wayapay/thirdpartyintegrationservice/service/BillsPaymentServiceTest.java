@@ -149,7 +149,7 @@ class BillsPaymentServiceTest {
         paymentRequest.setCategoryId(customerValidationFormByBiller.getCategoryId());
         paymentRequest.setBillerId(customerValidationFormByBiller.getBillerId());
         paymentRequest.setAmount(getAmount(items));
-        assertThrows(NullPointerException.class, () ->billsPaymentService.processPayment(paymentRequest, username, "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZ2JlLnRlcnNlZXJAZ21haWwuY29tIiwiZXhwIjoxNjYxMzM0NzQ4fQ.7Bqa50jXVUu4r63nrAbGrqsrdERB4565yXT6rWRyuYM"));
+        assertThrows(ThirdPartyIntegrationException.class, () ->billsPaymentService.processPayment(paymentRequest, username, "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZ2JlLnRlcnNlZXJAZ21haWwuY29tIiwiZXhwIjoxNjYxMzM0NzQ4fQ.7Bqa50jXVUu4r63nrAbGrqsrdERB4565yXT6rWRyuYM"));
         //assertNotNull(paymentResponse);
 
         //confirm that search is fine

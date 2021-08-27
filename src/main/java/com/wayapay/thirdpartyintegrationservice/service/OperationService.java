@@ -14,12 +14,18 @@ import com.wayapay.thirdpartyintegrationservice.util.*;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.boot.configurationprocessor.json.JSONArray;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -50,12 +56,9 @@ public class OperationService {
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token) throws ThirdPartyIntegrationException {
         //Get user default wallet
 
-        String user;
         ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getDefaultWallet(userName, token);
         InfoResponse infoResponse = (InfoResponse) responseEntity.getBody();
-
         log.info("mainWalletResponse :: {} " +infoResponse.data);
-
         NewWalletResponse mainWalletResponse = infoResponse.data;
 
         if (mainWalletResponse.getClr_bal_amt().doubleValue() < amount.doubleValue())
@@ -120,7 +123,7 @@ public class OperationService {
     }
 
 
-    public String getErrorMessage(String errorInJson){
+    public String getErrorMessage(String errorInJson) {
         try {
             log.info("JsonObject => {}", errorInJson);
             return CommonUtils.getObjectMapper().readValue(errorInJson, FundTransferResponse.class).getMessage();
@@ -130,4 +133,28 @@ public class OperationService {
         }
     }
 
-}
+
+        // working and tested 30/07/2021
+        public List<NewWalletResponse> getWayaOfficialWallet(String token) throws ThirdPartyIntegrationException {
+
+            try {
+                ResponseEntity<InfoResponseList> response =  walletFeignClient.getWayaOfficialWallet(token);
+
+                if (response.getStatusCode().isError()) {
+                    throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, response.getStatusCode().toString());
+                }
+                InfoResponseList infoResponse = (InfoResponseList) response.getBody();
+                log.info("mainWalletResponse :: {} " +infoResponse.data);
+                List<NewWalletResponse> mainWalletResponse = infoResponse.data;
+
+                return mainWalletResponse;
+            } catch (RestClientException  | ThirdPartyIntegrationException  e) {
+                System.out.println("Error is here " + e.getMessage());
+                throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
+            }
+
+        }
+
+
+    }
+

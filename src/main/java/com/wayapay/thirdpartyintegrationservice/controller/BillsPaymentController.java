@@ -129,4 +129,18 @@ public class BillsPaymentController {
         Page<TransactionDetail> transactionDetailPage = billsPaymentService.search(username, Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
+
+    @ApiOperation(value = "Get Transaction Report By Referral Code : This API is used to get all transaction report by user referralCode", position = 6)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful", response = SampleListCategoryResponse.class),
+            @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
+            @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
+    })
+    @GetMapping("/biller/report/referral/{referralCode}")
+    public ResponseEntity<ResponseHelper> customerTransactionReportByReferral(@RequestParam(required = false, defaultValue = "0") String pageNumber,  @RequestParam(required = false, defaultValue = "10") String pageSize, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username){
+
+        Page<TransactionDetail> transactionDetailPage = billsPaymentService.searchByReferralCode(username, Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
+        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
+    }
+
 }

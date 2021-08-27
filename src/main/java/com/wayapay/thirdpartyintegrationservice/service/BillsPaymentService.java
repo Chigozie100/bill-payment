@@ -4,8 +4,10 @@ import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.Biller;
 import com.wayapay.thirdpartyintegrationservice.model.Category;
+import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.model.ThirdParty;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
+import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
 import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
@@ -28,7 +30,11 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.ERROR_MESSAGE;
@@ -205,10 +211,56 @@ public class BillsPaymentService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
+
     public Page<TransactionDetail> search(String username, int pageNumber, int pageSize){
         if (CommonUtils.isEmpty(username)){
             return paymentTransactionRepo.getAllTransaction(PageRequest.of(pageNumber, pageSize));
         }
         return paymentTransactionRepo.getAllTransactionByUsername(username, PageRequest.of(pageNumber, pageSize));
     }
+
+
+    public Page<TransactionDetail> searchByReferralCode(String referralCode, int pageNumber, int pageSize){
+        if (CommonUtils.isEmpty(referralCode)){
+            return paymentTransactionRepo.getAllTransaction(PageRequest.of(pageNumber, pageSize));
+        }
+
+        return paymentTransactionRepo.getAllTransactionByReferralCode(referralCode, PageRequest.of(pageNumber, pageSize));
+    }
+
+
+    public Page<TransactionDetail> searchAndFilterTransactionStatus(Boolean status, int pageNumber, int pageSize){
+        if (CommonUtils.isEmpty(status.toString())){
+            return paymentTransactionRepo.getAllTransaction(PageRequest.of(pageNumber, pageSize));
+        }
+
+        return paymentTransactionRepo.getAllTransactionBySuccessful(status,PageRequest.of(pageNumber, pageSize));
+    }
+
+    public Page<TransactionDetail> searchByAccountType(String userAccountNumber, int pageNumber, int pageSize){
+        if (CommonUtils.isEmpty(userAccountNumber)){
+            return paymentTransactionRepo.getAllTransaction(PageRequest.of(pageNumber, pageSize));
+        }
+
+        return paymentTransactionRepo.getAllTransactionByUserAccountNumber(userAccountNumber,PageRequest.of(pageNumber, pageSize));
+    }
+
+
+    public TransactionDetail searchTransactionByTransactionID(String transactionId) throws ThirdPartyIntegrationException {
+        try{
+            return paymentTransactionRepo.getAllTransactionByTransactionId(transactionId);
+        }catch (Exception ex){
+            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
+
+    }
+
+    //ABILITY for waya admin with the right access and permission to select which of the waya official account to make the billspayment from
+    public List<NewWalletResponse> adminSelectWayaOfficialAccount(String token) throws ThirdPartyIntegrationException {
+        List<NewWalletResponse> newWalletResponses = operationService.getWayaOfficialWallet(token);
+        return newWalletResponses;
+    }
+
+
+
 }

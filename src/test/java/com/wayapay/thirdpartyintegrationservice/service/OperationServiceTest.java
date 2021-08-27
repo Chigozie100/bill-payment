@@ -5,6 +5,7 @@ import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
+import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferRequest;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferResponse;
@@ -48,11 +49,12 @@ class OperationServiceTest {
     @Mock
     private WalletFeignClient walletFeignClient;
     private OperationService operationService;
+    private ProfileFeignClient profileFeignClient;
     private static final String testUserName = "10";
 
     @BeforeEach
     void setUp() {
-        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService);
+        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService,profileFeignClient);
     }
 
     @Test

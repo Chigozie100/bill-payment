@@ -6,6 +6,11 @@ import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
+import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseObj;
+import com.wayapay.thirdpartyintegrationservice.service.notification.EmailEvent;
+import com.wayapay.thirdpartyintegrationservice.service.notification.InAppEvent;
+import com.wayapay.thirdpartyintegrationservice.service.notification.NotificationDto;
+import com.wayapay.thirdpartyintegrationservice.service.notification.NotificationFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferResponse;
@@ -36,6 +41,7 @@ public class OperationService {
     private final WalletFeignClient walletFeignClient;
     private final CategoryService categoryService;
     private final ProfileFeignClient profileFeignClient;
+    private final NotificationFeignClient notificationFeignClient;
 
 
     public UserProfileResponse getUserProfile(String userName, String token) throws ThirdPartyIntegrationException {
@@ -51,6 +57,32 @@ public class OperationService {
         }
       return userProfileResponse;
     }
+
+    public void sendInAppNotification(InAppEvent inAppEvent, String token) throws ThirdPartyIntegrationException {
+        try {
+            ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.inAppNotifyUser(inAppEvent,token);
+            ResponseObj infoResponse = (ResponseObj) responseEntity.getBody();
+            log.info("userProfileResponse :: " +infoResponse.data);
+        } catch (Exception e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
+
+    }
+    public void sendEmailNotification(EmailEvent emailEvent, String token) throws ThirdPartyIntegrationException {
+
+        try {
+            ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.emailNotifyUser(emailEvent,token);
+            ResponseObj infoResponse = (ResponseObj) responseEntity.getBody();
+            log.info("userProfileResponse :: " +infoResponse.data);
+        } catch (Exception e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
+
+    }
+
+
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token) throws ThirdPartyIntegrationException {

@@ -12,14 +12,13 @@ import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
 import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
 import com.wayapay.thirdpartyintegrationservice.service.itex.ItexService;
+import com.wayapay.thirdpartyintegrationservice.service.notification.*;
 import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
-import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
-import com.wayapay.thirdpartyintegrationservice.util.Constants;
-import com.wayapay.thirdpartyintegrationservice.util.FeeBearer;
-import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
+import com.wayapay.thirdpartyintegrationservice.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -30,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -197,7 +197,10 @@ public class BillsPaymentService {
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
-                operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
+                PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
+
+                pushINAPP(paymentTransactionDetail,token,paymentResponse);
+                pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
                 operationService.saveFailedTransactionDetail(userProfileResponse,paymentRequest, fee, null, userName, null);
@@ -209,6 +212,83 @@ public class BillsPaymentService {
 
         log.error("Unable to secure fund from user's wallet");
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private void pushINAPP(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse) throws ThirdPartyIntegrationException {
+        InAppEvent inAppEvent = buildInAppNotificationObject(paymentTransactionDetail, token, EventType.IN_APP, paymentResponse);
+        try {
+           operationService.sendInAppNotification(inAppEvent, token);
+        }catch (ThirdPartyIntegrationException ex){
+            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
+
+    }
+
+    private void pushEMAIL(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse,UserProfileResponse userProfileResponse) throws ThirdPartyIntegrationException {
+
+        EmailEvent emailEvent = new EmailEvent();
+        emailEvent.setEventType(EventType.EMAIL.name());
+        EmailPayload data = new EmailPayload();
+
+        data.setMessage(getMessageDetails(paymentResponse, paymentTransactionDetail));
+
+        EmailRecipient emailRecipient = new EmailRecipient();
+        emailRecipient.setFullName(userProfileResponse.getSurname()+ " " +userProfileResponse.getFirstName() + " " +userProfileResponse.getMiddleName());
+        emailRecipient.setEmail(userProfileResponse.getEmail());
+
+        List<EmailRecipient> addUserId = new ArrayList<>();
+        addUserId.add(emailRecipient);
+        data.setNames(addUserId);
+
+        emailEvent.setData(data);
+        emailEvent.setInitiator(paymentTransactionDetail.getUsername());
+
+        try {
+            operationService.sendEmailNotification(emailEvent, token);
+        }catch (ThirdPartyIntegrationException ex){
+            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
+
+    }
+
+    private InAppEvent buildInAppNotificationObject(PaymentTransactionDetail paymentTransactionDetail, String token, EventType eventType, PaymentResponse paymentResponse){
+        InAppEvent inAppEvent = new InAppEvent();
+        inAppEvent.setEventType(eventType.name());
+
+        InAppPayload data = new InAppPayload();
+        data.setMessage(getMessageDetails(paymentResponse, paymentTransactionDetail));
+        data.setType(eventType.name());
+
+        InAppRecipient inAppRecipient = new InAppRecipient();
+        inAppRecipient.setUserId(paymentTransactionDetail.getUsername());
+
+        List<InAppRecipient> addUserId = new ArrayList<>();
+        addUserId.add(inAppRecipient);
+
+        data.setUsers(addUserId);
+
+        inAppEvent.setData(data);
+        inAppEvent.setInitiator(paymentTransactionDetail.getUsername());
+
+        return inAppEvent;
+    }
+
+    private String getMessageDetails(PaymentResponse paymentResponse, PaymentTransactionDetail paymentTransactionDetail){
+        PaymentResponse data = new PaymentResponse();
+        List<ParamNameValue> valueList = paymentResponse.getData();
+        String message = null;
+        for (int i = 0; i < valueList.size(); i++) {
+            ParamNameValue value = new ParamNameValue();
+            value.setName(valueList.get(i).getName());
+            value.setValue(valueList.get(i).getValue());
+            message = "Your account has "+ "\n" +
+                    ""+"been credited with:" + paymentTransactionDetail.getAmount() +" \n" +
+                    "" + value.getValue();
+//            message = "name :" + value.getName() +"  \"<br>\"" +
+//            " \n" +  "Value : " + value.getValue();
+        }
+        return message;
+
     }
 
 

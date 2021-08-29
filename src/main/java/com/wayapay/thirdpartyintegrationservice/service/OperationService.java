@@ -7,10 +7,7 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseObj;
-import com.wayapay.thirdpartyintegrationservice.service.notification.EmailEvent;
-import com.wayapay.thirdpartyintegrationservice.service.notification.InAppEvent;
-import com.wayapay.thirdpartyintegrationservice.service.notification.NotificationDto;
-import com.wayapay.thirdpartyintegrationservice.service.notification.NotificationFeignClient;
+import com.wayapay.thirdpartyintegrationservice.service.notification.*;
 import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferResponse;
@@ -23,6 +20,7 @@ import org.springframework.boot.configurationprocessor.json.JSONArray;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -31,6 +29,7 @@ import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -74,13 +73,76 @@ public class OperationService {
         try {
             ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.emailNotifyUser(emailEvent,token);
             ResponseObj infoResponse = (ResponseObj) responseEntity.getBody();
-            log.info("userProfileResponse :: " +infoResponse.data);
+            log.info("userProfileResponse email sent status :: " +infoResponse.status);
         } catch (Exception e) {
             log.error("Unable to generate transaction Id", e);
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
         }
 
     }
+
+    private SMSGatewayResponse getActiveSMSGateway(String token) throws ThirdPartyIntegrationException {
+        SMSGatewayResponse smsGatewayResponse = null;
+        try {
+            ResponseEntity<ResponseObj<SMSGatewayResponse>>  responseEntity = notificationFeignClient.getActiveSMSGateway(token);
+            ResponseObj infoResponse = (ResponseObj) responseEntity.getBody();
+            smsGatewayResponse = (SMSGatewayResponse) infoResponse.data;
+            log.info("getActiveSMSGateway   :: " +smsGatewayResponse);
+        } catch (Exception e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
+        return smsGatewayResponse;
+    }
+
+    @Async("threadPoolTaskExecutor")
+    public CompletableFuture<Boolean>  smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
+        ResponseEntity<ResponseObj>  responseEntity = null;
+
+        String checkSMSGateway = getActiveSMSGateway(token).getName();
+        try {
+
+        switch(checkSMSGateway) {
+            case "ATALKING":
+                responseEntity = notificationFeignClient.smsNotifyUserAtalking(smsEvent,token);
+                break;
+            case "INFOBIP":
+                responseEntity = notificationFeignClient.smsNotifyUserInfobip(smsEvent,token);
+                break;
+            case "TWILIO":
+                responseEntity = notificationFeignClient.smsNotifyUserTwilio(smsEvent,token);
+                break;
+            default:
+                responseEntity = notificationFeignClient.smsNotifyUserTwilio(smsEvent,token);
+        }
+
+            ResponseObj infoResponse = (ResponseObj) responseEntity.getBody();
+            log.info("userProfileResponse sms sent status :: " +infoResponse.status);
+            return CompletableFuture.completedFuture(infoResponse.status);
+        } catch (Exception e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
+
+    }
+
+
+    public SMSChargeResponse getSMSCharges(String token) throws ThirdPartyIntegrationException {
+        log.info("inside :: getSMSCharges " + token);
+        try {
+            ResponseEntity<ResponseObj<SMSChargeResponse>>  responseEntity = notificationFeignClient.getActiveSMSCharge(token);
+            ResponseObj infoResponse = (ResponseObj) responseEntity.getBody();
+            log.info("getSMSCharges  :: " +responseEntity.getBody());
+            SMSChargeResponse smsChargeResponse = (SMSChargeResponse) infoResponse.data;
+            return smsChargeResponse;
+
+        } catch (RestClientException e) {
+            log.info(e.getMessage());
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
+        }
+
+    }
+
 
 
 

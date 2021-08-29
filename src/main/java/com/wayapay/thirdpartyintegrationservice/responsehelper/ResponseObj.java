@@ -10,6 +10,7 @@ public class ResponseObj<T> {
     public String message;
     public T data;
 
+
     public ResponseObj(Date timeStamp, boolean status, String message, T data) {
         super();
         this.timeStamp = timeStamp;

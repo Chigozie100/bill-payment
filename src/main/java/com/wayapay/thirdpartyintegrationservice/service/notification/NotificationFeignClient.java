@@ -18,14 +18,19 @@ public interface NotificationFeignClient {
     ResponseEntity<ResponseObj> emailNotifyUser(@RequestBody EmailEvent emailDto, @RequestHeader("Authorization") String token);
 
     @PostMapping("/sms-notification-atalking")
-    ResponseEntity<ResponseObj> smsNotifyUserAtalking(@RequestBody SMSDto smsDto, @RequestHeader("Authorization") String token);
+    ResponseEntity<ResponseObj> smsNotifyUserAtalking(@RequestBody SmsEvent smsEvent, @RequestHeader("Authorization") String token);
 
     @PostMapping("/sms-notification-infobip")
-    ResponseEntity<ResponseObj> smsNotifyUserInfobip(@RequestBody SMSDto smsDto, @RequestHeader("Authorization") String token);
+    ResponseEntity<ResponseObj> smsNotifyUserInfobip(@RequestBody SmsEvent smsEvent, @RequestHeader("Authorization") String token);
 
     @PostMapping("/sms-notification-twilio")
-    ResponseEntity<ResponseObj> smsNotifyUserTwilio(@RequestBody SMSDto smsDto, @RequestHeader("Authorization") String token);
+    ResponseEntity<ResponseObj> smsNotifyUserTwilio(@RequestBody SmsEvent smsEvent, @RequestHeader("Authorization") String token);
 
     @GetMapping("/admin/view-active-sms-charge")
-    ResponseEntity<String> getActiveSMSCharge(@RequestHeader("Authorization") String token);
+    ResponseEntity<ResponseObj<SMSChargeResponse>> getActiveSMSCharge(@RequestHeader("Authorization") String token);
+
+    @GetMapping("/admin/active-sms-gateway")
+    ResponseEntity<ResponseObj<SMSGatewayResponse>> getActiveSMSGateway(@RequestHeader("Authorization") String token);
+
+
 }

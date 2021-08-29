@@ -201,6 +201,19 @@ public class BillsPaymentService {
 
                 pushINAPP(paymentTransactionDetail,token,paymentResponse);
                 pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
+
+                if (userProfileResponse.isSmsAlertConfig()){
+                    SMSChargeResponse smsChargeResponse = operationService.getSMSCharges(token); // debit the customer for SMS
+                    if (smsChargeResponse != null){
+                        try {
+                            sendSMSOperation(userProfileResponse,paymentTransactionDetail, paymentRequest, fee, userName, paymentRequest, paymentResponse, token, smsChargeResponse);
+                        } catch (ExecutionException e) {
+                            e.printStackTrace();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
                 operationService.saveFailedTransactionDetail(userProfileResponse,paymentRequest, fee, null, userName, null);
@@ -290,6 +303,61 @@ public class BillsPaymentService {
         return message;
 
     }
+
+    @Async
+    public void sendSMSOperation(UserProfileResponse userProfileResponse, PaymentTransactionDetail paymentTransactionDetail, PaymentRequest paymentRequest, BigDecimal fee, String userName, PaymentRequest paymentRequest2, PaymentResponse paymentResponse, String token, SMSChargeResponse smsChargeResponse) throws ThirdPartyIntegrationException, ExecutionException, InterruptedException {
+        // get the SMS charge
+
+        String transactionId = null;
+        try {
+            transactionId = CommonUtils.generatePaymentTransactionId();
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
+
+        if(operationService.secureFund(smsChargeResponse.getFee(), BigDecimal.valueOf(0.0), userName, paymentRequest2.getSourceWalletAccountNumber(), transactionId, null, token)){
+            // Send SMS and save the transaction
+            log.info(" After deducting money for sms  send notificaiton::::: {} Line 246" + smsChargeResponse);
+
+            pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
+
+            operationService.saveTransactionDetail(userProfileResponse, paymentRequest, BigDecimal.valueOf(0.0), null, userName, transactionId);
+
+            paymentTransactionDetail.setAmount(smsChargeResponse.getFee());
+            pushSMS(paymentTransactionDetail,token,paymentResponse, userProfileResponse); // send SMS for SMS charg debit
+        }
+
+    }
+
+    public void pushSMS(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse, UserProfileResponse userProfileResponse) throws ThirdPartyIntegrationException {
+
+        SmsEvent smsEvent = new SmsEvent();
+        SmsPayload data = new SmsPayload();
+        data.setMessage(getMessageDetails(paymentResponse, paymentTransactionDetail));
+
+        SmsRecipient smsRecipient = new SmsRecipient();
+        smsRecipient.setEmail(userProfileResponse.getEmail());
+        smsRecipient.setTelephone(userProfileResponse.getPhoneNumber());
+        List<SmsRecipient> addList = new ArrayList<>();
+        addList.add(smsRecipient);
+
+        data.setRecipients(addList);
+        smsEvent.setData(data);
+
+        smsEvent.setEventType(EventType.SMS.name());
+        smsEvent.setInitiator(paymentTransactionDetail.getUsername());
+
+        try {
+            // check if User enables SMS charge
+            operationService.smsNotification(smsEvent,token);
+
+        }catch (ThirdPartyIntegrationException ex){
+            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
+
+    }
+
 
 
     public Page<TransactionDetail> search(String username, int pageNumber, int pageSize){

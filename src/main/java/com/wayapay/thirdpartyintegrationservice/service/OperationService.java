@@ -7,6 +7,8 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseObj;
+import com.wayapay.thirdpartyintegrationservice.service.logactivity.LogFeignClient;
+import com.wayapay.thirdpartyintegrationservice.service.logactivity.LogRequest;
 import com.wayapay.thirdpartyintegrationservice.service.notification.*;
 import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
@@ -16,6 +18,7 @@ import com.wayapay.thirdpartyintegrationservice.util.*;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration;
 import org.springframework.boot.configurationprocessor.json.JSONArray;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
@@ -27,8 +30,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -41,6 +45,8 @@ public class OperationService {
     private final CategoryService categoryService;
     private final ProfileFeignClient profileFeignClient;
     private final NotificationFeignClient notificationFeignClient;
+    private final LogFeignClient logFeignClient;
+
 
 
     public UserProfileResponse getUserProfile(String userName, String token) throws ThirdPartyIntegrationException {
@@ -55,6 +61,89 @@ public class OperationService {
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
         }
       return userProfileResponse;
+    }
+
+    public LogRequest creatLog(LogRequest logRequest, String token) throws ThirdPartyIntegrationException {
+
+        try {
+            ResponseEntity<ResponseObj<LogRequest>> response = logFeignClient.createLog(logRequest,token);
+
+            ResponseObj infoResponse = (ResponseObj) response.getBody();
+            LogRequest logRequest1 = (LogRequest) infoResponse.data;
+            log.info("ResponseObj :: " +infoResponse.data);
+            return logRequest1;
+
+        } catch (RestClientException e) {
+            System.out.println("Error is here " + e.getMessage());
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
+        }
+    }
+
+    public void logUserActivity(PaymentRequest request, Map<String,String> map, String token) throws ThirdPartyIntegrationException {
+        Map<String,Object> mapp = new HashMap<>();
+        mapp.put("amount", request.getAmount());
+        mapp.put("billerId", request.getBillerId());
+        mapp.put("categoryId", request.getCategoryId());
+        mapp.put("sourceWalletAccountNumber", request.getSourceWalletAccountNumber());
+
+        List<Map<String,Object>> newList = new ArrayList<>();
+        for (int i = 0; i < request.getData().size(); i++) {
+            Map<String,Object> maaapp = new HashMap<>();
+            String value = request.getData().get(i).getValue();
+            maaapp.put("value", value);
+            String name = request.getData().get(i).getName();
+            maaapp.put("value", name);
+            newList.add(maaapp);
+        }
+        mapp.put("ParamNameValue", newList);
+
+        log.info("about to log....");
+        LogRequest logRequest = new LogRequest();
+        logRequest.setAction("CREATE");
+        logRequest.setJsonRequest(mapp.toString());
+        logRequest.setModule(map.get("module"));
+        logRequest.setRequestDate(new Date());
+        logRequest.setUserId(Long.valueOf(map.get("userId")));
+        logRequest.setMessage(map.get("message"));
+         creatLog(logRequest, token);
+        log.info("done logging....");
+
+    }
+
+    public void logUserActivity(MultiplePaymentRequest request, Map<String,String> map, String token) throws ThirdPartyIntegrationException {
+        Map<String, Object> mapp = getStringObjectMap(request);
+
+        List<Map<String,Object>> newList = new ArrayList<>();
+        for (int i = 0; i < request.getData().size(); i++) {
+            Map<String,Object> maaapp = new HashMap<>();
+            String value = request.getData().get(i).getValue();
+            maaapp.put("value", value);
+            String name = request.getData().get(i).getName();
+            maaapp.put("value", name);
+            newList.add(maaapp);
+        }
+        mapp.put("ParamNameValue", newList);
+
+        log.info("about to log....");
+        LogRequest logRequest = new LogRequest();
+        logRequest.setAction("CREATE");
+        logRequest.setJsonRequest(mapp.toString());
+        logRequest.setModule(map.get("module"));
+        logRequest.setRequestDate(new Date());
+        logRequest.setUserId(Long.valueOf(map.get("userId")));
+        logRequest.setMessage(map.get("message"));
+        creatLog(logRequest, token);
+        log.info("done logging....");
+
+    }
+
+    private Map<String, Object> getStringObjectMap(MultiplePaymentRequest request) {
+        Map<String,Object> mapp = new HashMap<>();
+        mapp.put("amount", request.getAmount());
+        mapp.put("billerId", request.getBillerId());
+        mapp.put("categoryId", request.getCategoryId());
+        mapp.put("sourceWalletAccountNumber", request.getSourceWalletAccountNumber());
+        return mapp;
     }
 
     public void sendInAppNotification(InAppEvent inAppEvent, String token) throws ThirdPartyIntegrationException {
@@ -128,11 +217,10 @@ public class OperationService {
 
 
     public SMSChargeResponse getSMSCharges(String token) throws ThirdPartyIntegrationException {
-        log.info("inside :: getSMSCharges " + token);
+
         try {
             ResponseEntity<ResponseObj<SMSChargeResponse>>  responseEntity = notificationFeignClient.getActiveSMSCharge(token);
             ResponseObj infoResponse = (ResponseObj) responseEntity.getBody();
-            log.info("getSMSCharges  :: " +responseEntity.getBody());
             SMSChargeResponse smsChargeResponse = (SMSChargeResponse) infoResponse.data;
             return smsChargeResponse;
 
@@ -152,7 +240,6 @@ public class OperationService {
 
         ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getDefaultWallet(userName, token);
         InfoResponse infoResponse = (InfoResponse) responseEntity.getBody();
-        log.info("mainWalletResponse :: {} " +infoResponse.data);
         NewWalletResponse mainWalletResponse = infoResponse.data;
 
         if (mainWalletResponse.getClr_bal_amt().doubleValue() < amount.doubleValue())
@@ -180,6 +267,27 @@ public class OperationService {
 
     @AuditPaymentOperation(stage = Stage.SAVE_TRANSACTION_DETAIL, status = Status.END)
     public PaymentTransactionDetail saveTransactionDetail(UserProfileResponse userProfileResponse, PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId) throws ThirdPartyIntegrationException {
+
+        PaymentTransactionDetail paymentTransactionDetail = new PaymentTransactionDetail();
+        paymentTransactionDetail.setAmount(paymentRequest.getAmount());
+        paymentTransactionDetail.setFee(fee);
+        paymentTransactionDetail.setBiller(paymentRequest.getBillerId());
+        paymentTransactionDetail.setCategory(paymentRequest.getCategoryId());
+        paymentTransactionDetail.setPaymentRequest(CommonUtils.objectToJson(paymentRequest).orElse(""));
+        paymentTransactionDetail.setPaymentResponse(CommonUtils.objectToJson(paymentResponse).orElse(""));
+        paymentTransactionDetail.setSuccessful(true);
+        paymentTransactionDetail.setThirdPartyName(categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE)));
+        paymentTransactionDetail.setTransactionId(transactionId);
+        paymentTransactionDetail.setUserAccountNumber(paymentRequest.getSourceWalletAccountNumber());
+        paymentTransactionDetail.setUsername(userName);
+        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferral());
+        paymentTransactionDetail.setPhoneNumber(userProfileResponse.getPhoneNumber());
+        paymentTransactionDetail.setEmail(userProfileResponse.getEmail());
+        return paymentTransactionRepo.save(paymentTransactionDetail);
+    }
+
+    @AuditPaymentOperation(stage = Stage.SAVE_TRANSACTION_DETAIL, status = Status.END)
+    public PaymentTransactionDetail saveTransactionDetailMultiple(UserProfileResponse userProfileResponse, MultiplePaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId) throws ThirdPartyIntegrationException {
 
         PaymentTransactionDetail paymentTransactionDetail = new PaymentTransactionDetail();
         paymentTransactionDetail.setAmount(paymentRequest.getAmount());

@@ -25,14 +25,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -214,6 +215,19 @@ public class BillsPaymentService {
                         }
                     }
                 }
+
+                Map<String,String> map = new HashMap<>();
+                map.put("message", "Making Bills Payment");
+                map.put("userId", userName);
+                map.put("module", "Bills Payment");
+                CompletableFuture.runAsync(() -> {
+                    try {
+                       operationService.logUserActivity(paymentRequest, map, token);
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
+
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
                 operationService.saveFailedTransactionDetail(userProfileResponse,paymentRequest, fee, null, userName, null);
@@ -226,6 +240,159 @@ public class BillsPaymentService {
         log.error("Unable to secure fund from user's wallet");
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
+
+    public PaymentResponse processMultiplePayment(MultiplePaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+        // get user profile
+        System.out.println("paymentRequest.getUsername()" + paymentRequest.getUsername());
+        UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
+
+        log.info("HERE is the response from User Profile  ::: " + userProfileResponse.getReferenceCode());
+        log.info("HERE is the response from User Profile isSmsAle ::: " + userProfileResponse.isSmsAlertConfig());
+        //secure Payment
+        String transactionId = null;
+        try {
+            transactionId = CommonUtils.generatePaymentTransactionId();
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
+        ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
+        FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
+        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token)){
+            try {
+                PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processMultiplePayment(paymentRequest, fee, transactionId, userName);
+                //store the transaction information
+                PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetailMultiple(userProfileResponse, paymentRequest, fee, paymentResponse, userName, transactionId);
+                // notify customer
+                pushINAPP(paymentTransactionDetail,token,paymentResponse);
+                pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
+
+                // check if SMS is enabled
+                if (userProfileResponse.isSmsAlertConfig()){
+                    log.info("USER ENABLED SMS ALERT :::::: " + userProfileResponse.isSmsAlertConfig());
+                    SMSChargeResponse smsChargeResponse = operationService.getSMSCharges(token); // debit the customer for SMS
+                    log.info("smsChargeResponse ::::: {} :: " + smsChargeResponse);
+                    if (smsChargeResponse != null){
+                        log.info(" lets continue ::::: {} :: 2" + smsChargeResponse);
+                        sendSMSOperationMultiple(userProfileResponse,paymentTransactionDetail, paymentRequest, fee, userName, paymentRequest, paymentResponse, token, smsChargeResponse);
+                    }
+                }
+                log.info("This is the status of userAlert config {} :::" + userProfileResponse.isSmsAlertConfig());
+
+                /**
+                 * check user type
+                 * get commission for merchant user
+                 * credit the merchant user's commission wallet
+                 */
+                //payCommissionToMerchant(token, userName, fee);
+                //logTransaction(paymentRequest,paymentResponse,token,userName);
+                Map<String,String> map = new HashMap<>();
+                map.put("message", "Making Bulk Bills Payment");
+                map.put("userId", userName);
+                map.put("module", "Bills Payment");
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        operationService.logUserActivity(paymentRequest, map, token);
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                return paymentResponse;
+            } catch (ThirdPartyIntegrationException e) {
+                log.error("This is the error from payment :::: " + e.getMessage());
+                //   operationService.saveFailedTransactionDetail(paymentRequest, fee, null, userName, null);
+                //   disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
+
+                throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+
+        log.error("Unable to secure fund from user's wallet");
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+
+    public ResponseEntity<?> processBulkPayment(MultipartFile file, HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException, IOException {
+        System.out.println("file inside::: " + file.getInputStream());
+        PaymentResponse paymentResponse = null;
+        if (ExcelHelper.hasExcelFormat(file)) {
+            paymentResponse = buildBulkPayment(ExcelHelper.excelToPaymentRequest(file.getInputStream(),
+                    file.getOriginalFilename()), request, token);
+            System.out.println("file back frome extraction ::: " + paymentResponse);
+        }
+        System.out.println("outter ::: " + paymentResponse);
+        // build payment request
+        return new ResponseEntity<>(new SuccessResponse(paymentResponse), HttpStatus.OK);
+    }
+
+    PaymentResponse buildBulkPayment(BulkBillsPaymentDTO bulkBillsPaymentDTO,HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+        System.out.println("Just entered Here we are ");
+        System.out.println("Just entered Here we are " + bulkBillsPaymentDTO);
+
+        PaymentResponse paymentResponse = new PaymentResponse();
+        MultiplePaymentRequest paymentRequest = new MultiplePaymentRequest();
+        Map<String,String> map = new LinkedHashMap<>();
+
+        for (PaymentRequestExcel mPayUser : bulkBillsPaymentDTO.getPaymentRequestExcels()) {
+            paymentRequest.setSourceWalletAccountNumber(mPayUser.getSourceWalletAccountNumber());
+            paymentRequest.setAmount(BigDecimal.valueOf(mPayUser.getAmount()));
+            paymentRequest.setCategoryId(mPayUser.getCategoryId());
+            paymentRequest.setBillerId(mPayUser.getBillerId());
+
+            List<ParamNameValue> data = new ArrayList<>();
+
+            data.add(new ParamNameValue("phone",mPayUser.getPhone()));
+            data.add(new ParamNameValue("amount",mPayUser.getAmount().toString()));
+            data.add(new ParamNameValue("paymentMethod",mPayUser.getPaymentMethod()));
+            data.add(new ParamNameValue("channel",mPayUser.getChannel()));
+
+            paymentRequest.setData(data);
+
+            System.out.println("Here we are " + bulkBillsPaymentDTO);
+
+            processMultiplePayment(paymentRequest, mPayUser.getUserId(), token);
+
+
+        }
+
+        return paymentResponse;
+    }
+
+    public ResponseEntity<?> processBulkPaymentForm(MultipleFormPaymentRequest  multipleFormPaymentRequest, String username, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+
+        System.out.println("multipleFormPaymentRequest ::: {} " + multipleFormPaymentRequest);
+        List<MultiplePaymentRequest> paymentRequestList = multipleFormPaymentRequest.getPaymentRequest();
+        PaymentResponse paymentResponse = null;
+        MultiplePaymentRequest paymentRequest = new MultiplePaymentRequest();
+        for (int i = 0; i < paymentRequestList.size(); i++) {
+            paymentRequest = paymentRequestList.get(i);
+            System.out.println(" paymentRequest ::: {} " +paymentRequest );
+            paymentResponse = processMultiplePayment(paymentRequest, username, token);
+//            MultiplePaymentRequest finalPaymentRequest = paymentRequest;
+//            System.out.println("finalPaymentRequest :: {} " +finalPaymentRequest);
+//            CompletableFuture.runAsync(() -> {
+//                try {
+//                    processPayment(finalPaymentRequest, Constants.USERNAME, Constants.TOKEN);
+//                } catch (ThirdPartyIntegrationException e) {
+//                    e.printStackTrace();
+//                } catch (URISyntaxException e) {
+//                    e.printStackTrace();
+//                }
+//            });
+            System.out.println("outter ::: " + paymentResponse);
+        }
+
+
+        // build payment request
+        return new ResponseEntity<>(new SuccessResponse(paymentResponse), HttpStatus.OK);
+    }
+
 
     private void pushINAPP(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse) throws ThirdPartyIntegrationException {
         InAppEvent inAppEvent = buildInAppNotificationObject(paymentTransactionDetail, token, EventType.IN_APP, paymentResponse);
@@ -329,6 +496,32 @@ public class BillsPaymentService {
         }
 
     }
+
+    @Async
+    public void sendSMSOperationMultiple(UserProfileResponse userProfileResponse, PaymentTransactionDetail paymentTransactionDetail, MultiplePaymentRequest paymentRequest, BigDecimal fee, String userName, MultiplePaymentRequest paymentRequest2, PaymentResponse paymentResponse, String token, SMSChargeResponse smsChargeResponse) throws ThirdPartyIntegrationException, ExecutionException, InterruptedException {
+        // get the SMS charge
+
+        String transactionId = null;
+        try {
+            transactionId = CommonUtils.generatePaymentTransactionId();
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
+        if(operationService.secureFund(smsChargeResponse.getFee(), BigDecimal.valueOf(0.0), userName, paymentRequest2.getSourceWalletAccountNumber(), transactionId, null, token)){
+            // Send SMS and save the transaction
+            log.info(" After deducting money for sms  send notificaiton::::: {} Line 246" + smsChargeResponse);
+
+            pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
+
+            operationService.saveTransactionDetailMultiple(userProfileResponse,paymentRequest, BigDecimal.valueOf(0.0), null, userName, transactionId);
+
+            paymentTransactionDetail.setAmount(smsChargeResponse.getFee());
+            pushSMS(paymentTransactionDetail,token,paymentResponse, userProfileResponse); // send SMS for SMS charg debit
+        }
+
+    }
+
 
     public void pushSMS(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse, UserProfileResponse userProfileResponse) throws ThirdPartyIntegrationException {
 

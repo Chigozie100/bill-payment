@@ -13,12 +13,16 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
@@ -123,6 +127,27 @@ public class AdminController {
         //operationService.adminMakeReversalPayment(paymentRequest, userId, token);
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
+
+    //ABILITY for waya admin with the right access and permission to make bills payment to users - multiple webform
+    @ApiOperation(value = "Bulk Bills Payment: This API is used to by the admin to pay bills on behalf of users using web form", tags = {"ADMIN"})
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Response Headers")})
+    @PostMapping(path = "/admin/bulk-user-bills-payment")
+    public ResponseEntity<?> makeBulkBillsPaymentToUsersWithWebForm(@Valid @RequestBody MultipleFormPaymentRequest multipleFormPaymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, URISyntaxException {
+        return billsPaymentService.processBulkPaymentForm(multipleFormPaymentRequest, username, token);
+    }
+
+    @ApiOperation(value = "Bulk Bills Payment", tags = {"ADMIN"})
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Response Headers")})
+    @PostMapping(path = "/admin/bulk-user-excel", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}, produces = {
+            MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<?> makeBulkBillsPaymentToUsers(@RequestParam("file") MultipartFile file,
+                                                         HttpServletRequest request, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, IOException, URISyntaxException {
+        System.out.println("file ::: " + file.getContentType());
+        System.out.println("file ::: " + file.getOriginalFilename());
+        System.out.println("file ::: " + file.getName());
+        return billsPaymentService.processBulkPayment(file, request, token);
+    }
+
 
 
 }

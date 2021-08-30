@@ -178,6 +178,33 @@ public class QuickTellerService implements IThirdPartyService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, paymentAdviceResponse.getResponseMessage());
     }
 
+    @Override
+    @AuditPaymentOperation(stage = Stage.CONTACT_VENDOR_TO_PROVIDE_VALUE, status = Status.IN_PROGRESS)
+    public PaymentResponse processMultiplePayment(MultiplePaymentRequest request, BigDecimal fee, String transactionId, String username) throws ThirdPartyIntegrationException {
+        Optional<SendPaymentAdviceResponse> sendPaymentAdviceResponseOptional = Optional.empty();
+        try {
+            BillerDetail billerDetail = billerDetailMap.get(request.getBillerId());
+            if (Objects.isNull(billerDetail)){
+                throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
+            }
+
+            Map<String, String> headers = generateHeader(HttpMethod.POST, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getSendPaymentAdviceUrl());
+            SendPaymentAdviceRequest sendPaymentAdviceRequest = generateRequestMultiple(request, billerDetail, getTimeStamp(headers));
+            sendPaymentAdviceResponseOptional = Optional.of(feignClient.sendPaymentAdvice(sendPaymentAdviceRequest, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
+        } catch (FeignException e) {
+            log.error("Unable to process payment against interswitch ", e);
+        }
+
+        SendPaymentAdviceResponse paymentAdviceResponse = sendPaymentAdviceResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to process payment"));
+
+        if (SUCCESSFUL.equals(paymentAdviceResponse.getResponseCode())){
+            return getPaymentResponse(paymentAdviceResponse);
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, paymentAdviceResponse.getResponseMessage());
+
+    }
+
     private PaymentResponse getPaymentResponse(SendPaymentAdviceResponse paymentAdviceResponse){
         PaymentResponse paymentResponse = new PaymentResponse();
 
@@ -195,6 +222,17 @@ public class QuickTellerService implements IThirdPartyService {
     }
 
     private SendPaymentAdviceRequest generateRequest(PaymentRequest paymentRequest, BillerDetail billerDetail, String timeStamp){
+        QuickTellerUserParam userParam = getUserParam(paymentRequest.getData(), billerDetail);
+        SendPaymentAdviceRequest request = new SendPaymentAdviceRequest();
+        request.setAmount(getAmountInKobo(String.valueOf(paymentRequest.getAmount())));
+        request.setCustomerId(userParam.getCustomerId1());
+        request.setPaymentCode(userParam.getPaymentCode());
+        request.setTerminalId(appConfig.getQuickteller().getTerminalId());
+        request.setRequestReference(appConfig.getQuickteller().getTransactionRefCode()+timeStamp);
+        return request;
+    }
+
+    private SendPaymentAdviceRequest generateRequestMultiple(MultiplePaymentRequest paymentRequest, BillerDetail billerDetail, String timeStamp){
         QuickTellerUserParam userParam = getUserParam(paymentRequest.getData(), billerDetail);
         SendPaymentAdviceRequest request = new SendPaymentAdviceRequest();
         request.setAmount(getAmountInKobo(String.valueOf(paymentRequest.getAmount())));
@@ -267,7 +305,7 @@ public class QuickTellerService implements IThirdPartyService {
 
             case "4":
                 return getAmountInNaira(amount).subtract(BigDecimal.ONE).toString();
-            
+
             case "1":
             case "3":
             case "5":

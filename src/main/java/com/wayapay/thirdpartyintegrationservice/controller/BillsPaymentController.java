@@ -66,7 +66,7 @@ public class BillsPaymentController {
         }
     }
 
-    @ApiOperation(value = "Get Payment Items based on the selected biller : This API is used to get selected Biller's Payment Item", position = 2)
+    @ApiOperation(value = "Get Payment Items based on the selected biller : This API is used to get selected Biller's Payment Item", position = 3)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful", response = SamplePaymentItemsResponse.class),
             @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
@@ -82,7 +82,7 @@ public class BillsPaymentController {
         }
     }
 
-    @ApiOperation(value = "Validate Provided Payment Item : This API is used to validate payment items value provided by customer", position = 3)
+    @ApiOperation(value = "Validate Provided Payment Item : This API is used to validate payment items value provided by customer", position = 4)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful", response = SampleCustomerValidationResponse.class),
             @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
@@ -98,7 +98,7 @@ public class BillsPaymentController {
         }
     }
 
-    @ApiOperation(value = "Make Payment : This API is used to make payment such that customer gets value", position = 4)
+    @ApiOperation(value = "Make Payment : This API is used to make payment such that customer gets value", position = 5)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful", response = SamplePaymentResponse.class),
             @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
@@ -116,7 +116,7 @@ public class BillsPaymentController {
         }
     }
 
-    @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 5)
+    @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 6)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful", response = SampleListCategoryResponse.class),
             @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
@@ -129,7 +129,7 @@ public class BillsPaymentController {
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
-    @ApiOperation(value = "Get Transaction Report By Referral Code : This API is used to get all transaction report by user referralCode", position = 6)
+    @ApiOperation(value = "Get Transaction Report By Referral Code : This API is used to get all transaction report by user referralCode", position =7)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful", response = SampleListCategoryResponse.class),
             @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),

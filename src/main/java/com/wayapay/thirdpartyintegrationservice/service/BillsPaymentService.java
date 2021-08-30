@@ -184,14 +184,8 @@ public class BillsPaymentService {
 
         log.info("After getUserProfile ::: " + userProfileResponse);
         //secure Payment
-        String transactionId = null;
-        try {
-            transactionId = CommonUtils.generatePaymentTransactionId();
+        String transactionId = CommonUtils.generatePaymentTransactionId();
 
-        } catch (NoSuchAlgorithmException e) {
-            log.error("Unable to generate transaction Id", e);
-            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-        }
         log.info("After generatePaymentTransactionId ::: " + transactionId);
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
@@ -254,13 +248,8 @@ public class BillsPaymentService {
         log.info("HERE is the response from User Profile  ::: " + userProfileResponse.getReferenceCode());
         log.info("HERE is the response from User Profile isSmsAle ::: " + userProfileResponse.isSmsAlertConfig());
         //secure Payment
-        String transactionId = null;
-        try {
-            transactionId = CommonUtils.generatePaymentTransactionId();
-        } catch (NoSuchAlgorithmException e) {
-            log.error("Unable to generate transaction Id", e);
-            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-        }
+        String transactionId = CommonUtils.generatePaymentTransactionId();
+
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
@@ -480,13 +469,8 @@ public class BillsPaymentService {
     public void sendSMSOperation(UserProfileResponse userProfileResponse, PaymentTransactionDetail paymentTransactionDetail, PaymentRequest paymentRequest, BigDecimal fee, String userName, PaymentRequest paymentRequest2, PaymentResponse paymentResponse, String token, SMSChargeResponse smsChargeResponse) throws ThirdPartyIntegrationException, ExecutionException, InterruptedException {
         // get the SMS charge
 
-        String transactionId = null;
-        try {
-            transactionId = CommonUtils.generatePaymentTransactionId();
-        } catch (NoSuchAlgorithmException e) {
-            log.error("Unable to generate transaction Id", e);
-            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-        }
+        String transactionId = CommonUtils.generatePaymentTransactionId();
+
 
         if(operationService.secureFund(smsChargeResponse.getFee(), BigDecimal.valueOf(0.0), userName, paymentRequest2.getSourceWalletAccountNumber(), transactionId, null, token)){
             // Send SMS and save the transaction
@@ -506,13 +490,8 @@ public class BillsPaymentService {
     public void sendSMSOperationMultiple(UserProfileResponse userProfileResponse, PaymentTransactionDetail paymentTransactionDetail, MultiplePaymentRequest paymentRequest, BigDecimal fee, String userName, MultiplePaymentRequest paymentRequest2, PaymentResponse paymentResponse, String token, SMSChargeResponse smsChargeResponse) throws ThirdPartyIntegrationException, ExecutionException, InterruptedException {
         // get the SMS charge
 
-        String transactionId = null;
-        try {
-            transactionId = CommonUtils.generatePaymentTransactionId();
-        } catch (NoSuchAlgorithmException e) {
-            log.error("Unable to generate transaction Id", e);
-            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-        }
+        String transactionId = CommonUtils.generatePaymentTransactionId();
+
         if(operationService.secureFund(smsChargeResponse.getFee(), BigDecimal.valueOf(0.0), userName, paymentRequest2.getSourceWalletAccountNumber(), transactionId, null, token)){
             // Send SMS and save the transaction
             log.info(" After deducting money for sms  send notificaiton::::: {} Line 246" + smsChargeResponse);

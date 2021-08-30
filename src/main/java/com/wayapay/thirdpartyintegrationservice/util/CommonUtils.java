@@ -7,8 +7,6 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,7 +15,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Random;
 
 @Slf4j
 public class CommonUtils {
@@ -52,20 +49,8 @@ public class CommonUtils {
         return localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
     }
 
-    public static String generatePaymentTransactionId() throws NoSuchAlgorithmException {
-        return new SimpleDateFormat("yyMMddHHmmss").format(new Date()) + generateRandomNumber();
-    }
-
-    private static String generateRandomNumber() throws NoSuchAlgorithmException {
-        int lengthOfNumbers = 18;
-        StringBuilder numbers = new StringBuilder("");
-
-        Random random = SecureRandom.getInstanceStrong();
-        for (int i = 0; i < lengthOfNumbers; i++) {
-            numbers.append(random.nextInt() * 9);
-        }
-
-        return numbers.substring(0, 40);
+    public static String generatePaymentTransactionId() {
+        return new SimpleDateFormat("yyyyMMddHHmmssSS").format(new Date());
     }
 
     public static ObjectMapper getObjectMapper(){

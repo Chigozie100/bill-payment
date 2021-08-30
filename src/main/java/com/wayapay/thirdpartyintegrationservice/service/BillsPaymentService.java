@@ -182,18 +182,23 @@ public class BillsPaymentService {
 
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
 
+        log.info("After getUserProfile ::: " + userProfileResponse);
         //secure Payment
         String transactionId = null;
         try {
             transactionId = CommonUtils.generatePaymentTransactionId();
+
         } catch (NoSuchAlgorithmException e) {
             log.error("Unable to generate transaction Id", e);
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
         }
-
+        log.info("After generatePaymentTransactionId ::: " + transactionId);
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
+        log.info("After ThirdPartyNames fee  feeBearer::: " + feeBearer);
+        log.info("After ThirdPartyNames fee  feeBearer::: " + fee);
+        log.info("After ThirdPartyNames fee  feeBearer::: " + thirdPartyName);
         if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token)){
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);

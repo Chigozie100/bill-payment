@@ -182,23 +182,19 @@ public class BillsPaymentService {
 
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
 
-        log.info("After getUserProfile ::: " + userProfileResponse);
         //secure Payment
         String transactionId = CommonUtils.generatePaymentTransactionId();
 
-        log.info("After generatePaymentTransactionId ::: " + transactionId);
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        log.info("After ThirdPartyNames fee  feeBearer::: " + feeBearer);
-        log.info("After ThirdPartyNames fee  feeBearer::: " + fee);
-        log.info("After ThirdPartyNames fee  feeBearer::: " + thirdPartyName);
         if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token)){
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
                 PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
 
+                // call the receipt service
                 pushINAPP(paymentTransactionDetail,token,paymentResponse);
                 pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
 
@@ -226,6 +222,8 @@ public class BillsPaymentService {
                         e.printStackTrace();
                     }
                 });
+
+
 
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
@@ -313,21 +311,21 @@ public class BillsPaymentService {
 
 
     public ResponseEntity<?> processBulkPayment(MultipartFile file, HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException, IOException {
-        System.out.println("file inside::: " + file.getInputStream());
+        log.info("file inside::: " + file.getInputStream());
         PaymentResponse paymentResponse = null;
         if (ExcelHelper.hasExcelFormat(file)) {
             paymentResponse = buildBulkPayment(ExcelHelper.excelToPaymentRequest(file.getInputStream(),
                     file.getOriginalFilename()), request, token);
-            System.out.println("file back frome extraction ::: " + paymentResponse);
+            log.info("file back frome extraction ::: " + paymentResponse);
         }
-        System.out.println("outter ::: " + paymentResponse);
+
         // build payment request
         return new ResponseEntity<>(new SuccessResponse(paymentResponse), HttpStatus.OK);
     }
 
     PaymentResponse buildBulkPayment(BulkBillsPaymentDTO bulkBillsPaymentDTO,HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException {
-        System.out.println("Just entered Here we are ");
-        System.out.println("Just entered Here we are " + bulkBillsPaymentDTO);
+        log.info("Just entered Here we are ");
+        log.info("Just entered Here we are " + bulkBillsPaymentDTO);
 
         PaymentResponse paymentResponse = new PaymentResponse();
         MultiplePaymentRequest paymentRequest = new MultiplePaymentRequest();
@@ -348,7 +346,7 @@ public class BillsPaymentService {
 
             paymentRequest.setData(data);
 
-            System.out.println("Here we are " + bulkBillsPaymentDTO);
+            log.info("Here we are " + bulkBillsPaymentDTO);
 
             processMultiplePayment(paymentRequest, mPayUser.getUserId(), token);
 

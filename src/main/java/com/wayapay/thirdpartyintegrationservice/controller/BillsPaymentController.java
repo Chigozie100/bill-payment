@@ -136,9 +136,9 @@ public class BillsPaymentController {
             @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
     })
     @GetMapping("/biller/report/referral/{referralCode}")
-    public ResponseEntity<ResponseHelper> customerTransactionReportByReferral(@RequestParam(required = false, defaultValue = "0") String pageNumber,  @RequestParam(required = false, defaultValue = "10") String pageSize, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username){
+    public ResponseEntity<ResponseHelper> customerTransactionReportByReferral(@PathVariable String referralCode, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize){
 
-        Page<TransactionDetail> transactionDetailPage = billsPaymentService.searchByReferralCode(username, Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
+        Page<TransactionDetail> transactionDetailPage = billsPaymentService.searchByReferralCode(referralCode, Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 

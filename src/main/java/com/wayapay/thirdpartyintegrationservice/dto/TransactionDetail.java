@@ -60,4 +60,9 @@ public class TransactionDetail {
         this.email = email;
         this.userAccountNumber = userAccountNumber;
     }
+
+    public TransactionDetail(String username, String referralCode) {
+        this.username = username;
+        this.referralCode = referralCode;
+    }
 }

@@ -21,6 +21,7 @@ import javax.validation.Valid;
 
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 
@@ -138,7 +139,7 @@ public class BillsPaymentController {
     @GetMapping("/biller/report/referral/{referralCode}")
     public ResponseEntity<ResponseHelper> customerTransactionReportByReferral(@PathVariable String referralCode, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize){
 
-        Page<TransactionDetail> transactionDetailPage = billsPaymentService.searchByReferralCode(referralCode, Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
+        Map<String, Object> transactionDetailPage = billsPaymentService.searchByReferralCode(referralCode, Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 

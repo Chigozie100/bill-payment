@@ -22,6 +22,7 @@ import org.testcontainers.shaded.org.bouncycastle.crypto.RuntimeCryptoException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -155,11 +156,13 @@ class BillsPaymentServiceTest {
         assertNotNull(paymentResponse);
 
         //confirm that search is fine
-        Page<TransactionDetail> transactionDetails = billsPaymentService.search(username, 0, 10);
-        assertTrue(transactionDetails.hasContent());
+        Map<String, Object> transactionDetails = billsPaymentService.search(username, 0, 10);
+        List<TransactionDetail> transactionDetailList = (List<TransactionDetail>) transactionDetails.get("transactionList");
+        assertTrue(!transactionDetailList.isEmpty());
 
         transactionDetails = billsPaymentService.search(null, 0, 10);
-        assertTrue(transactionDetails.hasContent());
+        List<TransactionDetail> transactionDetailList2 = (List<TransactionDetail>) transactionDetails.get("transactionList");
+        assertTrue(!transactionDetailList2.isEmpty());
 
     }
 }

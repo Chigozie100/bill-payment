@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
@@ -534,21 +535,118 @@ public class BillsPaymentService {
     }
 
 
+    public Map<String, Object> search(String username, int pageNumber, int pageSize){
+        Pageable paging = PageRequest.of(pageNumber, pageSize);
+        Page<TransactionDetail> transactionDetailPage = null;
+        List<TransactionDetail> transactionDetailList = new ArrayList<>();
 
-    public Page<TransactionDetail> search(String username, int pageNumber, int pageSize){
         if (CommonUtils.isEmpty(username)){
-            return paymentTransactionRepo.getAllTransaction(PageRequest.of(pageNumber, pageSize));
+            transactionDetailPage = paymentTransactionRepo.getAllTransaction(paging);
+            transactionDetailList = transactionDetailPage.getContent();
+            return getTransactionMap(transactionDetailList,transactionDetailPage);
         }
-        return paymentTransactionRepo.getAllTransactionByUsername(username, PageRequest.of(pageNumber, pageSize));
+        transactionDetailPage = paymentTransactionRepo.getAllTransactionByUsername(username, paging);
+
+        transactionDetailList = transactionDetailPage.getContent();
+
+        return getTransactionMap(transactionDetailList,transactionDetailPage);
     }
 
 
-    public Page<TransactionDetail> searchByReferralCode(String referralCode, int pageNumber, int pageSize){
+    public Map<String, Object> searchByReferralCode(String referralCode, int page, int size){
+        Pageable paging = PageRequest.of(page, size);
+        Page<TransactionDetail> transactionDetailPage = null;
+        List<TransactionDetail> transactionDetailList = new ArrayList<>();
+
         if (CommonUtils.isEmpty(referralCode)){
-            return paymentTransactionRepo.getAllTransaction(PageRequest.of(pageNumber, pageSize));
+            transactionDetailPage = paymentTransactionRepo.getAllTransaction(paging);
+            transactionDetailList = transactionDetailPage.getContent();
+            return getTransactionMap(transactionDetailList,transactionDetailPage);
         }
 
-        return paymentTransactionRepo.getAllTransactionByReferralCode(referralCode, PageRequest.of(pageNumber, pageSize));
+        transactionDetailPage = paymentTransactionRepo.getAllTransactionByReferralCode(referralCode, paging);
+
+        transactionDetailList = transactionDetailPage.getContent();
+
+        List<TransactionDetail> transactionDetailPage2 = paymentTransactionRepo.getAllTransactionByReferralCodeGroupedBy(referralCode);
+
+        List<TransactionDetail> transactionDetailList1 = new ArrayList<>();
+
+        log.info("Transaction Size ::: {} " + transactionDetailPage2.size());
+        log.info("Transaction List" + transactionDetailPage2);
+        int count = 0;
+       for (int i = 0; i < transactionDetailPage2.size(); i++) {
+           count ++;
+        }
+
+        Map<String, Map<Object, Object>> map = new HashMap<>();
+        Map<String, Object> map1 = new LinkedHashMap<>();
+        Map<Object, Object> objectMap = null;
+        for (int i = 0; i < transactionDetailPage2.size()-1; i++)
+        {
+
+            for (int j = i+1; j < transactionDetailPage2.size(); j++)
+            {
+//                log.info("Second ::: {} ");
+//                System.out.println("i  " + transactionDetailPage2.get(i).getUsername());
+
+                //&& (transactionDetailPage2.get(i) != transactionDetailPage2.get(j))
+                if (transactionDetailPage2.get(i).getUsername().equalsIgnoreCase(transactionDetailPage2.get(j).getUsername()) && (i != j))
+                {
+                    log.info( j + "  ===inside :: {}===  " + i);
+
+//                    objectMap = new HashMap<>();
+//                    objectMap.put(transactionDetailPage2.get(i).getUsername(), "count");
+//                    map.put("ID", objectMap);
+//                    map1.putAll(map);
+//                    TransactionDetail transactionDetail = transactionDetailPage2.get(i);
+//                    transactionDetailList1.add(transactionDetail);
+//                    log.info("Third ::: {} ");
+                    System.out.println("Duplicate Element transactionDetailPage2.get(i) : "+transactionDetailPage2.get(j));
+                }
+            }
+        }
+
+//        log.info("Final :::" + transactionDetailList1.size());
+//        log.info("MAP" + map1);
+//
+//        int[] my_array = {1, 2, 5, 5, 6, 6, 7, 2};
+//
+//        for (int i = 0; i < my_array.length-1; i++)
+//        {
+//            for (int j = i+1; j < my_array.length; j++)
+//            {
+//                System.out.println("j " + j);
+//
+//                if ((my_array[i] == my_array[j]) && (i != j))
+//                {
+//                    System.out.println( my_array[i] +"Duplicate Element : "+my_array[j]);
+//                }
+//            }
+//        }
+
+
+
+        return getTransactionMap(transactionDetailList,transactionDetailPage);
+    }
+
+    private Map<String, Object> getTransactionMap(List<TransactionDetail> transactionDetailList, Page<TransactionDetail> transactionDetailPage){
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("transactionList", transactionDetailList);
+        response.put("currentPage", transactionDetailPage.getNumber());
+        response.put("totalItems", transactionDetailPage.getTotalElements());
+        response.put("totalPages", transactionDetailPage.getTotalPages());
+        return response;
+    }
+
+
+//    findByUsername
+    public long findByUsername(String username) throws ThirdPartyIntegrationException {
+        if (CommonUtils.isEmpty(username)){
+            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, "NOT Found");
+        }
+        return paymentTransactionRepo.findByUsername(username);
     }
 
 

@@ -154,10 +154,10 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @GetMapping("/admin/get-transaction-count/{username}")
-    public ResponseEntity<ResponseHelper> getTransactionCount(@PathVariable String username) throws ThirdPartyIntegrationException {
+    public ResponseEntity<Long> getTransactionCount(@PathVariable String username) throws ThirdPartyIntegrationException {
 
         long transactionDetailPage = billsPaymentService.findByUsername(username);
-        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
+        return ResponseEntity.ok(transactionDetailPage);
     }
 
 

@@ -535,12 +535,21 @@ public class BillsPaymentService {
     }
 
 
+    public Map<String, Object> search(String username, int pageNumber, int pageSize){
+        Pageable paging = PageRequest.of(pageNumber, pageSize);
+        Page<TransactionDetail> transactionDetailPage = null;
+        List<TransactionDetail> transactionDetailList = new ArrayList<>();
 
-    public Page<TransactionDetail> search(String username, int pageNumber, int pageSize){
         if (CommonUtils.isEmpty(username)){
-            return paymentTransactionRepo.getAllTransaction(PageRequest.of(pageNumber, pageSize));
+            transactionDetailPage = paymentTransactionRepo.getAllTransaction(paging);
+            transactionDetailList = transactionDetailPage.getContent();
+            return getTransactionMap(transactionDetailList,transactionDetailPage);
         }
-        return paymentTransactionRepo.getAllTransactionByUsername(username, PageRequest.of(pageNumber, pageSize));
+        transactionDetailPage = paymentTransactionRepo.getAllTransactionByUsername(username, paging);
+
+        transactionDetailList = transactionDetailPage.getContent();
+
+        return getTransactionMap(transactionDetailList,transactionDetailPage);
     }
 
 
@@ -598,23 +607,23 @@ public class BillsPaymentService {
             }
         }
 
-        log.info("Final :::" + transactionDetailList1.size());
-        log.info("MAP" + map1);
-
-        int[] my_array = {1, 2, 5, 5, 6, 6, 7, 2};
-
-        for (int i = 0; i < my_array.length-1; i++)
-        {
-            for (int j = i+1; j < my_array.length; j++)
-            {
-                System.out.println("j " + j);
-
-                if ((my_array[i] == my_array[j]) && (i != j))
-                {
-                    System.out.println( my_array[i] +"Duplicate Element : "+my_array[j]);
-                }
-            }
-        }
+//        log.info("Final :::" + transactionDetailList1.size());
+//        log.info("MAP" + map1);
+//
+//        int[] my_array = {1, 2, 5, 5, 6, 6, 7, 2};
+//
+//        for (int i = 0; i < my_array.length-1; i++)
+//        {
+//            for (int j = i+1; j < my_array.length; j++)
+//            {
+//                System.out.println("j " + j);
+//
+//                if ((my_array[i] == my_array[j]) && (i != j))
+//                {
+//                    System.out.println( my_array[i] +"Duplicate Element : "+my_array[j]);
+//                }
+//            }
+//        }
 
 
 
@@ -629,6 +638,15 @@ public class BillsPaymentService {
         response.put("totalItems", transactionDetailPage.getTotalElements());
         response.put("totalPages", transactionDetailPage.getTotalPages());
         return response;
+    }
+
+
+//    findByUsername
+    public long findByUsername(String username) throws ThirdPartyIntegrationException {
+        if (CommonUtils.isEmpty(username)){
+            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, "NOT Found");
+        }
+        return paymentTransactionRepo.findByUsername(username);
     }
 
 

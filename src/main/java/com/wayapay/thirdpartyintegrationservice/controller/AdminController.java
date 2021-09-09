@@ -25,6 +25,7 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 
@@ -99,7 +100,7 @@ public class AdminController {
     @GetMapping("/admin/report/user/{userId}")
     public ResponseEntity<ResponseHelper> adminSearchByUserID(@PathVariable("userId") String userId, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) throws ThirdPartyIntegrationException {
 
-        Page<TransactionDetail> transactionDetailPage = billsPaymentService.search(userId,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
+        Map<String, Object> transactionDetailPage = billsPaymentService.search(userId,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
@@ -147,6 +148,18 @@ public class AdminController {
         System.out.println("file ::: " + file.getName());
         return billsPaymentService.processBulkPayment(file, request, token);
     }
+
+    @ApiOperation(value = "Admin Get Users Transaction Count : This API is used to get all transaction report by user")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @GetMapping("/admin/get-transaction-count/{username}")
+    public ResponseEntity<ResponseHelper> getTransactionCount(@PathVariable String username) throws ThirdPartyIntegrationException {
+
+        long transactionDetailPage = billsPaymentService.findByUsername(username);
+        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
+    }
+
 
 
 

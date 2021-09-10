@@ -37,7 +37,7 @@ public interface WalletFeignClient {
     ResponseEntity<String> getWayaCommissionWallet(@RequestHeader("Authorization") String token);
 
     // Tested and working well 30/10/2021 to be done today
-    @GetMapping("/api/v1/wallet/waya/account")
+    @GetMapping("/api/v1/wallet/waya/official/account") ///api/v1/wallet/waya/official/account api/v1/wallet/waya/account
     ResponseEntity<InfoResponseList> getWayaOfficialWallet(@RequestHeader("Authorization") String token);
 
 

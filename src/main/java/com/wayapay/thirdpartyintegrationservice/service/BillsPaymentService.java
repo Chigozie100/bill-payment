@@ -455,7 +455,7 @@ public class BillsPaymentService {
             value.setName(valueList.get(i).getName());
             value.setValue(valueList.get(i).getValue());
             message = "Your account has "+ "\n" +
-                    ""+"been credited with:" + paymentTransactionDetail.getAmount() +" \n" +
+                    ""+"been debited with:" + paymentTransactionDetail.getAmount() +" \n" +
                     "" + value.getValue();
 //            message = "name :" + value.getName() +"  \"<br>\"" +
 //            " \n" +  "Value : " + value.getValue();

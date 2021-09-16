@@ -109,10 +109,10 @@ public class AdminController {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful")
     })
-    @PostMapping("/admin/make-payment")
-    public ResponseEntity<ResponseHelper> adminMakeBillsPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, Authentication authentication) throws ThirdPartyIntegrationException, URISyntaxException {
+    @PostMapping("/admin/make-payment/{userId}")
+    public ResponseEntity<ResponseHelper> adminMakeBillsPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, @PathVariable String userId) throws ThirdPartyIntegrationException, URISyntaxException {
 
-        PaymentResponse transactionDetailPage = billsPaymentService.processPayment(paymentRequest, username, token);
+        PaymentResponse transactionDetailPage = billsPaymentService.processPayment(paymentRequest, userId, token);
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 

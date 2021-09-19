@@ -33,17 +33,17 @@ pipeline {
          }
     
 		
-		stage('Code Quality Check via SonarQube') {
-			steps {
-				script {
-        				def scannerHome = tool 'Jenkins-sonar-scanner';
-					def mvn         = tool 'mvn3.6.3'
-					withSonarQubeEnv("Jenkins-sonar-scanner") {
-          					sh "${mvn}/bin/mvn sonar:sonar"
-					}
-        			}
-      			}
-   		}
+		//stage('Code Quality Check via SonarQube') {
+		//	steps {
+		//		script {
+        	//			def scannerHome = tool 'Jenkins-sonar-scanner';
+		//			def mvn         = tool 'mvn3.6.3'
+		//			withSonarQubeEnv("Jenkins-sonar-scanner") {
+          	//				sh "${mvn}/bin/mvn sonar:sonar"
+		//			}
+        	//		}
+      		//	}
+   		//}
 	    
 		//stage("Quality Gate") {
 			//steps {

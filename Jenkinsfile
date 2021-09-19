@@ -21,7 +21,6 @@ pipeline {
 		
 		 stage('Checkout') {
             		steps {
-				cleanWs()
 				sh "git branch"
                 		sh "ls -lart ./*"
             		}

@@ -28,6 +28,7 @@ pipeline {
 		
         	stage('compile') {
             		steps {
+				cleanWs()
                			sh "mvn clean install"
             		}
          }

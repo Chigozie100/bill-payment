@@ -199,18 +199,20 @@ public class BillsPaymentService {
                 pushINAPP(paymentTransactionDetail,token,paymentResponse);
                 pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
 
-                if (userProfileResponse.isSmsAlertConfig()){
-                    SMSChargeResponse smsChargeResponse = operationService.getSMSCharges(token); // debit the customer for SMS
-                    if (smsChargeResponse != null){
-                        try {
-                            sendSMSOperation(userProfileResponse,paymentTransactionDetail, paymentRequest, fee, userName, paymentRequest, paymentResponse, token, smsChargeResponse);
-                        } catch (ExecutionException e) {
-                            e.printStackTrace();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+                pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
+
+//                if (userProfileResponse.isSmsAlertConfig()){
+//                    SMSChargeResponse smsChargeResponse = operationService.getSMSCharges(token); // debit the customer for SMS
+//                    if (smsChargeResponse != null){
+//                        try {
+//                            sendSMSOperation(userProfileResponse,paymentTransactionDetail, paymentRequest, fee, userName, paymentRequest, paymentResponse, token, smsChargeResponse);
+//                        } catch (ExecutionException e) {
+//                            e.printStackTrace();
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                }
 
                 Map<String,String> map = new HashMap<>();
                 map.put("message", "Making Bills Payment");
@@ -317,7 +319,7 @@ public class BillsPaymentService {
         if (ExcelHelper.hasExcelFormat(file)) {
             paymentResponse = buildBulkPayment(ExcelHelper.excelToPaymentRequest(file.getInputStream(),
                     file.getOriginalFilename()), request, token);
-            log.info("file back frome extraction ::: " + paymentResponse);
+            log.info("file back from extraction ::: " + paymentResponse);
         }
 
         // build payment request
@@ -325,7 +327,7 @@ public class BillsPaymentService {
     }
 
     PaymentResponse buildBulkPayment(BulkBillsPaymentDTO bulkBillsPaymentDTO,HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException {
-        log.info("Just entered Here we are ");
+
         log.info("Just entered Here we are " + bulkBillsPaymentDTO);
 
         PaymentResponse paymentResponse = new PaymentResponse();
@@ -357,10 +359,10 @@ public class BillsPaymentService {
         return paymentResponse;
     }
 
-    public ResponseEntity<?> processBulkPaymentForm(MultipleFormPaymentRequest  multipleFormPaymentRequest, String username, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+    public ResponseEntity<?> processBulkPaymentForm(List<MultiplePaymentRequest>  multipleFormPaymentRequest, String username, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
         System.out.println("multipleFormPaymentRequest ::: {} " + multipleFormPaymentRequest);
-        List<MultiplePaymentRequest> paymentRequestList = multipleFormPaymentRequest.getPaymentRequest();
+        List<MultiplePaymentRequest> paymentRequestList = multipleFormPaymentRequest;
         PaymentResponse paymentResponse = null;
         MultiplePaymentRequest paymentRequest = new MultiplePaymentRequest();
         for (int i = 0; i < paymentRequestList.size(); i++) {
@@ -455,7 +457,7 @@ public class BillsPaymentService {
             value.setName(valueList.get(i).getName());
             value.setValue(valueList.get(i).getValue());
             message = "Your account has "+ "\n" +
-                    ""+"been debited with:" + paymentTransactionDetail.getAmount() +" \n" +
+                    ""+"been credited with:" + paymentTransactionDetail.getAmount() +" \n" +
                     "" + value.getValue();
 //            message = "name :" + value.getName() +"  \"<br>\"" +
 //            " \n" +  "Value : " + value.getValue();

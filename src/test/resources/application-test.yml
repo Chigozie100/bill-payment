@@ -1,0 +1,95 @@
+server:
+  port: ${SERVER_PORT}
+spring:
+  cache:
+    type: redis
+    redis:
+      time-to-live: 2400000
+      cache-null-values: false
+      use-key-prefix: true
+      key-prefix: tokens
+  session:
+    store-type: jdbc
+  kafka:
+    producer:
+      bootstrap-servers: ${BOOTSTRAP_SERVICE}
+      key-serializer: ${KEY_SERIALIZER}
+      value-serializer: ${VALUE_SERIALIZER}
+      auto-offset-reset: earliest
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        show-sql: true
+        jdbc:
+          time_zone: UTC
+
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+
+  datasource:
+    url: jdbc:h2:mem:db;DB_CLOSE_DELAY=-1
+    username: sa
+    password: sa
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+security:
+  basic:
+    enabled: false
+
+app:
+  config:
+    quickteller:
+      base-url: ${QUICK_TELLER_BASE:https://sandbox.interswitchng.com}
+      client-id: ${QUICK_TELLER_CLIENT_ID:IKIA9614B82064D632E9B6418DF358A6A4AEA84D7218}
+      secret: ${QUICK_TELLER_SECRET:XCTiBtLy1G9chAnyg0z3BcaFK4cVpwDg/GTw2EmjTZ8=}
+      account-number: ${QUICK_TELLER_ACCOUNT_NUMBER:0000000001}
+      biller-category-url: ${QUICK_TELLER_BILLER_CATEGORY_URL:/api/v2/quickteller/categorys}
+      billers-url: ${QUICK_TELLER_BILLERS_URL:/api/v2/quickteller/billers}
+      biller-payment-item-url: ${QUICK_TELLER_BILLER_PAYMENT_ITEM_URL:/api/v2/quickteller/billers/{billerId}/paymentitems}
+      customer-validation-url: ${QUICK_TELLER_CUSTOMER_VALIDATION_URL:/api/v2/quickteller/customers/validations}
+      send-payment-advice-url: ${QUICK_TELLER_SEND_PAYMENT_ADVICE_URL:/api/v2/quickteller/payments/advices}
+      transaction-ref-code: ${QUICK_TELLER_TRANSACTION_REF_CODE:1453}
+      terminal-id: ${QUICK_TELLER_TERMIAL_ID:3DMO0001}
+    baxi:
+      base-url: ${BAXI_BASE:https://payments.baxipay.com.ng/api/baxipay}
+      x-api-key: ${BAXI_X_API_KEY:5adea9-044a85-708016-7ae662-646d59}
+      agent-code: ${BAXI_AGENT_CODE:69}
+      account-number: ${BAXI_ACCOUNT_NUMBER:0000000001}
+    itex:
+      base-url: ${ITEX_BASE:http://197.253.19.78:1880/api}
+      wallet-id: ${ITEX_WALLET_ID:35738987}
+      username: ${ITEX_USERNAME:payvice.waya@wayapaychat.com}
+      password: ${ITEX_PASSWORD:Waya203040!!}
+      account-number: ${ITEX_ACCOUNT_NUMBER:0000000001}
+      pay-vice-pin: ${ITEX_PAY_VIA_PIN:4444}
+      unique-api-identifier: ${ITEX_UNIQUE_API_IDENTIFIER:wayapaychat}
+      hmacsha256key: ${ITEX_HMACSHA256KEY:3de02eaf333f7cefde86677d60e5e47f}
+
+    dispute:
+      base-url: ${DISPUTE_BASE:http://46.101.41.187:9400/complaint-service/dispute}
+    wallet:
+      base-url: ${WALLET_BASE:http://157.230.223.54:9009}
+    auth:
+      base-url: ${AUTH_BASE:http://68.183.60.114:8059}
+    notification:
+      base-url: ${NOTIFICATION_BASE:http://68.183.60.114:8085/notification-service}
+    log-service:
+      base-url: ${LOG_SERVICE_BASE:http://46.101.41.187:8083 }
+
+    kafka:
+      transaction-topic: ${TRANSACTION_TOPIC:transaction}
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER_URL}
+    service-url:
+      default-zone: ${EUREKA_SERVER_URL}
+  instance:
+    preferIpAddress: true

@@ -1,3 +1,10 @@
+server:
+  port: ${SERVER_PORT}
+  error:
+    include-message: always
+  servlet:
+    context-path: /billspayment-service
+
 spring:
   application:
     name: bills-payment-service
@@ -26,22 +33,14 @@ spring:
       key-serializer: ${KEY_SERIALIZER}
       value-serializer: ${VALUE_SERIALIZER}
 
-
-server:
-  port: ${SERVER_PORT}
-  error:
-    include-message: always
-  servlet:
-    context-path: /billspayment-service
-
 eureka:
   client:
     serviceUrl:
       defaultZone: ${EUREKA_SERVER_URL}
     service-url:
       default-zone: ${EUREKA_SERVER_URL}
-  register-with-eureka: false
-  fetch-registry: false
+    register-with-eureka: false
+    fetch-registry: false
   instance:
     preferIpAddress: true
 

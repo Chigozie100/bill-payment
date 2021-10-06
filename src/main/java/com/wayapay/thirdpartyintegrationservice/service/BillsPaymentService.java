@@ -226,8 +226,6 @@ public class BillsPaymentService {
                     }
                 });
 
-
-
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
                 operationService.saveFailedTransactionDetail(userProfileResponse,paymentRequest, fee, null, userName, null);
@@ -254,25 +252,25 @@ public class BillsPaymentService {
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token)){
+        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token)) {
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processMultiplePayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
                 PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetailMultiple(userProfileResponse, paymentRequest, fee, paymentResponse, userName, transactionId);
                 // notify customer
-                pushINAPP(paymentTransactionDetail,token,paymentResponse);
-                pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
+                pushINAPP(paymentTransactionDetail, token, paymentResponse);
+                pushEMAIL(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
                 // check if SMS is enabled
-                if (userProfileResponse.isSmsAlertConfig()){
-                    log.info("USER ENABLED SMS ALERT :::::: " + userProfileResponse.isSmsAlertConfig());
-                    SMSChargeResponse smsChargeResponse = operationService.getSMSCharges(token); // debit the customer for SMS
-                    log.info("smsChargeResponse ::::: {} :: " + smsChargeResponse);
-                    if (smsChargeResponse != null){
-                        log.info(" lets continue ::::: {} :: 2" + smsChargeResponse);
-                        sendSMSOperationMultiple(userProfileResponse,paymentTransactionDetail, paymentRequest, fee, userName, paymentRequest, paymentResponse, token, smsChargeResponse);
-                    }
-                }
+//                if (userProfileResponse.isSmsAlertConfig()){
+//                    log.info("USER ENABLED SMS ALERT :::::: " + userProfileResponse.isSmsAlertConfig());
+//                    SMSChargeResponse smsChargeResponse = operationService.getSMSCharges(token); // debit the customer for SMS
+//                    log.info("smsChargeResponse ::::: {} :: " + smsChargeResponse);
+//                    if (smsChargeResponse != null){
+//                        log.info(" lets continue ::::: {} :: 2" + smsChargeResponse);
+//                        sendSMSOperationMultiple(userProfileResponse,paymentTransactionDetail, paymentRequest, fee, userName, paymentRequest, paymentResponse, token, smsChargeResponse);
+//                    }
+//                }
                 log.info("This is the status of userAlert config {} :::" + userProfileResponse.isSmsAlertConfig());
 
                 /**
@@ -282,7 +280,7 @@ public class BillsPaymentService {
                  */
                 //payCommissionToMerchant(token, userName, fee);
                 //logTransaction(paymentRequest,paymentResponse,token,userName);
-                Map<String,String> map = new HashMap<>();
+                Map<String, String> map = new HashMap<>();
                 map.put("message", "Making Bulk Bills Payment");
                 map.put("userId", userName);
                 map.put("module", "Bills Payment");
@@ -301,10 +299,6 @@ public class BillsPaymentService {
                 //   disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
 
                 throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
             }
         }
 

@@ -178,8 +178,11 @@ public class BillsPaymentService {
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, ERROR_MESSAGE);
         }
     }
+    public void adminProcessPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
-    public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+    }
+
+        public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
 
@@ -200,19 +203,6 @@ public class BillsPaymentService {
                 pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
 
                 pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
-
-//                if (userProfileResponse.isSmsAlertConfig()){
-//                    SMSChargeResponse smsChargeResponse = operationService.getSMSCharges(token); // debit the customer for SMS
-//                    if (smsChargeResponse != null){
-//                        try {
-//                            sendSMSOperation(userProfileResponse,paymentTransactionDetail, paymentRequest, fee, userName, paymentRequest, paymentResponse, token, smsChargeResponse);
-//                        } catch (ExecutionException e) {
-//                            e.printStackTrace();
-//                        } catch (InterruptedException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                }
 
                 Map<String,String> map = new HashMap<>();
                 map.put("message", "Making Bills Payment");

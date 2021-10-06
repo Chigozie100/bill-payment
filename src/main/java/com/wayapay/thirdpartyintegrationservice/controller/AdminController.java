@@ -109,10 +109,10 @@ public class AdminController {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful")
     })
-    @PostMapping("/admin/make-payment")
-    public ResponseEntity<ResponseHelper> adminMakeBillsPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, Authentication authentication) throws ThirdPartyIntegrationException, URISyntaxException {
+    @PostMapping("/admin/make-payment/{userId}")
+    public ResponseEntity<ResponseHelper> adminMakeBillsPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, @PathVariable String userId) throws ThirdPartyIntegrationException, URISyntaxException {
 
-        PaymentResponse transactionDetailPage = billsPaymentService.processPayment(paymentRequest, username, token);
+        PaymentResponse transactionDetailPage = billsPaymentService.processPayment(paymentRequest, userId, token);
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
@@ -133,7 +133,7 @@ public class AdminController {
     @ApiOperation(value = "Bulk Bills Payment: This API is used to by the admin to pay bills on behalf of users using web form", tags = {"ADMIN"})
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Response Headers")})
     @PostMapping(path = "/admin/bulk-user-bills-payment")
-    public ResponseEntity<?> makeBulkBillsPaymentToUsersWithWebForm(@Valid @RequestBody MultipleFormPaymentRequest multipleFormPaymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, URISyntaxException {
+    public ResponseEntity<?> makeBulkBillsPaymentToUsersWithWebForm(@Valid @RequestBody List<MultiplePaymentRequest> multipleFormPaymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, URISyntaxException {
         return billsPaymentService.processBulkPaymentForm(multipleFormPaymentRequest, username, token);
     }
 

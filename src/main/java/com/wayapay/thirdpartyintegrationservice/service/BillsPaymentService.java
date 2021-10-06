@@ -178,8 +178,11 @@ public class BillsPaymentService {
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, ERROR_MESSAGE);
         }
     }
+    public void adminProcessPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
-    public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+    }
+
+        public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
 
@@ -199,18 +202,7 @@ public class BillsPaymentService {
                 pushINAPP(paymentTransactionDetail,token,paymentResponse);
                 pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
 
-                if (userProfileResponse.isSmsAlertConfig()){
-                    SMSChargeResponse smsChargeResponse = operationService.getSMSCharges(token); // debit the customer for SMS
-                    if (smsChargeResponse != null){
-                        try {
-                            sendSMSOperation(userProfileResponse,paymentTransactionDetail, paymentRequest, fee, userName, paymentRequest, paymentResponse, token, smsChargeResponse);
-                        } catch (ExecutionException e) {
-                            e.printStackTrace();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+                pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
                 Map<String,String> map = new HashMap<>();
                 map.put("message", "Making Bills Payment");
@@ -223,8 +215,6 @@ public class BillsPaymentService {
                         e.printStackTrace();
                     }
                 });
-
-
 
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
@@ -252,25 +242,25 @@ public class BillsPaymentService {
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token)){
+        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token)) {
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processMultiplePayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
                 PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetailMultiple(userProfileResponse, paymentRequest, fee, paymentResponse, userName, transactionId);
                 // notify customer
-                pushINAPP(paymentTransactionDetail,token,paymentResponse);
-                pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
+                pushINAPP(paymentTransactionDetail, token, paymentResponse);
+                pushEMAIL(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
                 // check if SMS is enabled
-                if (userProfileResponse.isSmsAlertConfig()){
-                    log.info("USER ENABLED SMS ALERT :::::: " + userProfileResponse.isSmsAlertConfig());
-                    SMSChargeResponse smsChargeResponse = operationService.getSMSCharges(token); // debit the customer for SMS
-                    log.info("smsChargeResponse ::::: {} :: " + smsChargeResponse);
-                    if (smsChargeResponse != null){
-                        log.info(" lets continue ::::: {} :: 2" + smsChargeResponse);
-                        sendSMSOperationMultiple(userProfileResponse,paymentTransactionDetail, paymentRequest, fee, userName, paymentRequest, paymentResponse, token, smsChargeResponse);
-                    }
-                }
+//                if (userProfileResponse.isSmsAlertConfig()){
+//                    log.info("USER ENABLED SMS ALERT :::::: " + userProfileResponse.isSmsAlertConfig());
+//                    SMSChargeResponse smsChargeResponse = operationService.getSMSCharges(token); // debit the customer for SMS
+//                    log.info("smsChargeResponse ::::: {} :: " + smsChargeResponse);
+//                    if (smsChargeResponse != null){
+//                        log.info(" lets continue ::::: {} :: 2" + smsChargeResponse);
+//                        sendSMSOperationMultiple(userProfileResponse,paymentTransactionDetail, paymentRequest, fee, userName, paymentRequest, paymentResponse, token, smsChargeResponse);
+//                    }
+//                }
                 log.info("This is the status of userAlert config {} :::" + userProfileResponse.isSmsAlertConfig());
 
                 /**
@@ -280,7 +270,7 @@ public class BillsPaymentService {
                  */
                 //payCommissionToMerchant(token, userName, fee);
                 //logTransaction(paymentRequest,paymentResponse,token,userName);
-                Map<String,String> map = new HashMap<>();
+                Map<String, String> map = new HashMap<>();
                 map.put("message", "Making Bulk Bills Payment");
                 map.put("userId", userName);
                 map.put("module", "Bills Payment");
@@ -299,10 +289,6 @@ public class BillsPaymentService {
                 //   disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
 
                 throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
             }
         }
 
@@ -317,7 +303,7 @@ public class BillsPaymentService {
         if (ExcelHelper.hasExcelFormat(file)) {
             paymentResponse = buildBulkPayment(ExcelHelper.excelToPaymentRequest(file.getInputStream(),
                     file.getOriginalFilename()), request, token);
-            log.info("file back frome extraction ::: " + paymentResponse);
+            log.info("file back from extraction ::: " + paymentResponse);
         }
 
         // build payment request
@@ -325,7 +311,7 @@ public class BillsPaymentService {
     }
 
     PaymentResponse buildBulkPayment(BulkBillsPaymentDTO bulkBillsPaymentDTO,HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException {
-        log.info("Just entered Here we are ");
+
         log.info("Just entered Here we are " + bulkBillsPaymentDTO);
 
         PaymentResponse paymentResponse = new PaymentResponse();
@@ -357,10 +343,10 @@ public class BillsPaymentService {
         return paymentResponse;
     }
 
-    public ResponseEntity<?> processBulkPaymentForm(MultipleFormPaymentRequest  multipleFormPaymentRequest, String username, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+    public ResponseEntity<?> processBulkPaymentForm(List<MultiplePaymentRequest>  multipleFormPaymentRequest, String username, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
         System.out.println("multipleFormPaymentRequest ::: {} " + multipleFormPaymentRequest);
-        List<MultiplePaymentRequest> paymentRequestList = multipleFormPaymentRequest.getPaymentRequest();
+        List<MultiplePaymentRequest> paymentRequestList = multipleFormPaymentRequest;
         PaymentResponse paymentResponse = null;
         MultiplePaymentRequest paymentRequest = new MultiplePaymentRequest();
         for (int i = 0; i < paymentRequestList.size(); i++) {

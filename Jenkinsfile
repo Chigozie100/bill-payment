@@ -1,6 +1,6 @@
 pipeline {
     environment {
-    registry = "wayapaychat-container-registry/waya-billspayment-model"
+    registry = "wayapaychat-container-registry/waya-billspayment-model-staging"
     registryCredential = 'DigitalOcean-registry-for-development'
     dockerImage = ''
     }
@@ -92,7 +92,7 @@ pipeline {
 	    
     stage ('Starting the deployment job') {
 	    steps {
-                build job: 'waya-2.0-bills-payment-service-deploy-dev', 
+                build job: 'waya-staging-services/bills-payment-service-deploy', 
 		parameters: [[$class: 'StringParameterValue', name: 'FROM_BUILD', value: "${BUILD_NUMBER}"]
 	        ]
 	    }	    

@@ -5,6 +5,7 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.BillsPaymentService;
+import com.wayapay.thirdpartyintegrationservice.service.OperationService;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -37,6 +38,7 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 public class AdminController {
 
     private final BillsPaymentService billsPaymentService;
+    private final OperationService operationService;
 
 
 
@@ -61,9 +63,9 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @GetMapping("/biller/report/filter/{transaction_status}")
-    public ResponseEntity<ResponseHelper> searchAndFilterTransactionStatus(@PathVariable("transaction_type") Boolean transaction_type, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseHelper> searchAndFilterTransactionStatus(@PathVariable("transaction_status") boolean transaction_status, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) throws ThirdPartyIntegrationException {
 
-        Page<TransactionDetail> transactionDetailPage = billsPaymentService.searchAndFilterTransactionStatus(transaction_type,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
+        Page<TransactionDetail> transactionDetailPage = billsPaymentService.searchAndFilterTransactionStatus(transaction_status,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
@@ -159,6 +161,22 @@ public class AdminController {
         long transactionDetailPage = billsPaymentService.findByUsername(username);
         return ResponseEntity.ok(transactionDetailPage);
     }
+
+
+
+    @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @PostMapping("/admin/refund-failed-transaction")
+    public ResponseEntity<ResponseHelper> refundFailedTransaction(@Valid @RequestBody TransferFromOfficialToMainWallet transfer, @PathVariable String userId, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
+
+        List<WalletTransactionPojo> transactionDetailPage = operationService.refundFailedTransaction(transfer, token);
+        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
+    }
+
+
+
 
 
 

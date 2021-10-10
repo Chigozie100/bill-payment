@@ -84,6 +84,8 @@ app:
       base-url: ${NOTIFICATION_BASE}
     log-service:
       base-url: ${LOG_SERVICE_BASE}
+    commission:
+      base-url: ${COMMISSION_BASE}
 
     kafka:
       transaction-topic: ${TRANSACTION_TOPIC}

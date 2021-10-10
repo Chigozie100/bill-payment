@@ -9,31 +9,31 @@ import com.wayapay.thirdpartyintegrationservice.model.ThirdParty;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
+import com.wayapay.thirdpartyintegrationservice.service.commission.MerchantCommissionTrackerDto;
 import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
 import com.wayapay.thirdpartyintegrationservice.service.itex.ItexService;
 import com.wayapay.thirdpartyintegrationservice.service.notification.*;
-import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 import com.wayapay.thirdpartyintegrationservice.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -54,6 +54,8 @@ public class BillsPaymentService {
     private final DisputeService disputeService;
     private final OperationService operationService;
     private final BillerConsumerFeeService billerConsumerFeeService;
+    private final CommissionOperationService commissionOperationService;
+    private final NotificationService notificationService;
 
     private final CategoryService categoryService;
     private final BillerService billerService;
@@ -199,10 +201,29 @@ public class BillsPaymentService {
                 PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
 
                 // call the receipt service
-                pushINAPP(paymentTransactionDetail,token,paymentResponse);
-                pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        notificationService.pushINAPP(paymentTransactionDetail,token,paymentResponse);
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        notificationService.pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
+                CompletableFuture.runAsync(() -> {
+                    try {
+                       notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
 
-                pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
+
 
                 Map<String,String> map = new HashMap<>();
                 map.put("message", "Making Bills Payment");
@@ -268,7 +289,15 @@ public class BillsPaymentService {
                  * get commission for merchant user
                  * credit the merchant user's commission wallet
                  */
-                //payCommissionToMerchant(token, userName, fee);
+
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        payCommissionToMerchant(token, userName, fee);
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
+
                 //logTransaction(paymentRequest,paymentResponse,token,userName);
                 Map<String, String> map = new HashMap<>();
                 map.put("message", "Making Bulk Bills Payment");
@@ -337,7 +366,6 @@ public class BillsPaymentService {
 
             processMultiplePayment(paymentRequest, mPayUser.getUserId(), token);
 
-
         }
 
         return paymentResponse;
@@ -373,7 +401,8 @@ public class BillsPaymentService {
     }
 
 
-    private void pushINAPP(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse) throws ThirdPartyIntegrationException {
+
+    public void pushINAPP(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse) throws ThirdPartyIntegrationException {
         InAppEvent inAppEvent = buildInAppNotificationObject(paymentTransactionDetail, token, EventType.IN_APP, paymentResponse);
         try {
            operationService.sendInAppNotification(inAppEvent, token);
@@ -522,7 +551,7 @@ public class BillsPaymentService {
 
 
     public Map<String, Object> search(String username, int pageNumber, int pageSize){
-        Pageable paging = PageRequest.of(pageNumber, pageSize);
+        Pageable paging = getPageable(pageNumber, pageSize);
         Page<TransactionDetail> transactionDetailPage = null;
         List<TransactionDetail> transactionDetailList = new ArrayList<>();
 
@@ -540,7 +569,7 @@ public class BillsPaymentService {
 
 
     public Map<String, Object> searchByReferralCode(String referralCode, int page, int size){
-        Pageable paging = PageRequest.of(page, size);
+        Pageable paging = getPageable(page, size);
         Page<TransactionDetail> transactionDetailPage = null;
         List<TransactionDetail> transactionDetailList = new ArrayList<>();
 
@@ -611,9 +640,11 @@ public class BillsPaymentService {
 //            }
 //        }
 
-
-
         return getTransactionMap(transactionDetailList,transactionDetailPage);
+    }
+
+    private Pageable getPageable(int page, int size) {
+        return PageRequest.of(page, size);
     }
 
     private Map<String, Object> getTransactionMap(List<TransactionDetail> transactionDetailList, Page<TransactionDetail> transactionDetailPage){
@@ -636,11 +667,7 @@ public class BillsPaymentService {
     }
 
 
-    public Page<TransactionDetail> searchAndFilterTransactionStatus(Boolean status, int pageNumber, int pageSize){
-        if (CommonUtils.isEmpty(status.toString())){
-            return paymentTransactionRepo.getAllTransaction(PageRequest.of(pageNumber, pageSize));
-        }
-
+    public Page<TransactionDetail> searchAndFilterTransactionStatus(boolean status, int pageNumber, int pageSize){
         return paymentTransactionRepo.getAllTransactionBySuccessful(status,PageRequest.of(pageNumber, pageSize));
     }
 
@@ -652,7 +679,6 @@ public class BillsPaymentService {
         return paymentTransactionRepo.getAllTransactionByUserAccountNumber(userAccountNumber,PageRequest.of(pageNumber, pageSize));
     }
 
-
     public TransactionDetail searchTransactionByTransactionID(String transactionId) throws ThirdPartyIntegrationException {
         try{
             return paymentTransactionRepo.getAllTransactionByTransactionId(transactionId);
@@ -662,11 +688,92 @@ public class BillsPaymentService {
 
     }
 
+    //    //check for the userType whos Item has been purchased
+//    // take percentage from payment and send as commission to the Agent
+//    // get commission from commission user table
+//
+//    // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment
+    public void getCommissionForMakingBillsPayment(String token, String userId) throws ThirdPartyIntegrationException {
+        UserType userType = getUserType();
+
+        if (userType !=null){
+            MerchantCommissionTrackerDto trackerDto= new MerchantCommissionTrackerDto();
+            trackerDto.setUserId(userId);
+            trackerDto.setUserType(userType);
+            trackerDto.setCommissionType(CommissionType.PERCENTAGE);
+            trackerDto.setCommissionValue(BigDecimal.ONE.doubleValue());
+            trackerDto.setTransactionType(TransactionType.BILLS_PAYMENT);
+
+            commissionOperationService.saveMerchantCommission(trackerDto,token);
+        }
+
+    }
+
+
+    private UserType getUserType(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Set<String> roles = authentication.getAuthorities().stream()
+                .map(r -> r.getAuthority()).collect(Collectors.toSet());
+        UserType  userType = null;
+        if (Arrays.asList(roles).contains(UserType.ROLE_CORP)) {
+         userType = UserType.ROLE_CORP;
+        }
+        return userType;
+
+    }
+
+
+
+
+
+//as a merchant user anytime i sell billspayment a certain % amount of the item sold amount is transferred on real time to my commission wallet from WAYA
+    public String payCommissionToMerchant(String token, String userName, BigDecimal fee) throws ThirdPartyIntegrationException {
+        UserType userType = null;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Set<String> roles = authentication.getAuthorities().stream()
+                .map(r -> r.getAuthority()).collect(Collectors.toSet());
+        for(String role : roles){
+            System.out.println("###########  HERE stock ######### " +role);
+            if (UserType.ROLE_CORP.equals(role)){
+                userType = UserType.ROLE_CORP;
+            }else if (UserType.ROLE_CORP_ADMIN.equals(role)){
+                userType = UserType.ROLE_CORP_ADMIN;
+            }else{
+                return null;
+            }
+        }
+        boolean corp_user_aggre = authentication.getAuthorities().stream()
+                .anyMatch(r -> r.getAuthority().equals(UserType.ROLE_CORP));
+        boolean corp_user_agent = authentication.getAuthorities().stream()
+                .anyMatch(r -> r.getAuthority().equals(UserType.ROLE_CORP_ADMIN));
+
+
+        PayRequest payRequest = new PayRequest();
+        payRequest.setAmount(fee);
+        if (corp_user_aggre || corp_user_agent ){
+
+             commissionOperationService.payUserCommission(userType,token,userName); // log commission
+            // save this transaction on commission service
+        }
+            //commissionOperationService.payUserCommission(userType,token,userName); // log commission
+
+        return null;
+    }
+
+    //check for the userType who's Item has been purchased
+    public ThirdParty checkCustomerWhosItemIsBeanPurchased(){
+        ThirdParty thirdParty = new ThirdParty();
+
+        return thirdParty;
+    }
+
     //ABILITY for waya admin with the right access and permission to select which of the waya official account to make the billspayment from
     public List<NewWalletResponse> adminSelectWayaOfficialAccount(String token) throws ThirdPartyIntegrationException {
         List<NewWalletResponse> newWalletResponses = operationService.getWayaOfficialWallet(token);
         return newWalletResponses;
     }
+
+    //As a an agent aggregator user, I should receive a certain % amount of commission from WAYA when the agent that signed up with my referral code has received a commision from WAYA for the sell of billspayment
 
 
 

@@ -62,6 +62,12 @@ class BillsPaymentServiceTest {
 
     @Autowired
     private ThirdPartyService thirdPartyService;
+
+    @Autowired
+    private CommissionOperationService commissionOperationService;
+
+    @Autowired
+    private NotificationService notificationService;
 //
 //    @Autowired
 //    private ProfileFeignClient profileFeignClient;
@@ -72,7 +78,7 @@ class BillsPaymentServiceTest {
 
     @BeforeEach
     void setUp() {
-        billsPaymentService = new BillsPaymentService(itexService, baxiService, quickTellerService, paymentTransactionRepo, disputeService, operationService, billerConsumerFeeService, categoryService, billerService, thirdPartyService);
+        billsPaymentService = new BillsPaymentService(itexService, baxiService, quickTellerService, paymentTransactionRepo, disputeService, operationService, billerConsumerFeeService, commissionOperationService, notificationService, categoryService, billerService, thirdPartyService);
     }
 
     @Test

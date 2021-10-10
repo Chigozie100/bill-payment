@@ -179,26 +179,27 @@ public class OperationService {
 
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Boolean>  smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
-        ResponseEntity<ResponseObj>  responseEntity = null;
 
-        String checkSMSGateway = getActiveSMSGateway(token).getName();
+
+        //String checkSMSGateway = getActiveSMSGateway(token).getName();
         try {
 
-        switch(checkSMSGateway) {
-            case "ATALKING":
-                responseEntity = notificationFeignClient.smsNotifyUserAtalking(smsEvent,token);
-                break;
-            case "INFOBIP":
-                responseEntity = notificationFeignClient.smsNotifyUserInfobip(smsEvent,token);
-                break;
-            case "TWILIO":
-                responseEntity = notificationFeignClient.smsNotifyUserTwilio(smsEvent,token);
-                break;
-            default:
-                responseEntity = notificationFeignClient.smsNotifyUserTwilio(smsEvent,token);
-        }
+//        switch(checkSMSGateway) {
+//            case "ATALKING":
+//                responseEntity = notificationFeignClient.smsNotifyUserAtalking(smsEvent,token);
+//                break;
+//            case "INFOBIP":
+//                responseEntity = notificationFeignClient.smsNotifyUserInfobip(smsEvent,token);
+//                break;
+//            case "TWILIO":
+//                responseEntity = notificationFeignClient.smsNotifyUserTwilio(smsEvent,token);
+//                break;
+//            default:
+//                responseEntity = notificationFeignClient.smsNotifyUserTwilio(smsEvent,token);
+//        }
+            ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.smsNotifyUser(smsEvent,token);
 
-            ResponseObj infoResponse = (ResponseObj) responseEntity.getBody();
+            ResponseObj infoResponse = responseEntity.getBody();
             log.info("userProfileResponse sms sent status :: " +infoResponse.status);
             return CompletableFuture.completedFuture(infoResponse.status);
         } catch (Exception e) {
@@ -229,7 +230,7 @@ public class OperationService {
         //Get user default wallet
 
         ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getDefaultWallet(userName, token);
-        InfoResponse infoResponse = (InfoResponse) responseEntity.getBody();
+        InfoResponse infoResponse = responseEntity.getBody();
         NewWalletResponse mainWalletResponse = infoResponse.data;
 
         if (mainWalletResponse.getClr_bal_amt().doubleValue() < amount.doubleValue())
@@ -346,6 +347,29 @@ public class OperationService {
             }
 
         }
+
+
+    public List<WalletTransactionPojo> refundFailedTransaction(TransferFromOfficialToMainWallet transfer, String token) throws ThirdPartyIntegrationException {
+
+        try {
+            ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> response =  walletFeignClient.refundFailedTransaction(transfer,token);
+
+            ApiResponseBody<List<WalletTransactionPojo>> infoResponse = response.getBody();
+            List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
+            log.info("responseList " + mainWalletResponseList);
+
+            return mainWalletResponseList;
+        } catch (RestClientException e) {
+            System.out.println("Error is here " + e.getMessage());
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
+        }
+
+    }
+
+
+    public void viewAllFailedTransactions(){
+
+    }
 
 
     }

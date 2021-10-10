@@ -20,8 +20,8 @@ public interface PaymentTransactionRepo extends JpaRepository<PaymentTransaction
     @Query("select new com.wayapay.thirdpartyintegrationservice.dto.TransactionDetail(p.transactionId, p.thirdPartyName, p.amount, p.successful, p.category, p.biller, p.referralCode, p.paymentRequest, p.paymentResponse,  p.createdAt, p.username, p.email, p.userAccountNumber) from PaymentTransactionDetail p where p.referralCode =:referralCode order by p.createdAt desc ")
     List<TransactionDetail> getAllTransactionByReferralCodeGroupedBy(String referralCode);
 
-    @Query("select new com.wayapay.thirdpartyintegrationservice.dto.TransactionDetail(p.transactionId, p.thirdPartyName, p.amount, p.successful, p.category, p.biller, p.referralCode, p.paymentRequest, p.paymentResponse,  p.createdAt, p.username, p.email, p.userAccountNumber) from PaymentTransactionDetail p order by p.createdAt desc ")
-    Page<TransactionDetail> getAllTransactionBySuccessful(Boolean username, Pageable pageable);
+    @Query("select new com.wayapay.thirdpartyintegrationservice.dto.TransactionDetail(p.transactionId, p.thirdPartyName, p.amount, p.successful, p.category, p.biller, p.referralCode, p.paymentRequest, p.paymentResponse,  p.createdAt, p.username, p.email, p.userAccountNumber) from PaymentTransactionDetail p where  p.successful =:status order by p.createdAt desc ")
+    Page<TransactionDetail> getAllTransactionBySuccessful(boolean status, Pageable pageable);
 
     @Query("select new com.wayapay.thirdpartyintegrationservice.dto.TransactionDetail(p.transactionId, p.thirdPartyName, p.amount, p.successful, p.category, p.biller, p.referralCode, p.paymentRequest, p.paymentResponse,  p.createdAt, p.username, p.email, p.userAccountNumber) from PaymentTransactionDetail p order by p.createdAt desc ")
     Page<TransactionDetail> getAllTransactionByUserAccountNumber(String userAccountNumber, Pageable pageable);

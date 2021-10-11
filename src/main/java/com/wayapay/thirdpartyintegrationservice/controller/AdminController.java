@@ -121,7 +121,7 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @PostMapping("/admin/make-reversal-payment/{userId}")
-    public ResponseEntity<ResponseHelper> adminMakeReversalPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @PathVariable String userId, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, URISyntaxException {
+    public ResponseEntity<ResponseHelper> adminMakeReversalPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @PathVariable String userId, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token){
 
         PaymentResponse transactionDetailPage = null;
         //operationService.adminMakeReversalPayment(paymentRequest, userId, token);

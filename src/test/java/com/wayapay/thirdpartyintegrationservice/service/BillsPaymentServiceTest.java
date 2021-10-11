@@ -157,9 +157,9 @@ class BillsPaymentServiceTest {
         paymentRequest.setBillerId(customerValidationFormByBiller.getBillerId());
         paymentRequest.setAmount(getAmount(items));
 
-        PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZ2JlLnRlcnNlZXJAZ21haWwuY29tIiwiZXhwIjoxNjYxMzM0NzQ4fQ.7Bqa50jXVUu4r63nrAbGrqsrdERB4565yXT6rWRyuYM");
-//        assertThrows(ThirdPartyIntegrationException.class, () ->billsPaymentService.processPayment(paymentRequest, username, "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZ2JlLnRlcnNlZXJAZ21haWwuY29tIiwiZXhwIjoxNjYxMzM0NzQ4fQ.7Bqa50jXVUu4r63nrAbGrqsrdERB4565yXT6rWRyuYM"));
-        assertNotNull(paymentResponse);
+//        PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, "serial eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjpbeyJjcmVhdGVkQXQiOiIxNi0wNy0yMDIxIDA1OjE4OjQ3IiwidXBkYXRlZEF0IjoiMTYtMDctMjAyMSAwNToxODo0NyIsImNyZWF0ZWRCeSI6bnVsbCwibW9kaWZpZWRCeSI6bnVsbCwiaWQiOjksIm5hbWUiOiJST0xFX1VTRVIiLCJkZXNjcmlwdGlvbiI6IlVTRVIgUk9MRSJ9LHsiY3JlYXRlZEF0IjoiMTYtMDctMjAyMSAwNToxODo1NCIsInVwZGF0ZWRBdCI6IjE2LTA3LTIwMjEgMDU6MTg6NTQiLCJjcmVhdGVkQnkiOm51bGwsIm1vZGlmaWVkQnkiOm51bGwsImlkIjoxMiwibmFtZSI6IlJPTEVfQVBQX0FETUlOIiwiZGVzY3JpcHRpb24iOiJBUFBMSUNBVElPTiBBRE1JTiJ9XSwiaWQiOjEwLCJzdWIiOiJhZ2JlLnRlcnNlZXJAZ21haWwuY29tIiwiaWF0IjoxNjMzOTE4NDM4LCJleHAiOjE2NjU0NzYwMzh9.a7UTUPE4iKWGpo5h1G9OvFh_MZxf1FjosfRSUrO51QW_FxydIj2QYQcDzpkI73FRdxuEqFJDc31KBVPnknt60A");
+        assertThrows(ThirdPartyIntegrationException.class, () ->billsPaymentService.processPayment(paymentRequest, username, "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZ2JlLnRlcnNlZXJAZ21haWwuY29tIiwiZXhwIjoxNjYxMzM0NzQ4fQ.7Bqa50jXVUu4r63nrAbGrqsrdERB4565yXT6rWRyuYM"));
+//        assertNotNull(paymentResponse);
 
         //confirm that search is fine
         Map<String, Object> transactionDetails = billsPaymentService.search(username, 0, 10);

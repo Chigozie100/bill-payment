@@ -218,10 +218,23 @@ public class BillsPaymentService {
                 CompletableFuture.runAsync(() -> {
                     try {
                        notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
+
                     } catch (ThirdPartyIntegrationException e) {
                         e.printStackTrace();
                     }
                 });
+
+                getCommissionForMakingBillsPayment(token, userName);
+
+//                CompletableFuture.runAsync(() -> {
+//                    try {
+//
+//                    } catch (ThirdPartyIntegrationException e) {
+//                        e.printStackTrace();
+//                    }
+//                });
+
+
 
 
 
@@ -694,7 +707,9 @@ public class BillsPaymentService {
 //
 //    // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment
     public void getCommissionForMakingBillsPayment(String token, String userId) throws ThirdPartyIntegrationException {
+
         UserType userType = getUserType();
+        log.info("Billspyament:: {} ::: " + userType);
 
         if (userType !=null){
             MerchantCommissionTrackerDto trackerDto= new MerchantCommissionTrackerDto();
@@ -703,7 +718,6 @@ public class BillsPaymentService {
             trackerDto.setCommissionType(CommissionType.PERCENTAGE);
             trackerDto.setCommissionValue(BigDecimal.ONE.doubleValue());
             trackerDto.setTransactionType(TransactionType.BILLS_PAYMENT);
-
             commissionOperationService.saveMerchantCommission(trackerDto,token);
         }
 
@@ -715,18 +729,19 @@ public class BillsPaymentService {
         Set<String> roles = authentication.getAuthorities().stream()
                 .map(r -> r.getAuthority()).collect(Collectors.toSet());
         UserType  userType = null;
-        if (Arrays.asList(roles).contains(UserType.ROLE_CORP)) {
-         userType = UserType.ROLE_CORP;
+        for(String role : roles) {
+            if (role.equalsIgnoreCase("ROLE_"+UserType.ROLE_CORP)){
+                userType = UserType.ROLE_CORP;
+            }else if (role.equalsIgnoreCase("ROLE_"+UserType.ROLE_CORP_ADMIN)){
+                userType = UserType.ROLE_CORP;
+            }
         }
+
         return userType;
 
     }
 
-
-
-
-
-//as a merchant user anytime i sell billspayment a certain % amount of the item sold amount is transferred on real time to my commission wallet from WAYA
+    //as a merchant user anytime i sell billspayment a certain % amount of the item sold amount is transferred on real time to my commission wallet from WAYA
     public String payCommissionToMerchant(String token, String userName, BigDecimal fee) throws ThirdPartyIntegrationException {
         UserType userType = null;
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

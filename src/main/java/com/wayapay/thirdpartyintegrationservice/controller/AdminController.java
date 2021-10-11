@@ -40,9 +40,6 @@ public class AdminController {
     private final BillsPaymentService billsPaymentService;
     private final OperationService operationService;
 
-
-
-
     @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 8)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful")
@@ -163,13 +160,12 @@ public class AdminController {
     }
 
 
-
     @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful")
     })
     @PostMapping("/admin/refund-failed-transaction")
-    public ResponseEntity<ResponseHelper> refundFailedTransaction(@Valid @RequestBody TransferFromOfficialToMainWallet transfer, @PathVariable String userId, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseHelper> refundFailedTransaction(@Valid @RequestBody TransferFromOfficialToMainWallet transfer, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
 
         List<WalletTransactionPojo> transactionDetailPage = operationService.refundFailedTransaction(transfer, token);
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));

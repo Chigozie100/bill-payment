@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wayapay.thirdpartyintegrationservice.annotations.AuditPaymentOperation;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
+import com.wayapay.thirdpartyintegrationservice.model.BillsPaymentRefund;
 import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
+import com.wayapay.thirdpartyintegrationservice.repo.BillsPaymentRefundRepository;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseObj;
 import com.wayapay.thirdpartyintegrationservice.service.logactivity.LogFeignClient;
@@ -22,7 +24,6 @@ import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -39,6 +40,7 @@ public class OperationService {
     private final ProfileFeignClient profileFeignClient;
     private final NotificationFeignClient notificationFeignClient;
     private final LogFeignClient logFeignClient;
+    private final BillsPaymentRefundRepository billsPaymentRefundRepository;
 
 
 
@@ -46,7 +48,7 @@ public class OperationService {
         UserProfileResponse userProfileResponse = null;
       try {
             ResponseEntity<ProfileResponseObject> responseEntity = profileFeignClient.getUserProfile(userName, token);
-            ProfileResponseObject infoResponse = (ProfileResponseObject) responseEntity.getBody();
+            ProfileResponseObject infoResponse =  responseEntity.getBody();
             userProfileResponse = infoResponse.data;
             log.info("userProfileResponse :: " +userProfileResponse);
         } catch (Exception e) {
@@ -61,7 +63,7 @@ public class OperationService {
         try {
             ResponseEntity<ResponseObj<LogRequest>> response = logFeignClient.createLog(logRequest,token);
 
-            ResponseObj infoResponse = (ResponseObj) response.getBody();
+            ResponseObj infoResponse = response.getBody();
             LogRequest logRequest1 = (LogRequest) infoResponse.data;
             log.info("ResponseObj :: " +infoResponse.data);
             return logRequest1;
@@ -336,7 +338,7 @@ public class OperationService {
                 if (response.getStatusCode().isError()) {
                     throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, response.getStatusCode().toString());
                 }
-                InfoResponseList infoResponse = (InfoResponseList) response.getBody();
+                InfoResponseList infoResponse = response.getBody();
                 log.info("mainWalletResponse :: {} " +infoResponse.data);
                 List<NewWalletResponse> mainWalletResponse = infoResponse.data;
 
@@ -352,18 +354,45 @@ public class OperationService {
     public List<WalletTransactionPojo> refundFailedTransaction(TransferFromOfficialToMainWallet transfer, String token) throws ThirdPartyIntegrationException {
 
         try {
-            ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> response =  walletFeignClient.refundFailedTransaction(transfer,token);
 
-            ApiResponseBody<List<WalletTransactionPojo>> infoResponse = response.getBody();
+            Optional<TransactionDetail> transactionDetail = paymentTransactionRepo.findByTransactionId(transfer.getBillsPaymentTransactionId());
+            if (transactionDetail.isPresent()){
+
+            ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> responseEntity =  walletFeignClient.refundFailedTransaction(transfer,token);
+
+            ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
             List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
             log.info("responseList " + mainWalletResponseList);
 
+
+                if (responseEntity.getStatusCode().is2xxSuccessful()){
+                    saveBillsPaymentRefund(transfer);
+                }
+
             return mainWalletResponseList;
+
+            }
         } catch (RestClientException e) {
             System.out.println("Error is here " + e.getMessage());
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
         }
+        return null;
+    }
 
+
+
+    public void saveBillsPaymentRefund(TransferFromOfficialToMainWallet transfer) throws ThirdPartyIntegrationException {
+        try{
+            BillsPaymentRefund billsPaymentRefund = new BillsPaymentRefund();
+            billsPaymentRefund.setAmount(transfer.getAmount());
+            billsPaymentRefund.setUserId(transfer.getUserId());
+            billsPaymentRefund.setTransactionId(transfer.getBillsPaymentTransactionId());
+
+            billsPaymentRefundRepository.save(billsPaymentRefund);
+        } catch (Exception e) {
+            System.out.println("Error is here " + e.getMessage());
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
+        }
     }
 
 

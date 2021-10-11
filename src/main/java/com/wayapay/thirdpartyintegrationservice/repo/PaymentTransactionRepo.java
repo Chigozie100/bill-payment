@@ -6,8 +6,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PaymentTransactionRepo extends JpaRepository<PaymentTransactionDetail, Long> {
 
@@ -35,4 +37,12 @@ public interface PaymentTransactionRepo extends JpaRepository<PaymentTransaction
 
     @Query("select count(p.id) from PaymentTransactionDetail p where p.username =:username")
     long findByUsername(String username);
+
+
+    @Query("select new com.wayapay.thirdpartyintegrationservice.dto.TransactionDetail(p.transactionId, p.thirdPartyName, p.amount, p.successful, p.category, p.biller, p.referralCode, p.paymentRequest, p.paymentResponse, p.createdAt, p.username, p.email, p.userAccountNumber) from PaymentTransactionDetail p where p.id = ?1")
+     Optional<TransactionDetail> findByTransId(Long id);
+
+    @Query("select new com.wayapay.thirdpartyintegrationservice.dto.TransactionDetail(p.transactionId, p.thirdPartyName, p.amount, p.successful, p.category, p.biller, p.referralCode, p.paymentRequest, p.paymentResponse, p.createdAt, p.username, p.email, p.userAccountNumber) from PaymentTransactionDetail p where p.transactionId = ?1")
+    Optional<TransactionDetail> findByTransactionId(@Param("transactionId") String transactionId);
+
 }

@@ -181,6 +181,7 @@ public class CommissionOperationService {
         try {
             ResponseEntity<ApiResponseBody<MerchantCommissionTrackerDto>> responseEntity = commissionFeignClient.recordMerchantCommission(request,token);
             ApiResponseBody<MerchantCommissionTrackerDto> responseBody = responseEntity.getBody();
+            log.info("Billspyament:: {} in here saveMerchantCommission ::: " + responseBody.getData());
             return responseBody != null ? responseBody.getData() : null;
         }catch (Exception exception){
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, exception.getMessage());

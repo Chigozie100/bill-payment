@@ -27,7 +27,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -180,11 +179,11 @@ public class BillsPaymentService {
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, ERROR_MESSAGE);
         }
     }
-    public void adminProcessPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+    public void adminProcessPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
 
     }
 
-        public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+        public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
 
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
 
@@ -233,9 +232,6 @@ public class BillsPaymentService {
 //                        e.printStackTrace();
 //                    }
 //                });
-
-
-
 
 
                 Map<String,String> map = new HashMap<>();
@@ -708,7 +704,8 @@ public class BillsPaymentService {
 //    // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment
     public void getCommissionForMakingBillsPayment(String token, String userId) throws ThirdPartyIntegrationException {
 
-        UserType userType = getUserType();
+        UserType userType = getUserType() != null ? getUserType() : null;
+
         log.info("Billspyament:: {} ::: " + userType);
 
         if (userType !=null){
@@ -724,20 +721,30 @@ public class BillsPaymentService {
     }
 
 
-    private UserType getUserType(){
+    private UserType getUserType() throws ThirdPartyIntegrationException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Set<String> roles = authentication.getAuthorities().stream()
-                .map(r -> r.getAuthority()).collect(Collectors.toSet());
+        Set<String> roles = null;
+        try{
+           roles = authentication.getAuthorities().stream()
+                    .map(r -> r.getAuthority()).collect(Collectors.toSet());
+        }catch(Exception exception){
+            roles = Collections.singleton("ROLE_" + UserType.ROLE_CORP_ADMIN);
+            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, exception.getMessage());
+        }
+
         UserType  userType = null;
-        for(String role : roles) {
-            if (role.equalsIgnoreCase("ROLE_"+UserType.ROLE_CORP)){
-                userType = UserType.ROLE_CORP;
-            }else if (role.equalsIgnoreCase("ROLE_"+UserType.ROLE_CORP_ADMIN)){
-                userType = UserType.ROLE_CORP;
+        if (!roles.isEmpty() || roles !=null){
+            for(String role : roles) {
+                if (role.equalsIgnoreCase("ROLE_"+UserType.ROLE_CORP)){
+                    userType = UserType.ROLE_CORP;
+                }else if (role.equalsIgnoreCase("ROLE_"+UserType.ROLE_CORP_ADMIN)){
+                    userType = UserType.ROLE_CORP;
+                }
             }
         }
 
-        return userType;
+
+        return userType != null ? userType : null;
 
     }
 

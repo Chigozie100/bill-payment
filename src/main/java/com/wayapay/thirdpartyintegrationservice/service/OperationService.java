@@ -364,7 +364,6 @@ public class OperationService {
             List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
             log.info("responseList " + mainWalletResponseList);
 
-
                 if (responseEntity.getStatusCode().is2xxSuccessful()){
                     saveBillsPaymentRefund(transfer);
                 }

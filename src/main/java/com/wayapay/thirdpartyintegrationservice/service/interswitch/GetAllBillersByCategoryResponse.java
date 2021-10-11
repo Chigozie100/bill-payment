@@ -42,4 +42,8 @@ class BillerDetail{
     private String logoUrl;
     private String type;
     private String url;
+    private String customerId = "customerId";
+    private String customerEmail = "customerEmail";
+    private String paymentCode = "paymentCode";
+    private String customerMobile = "customerMobile";
 }

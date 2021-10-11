@@ -77,6 +77,7 @@ public class BillsPaymentController {
     public ResponseEntity<ResponseHelper> getBillerPaymentItem(@ApiParam(example = "Airtime") @PathVariable("categoryId") String categoryId, @ApiParam(example = "mtnvtu") @PathVariable("billerId") String billerId){
         try {
             PaymentItemsResponse customerValidationFormByBiller = billsPaymentService.getBillsPaymentService(categoryId).getCustomerValidationFormByBiller(categoryId, billerId);
+           log.info("customerValidationFormByBiller ::: " + customerValidationFormByBiller);
             return ResponseEntity.ok(new SuccessResponse(customerValidationFormByBiller));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));

@@ -154,6 +154,7 @@ public class BillsPaymentService {
                 List<BillerResponse> billerResponseListFromApi;
                 try {
                     billerResponseListFromApi = getBillsPaymentService(category.getThirdParty().getThirdPartyNames()).getAllBillersByCategory(category.getCategoryAggregatorCode());
+
                 } catch (ThirdPartyIntegrationException e) {
                     log.error("Unable to fetch all billers from {}", category.getThirdParty().getThirdPartyNames(), e);
                     continue;

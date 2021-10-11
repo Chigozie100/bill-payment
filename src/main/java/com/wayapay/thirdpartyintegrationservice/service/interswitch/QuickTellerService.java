@@ -29,6 +29,13 @@ public class QuickTellerService implements IThirdPartyService {
     private AppConfig appConfig;
     private QuickTellerFeignClient feignClient;
     private static Map<String, BillerDetail> billerDetailMap = new HashMap<>();
+    private static List<BillerResponse> categoryAirtime = Arrays.asList(new BillerResponse("109", "Airtel Mobile Top-Up", "4"), new BillerResponse("108", "Airtel Recharge Pins", "4"), new BillerResponse("120", "Etisalat Recharge Top-Up", "4"),
+            new BillerResponse("402", "Glo QuickCharge", "4"),
+            new BillerResponse("109", "MTN e-Charge Prepaid", "4"),
+            new BillerResponse("110", "VisaFone Data Plan", "4"),
+            new BillerResponse("913", "Visafone Topup", "4"),
+            new BillerResponse("910112", "Voucher Service", "4")
+    );
     private static final  String INVALID_BILLER_MESSAGE = "Invalid Biller provided";
     private static final  String SELECTED_ITEM_PARAM_NAME = "Item";
 
@@ -99,6 +106,9 @@ public class QuickTellerService implements IThirdPartyService {
         try {
             Map<String, String> headers = generateHeader(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getBillersUrl());
             billersResponseOptional = Optional.of(feignClient.getAllBillers(getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers)));
+
+            log.info(" billersResponseOptional ::: " + billersResponseOptional);
+
         } catch (FeignException e) {
             log.error("Unable to fetch billers by category => {} from interswitch ", categoryId, e);
         }
@@ -120,11 +130,15 @@ public class QuickTellerService implements IThirdPartyService {
         try {
             Map<String, String> headers = generateHeader(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getBillerPaymentItemUrl().replace("{billerId}", billerId));
             billerPaymentItemsResponseOptional = Optional.of(feignClient.getBillerPaymentItems(billerId, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers)));
+            log.info("billerPaymentItemsResponseOptional :: " + billerPaymentItemsResponseOptional);
         } catch (FeignException e) {
             log.error("Unable to fetch billers paymentitems, billerId is => {} from interswitch ", billerId, e);
         }
 
         GetBillerPaymentItemResponse getBillerPaymentItemResponse = billerPaymentItemsResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch biller's payment items"));
+        log.info("getBillerPaymentItemResponse ::: : " + getBillerPaymentItemResponse);
+        log.info("categoryId ::: : " + categoryId);
+        log.info("billerId ::: : " + billerId);
         return getPaymentItemResponse(categoryId, billerId, getBillerPaymentItemResponse);
     }
 
@@ -154,11 +168,15 @@ public class QuickTellerService implements IThirdPartyService {
     @Override
     @AuditPaymentOperation(stage = Stage.CONTACT_VENDOR_TO_PROVIDE_VALUE, status = Status.IN_PROGRESS)
     public PaymentResponse processPayment(PaymentRequest request, BigDecimal fee, String transactionId, String username) throws ThirdPartyIntegrationException {
-
+        log.info("The Request  ::: " + request);
         Optional<SendPaymentAdviceResponse> sendPaymentAdviceResponseOptional = Optional.empty();
         try {
-            BillerDetail billerDetail = billerDetailMap.get(request.getBillerId());
-            if (Objects.isNull(billerDetail)){
+            log.info("Here is the Biller ::: " + request.getBillerId());
+          //  BillerDetail billerDetail1 = billerDetailMap.get(request.getBillerId());
+            BillerDetail billerDetail = new BillerDetail();
+            log.info("Here is the billerDetailbillerDetail ::: " + billerDetail);
+            log.info("Here is the Biller ::: " + billerDetail);
+            if (Objects.isNull(billerDetail.getCustomerId())){
                 throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
             }
 
@@ -225,7 +243,8 @@ public class QuickTellerService implements IThirdPartyService {
         QuickTellerUserParam userParam = getUserParam(paymentRequest.getData(), billerDetail);
         SendPaymentAdviceRequest request = new SendPaymentAdviceRequest();
         request.setAmount(getAmountInKobo(String.valueOf(paymentRequest.getAmount())));
-        request.setCustomerId(userParam.getCustomerId1());
+        request.setCustomerId(userParam.getCustomerId());
+        request.setCustomerMobile(userParam.getCustomerMobile());
         request.setPaymentCode(userParam.getPaymentCode());
         request.setTerminalId(appConfig.getQuickteller().getTerminalId());
         request.setRequestReference(appConfig.getQuickteller().getTransactionRefCode()+timeStamp);
@@ -236,7 +255,8 @@ public class QuickTellerService implements IThirdPartyService {
         QuickTellerUserParam userParam = getUserParam(paymentRequest.getData(), billerDetail);
         SendPaymentAdviceRequest request = new SendPaymentAdviceRequest();
         request.setAmount(getAmountInKobo(String.valueOf(paymentRequest.getAmount())));
-        request.setCustomerId(userParam.getCustomerId1());
+        request.setCustomerId(userParam.getCustomerId());
+        request.setCustomerMobile(userParam.getCustomerMobile());
         request.setPaymentCode(userParam.getPaymentCode());
         request.setTerminalId(appConfig.getQuickteller().getTerminalId());
         request.setRequestReference(appConfig.getQuickteller().getTransactionRefCode()+timeStamp);
@@ -248,7 +268,7 @@ public class QuickTellerService implements IThirdPartyService {
                                                                            BillerDetail billerDetail){
 
         QuickTellerUserParam userParam = getUserParam(request.getData(), billerDetail);
-        validationRequest.getCustomers().add(new ValidationRequest(userParam.getCustomerId1(), userParam.getPaymentCode()));
+        validationRequest.getCustomers().add(new ValidationRequest(userParam.getCustomerId(), userParam.getPaymentCode()));
 //        validationRequest.getCustomers().add(new ValidationRequest(customerId2, paymentCode));
         return validationRequest;
     }
@@ -257,6 +277,10 @@ public class QuickTellerService implements IThirdPartyService {
         String customerId1 = Strings.EMPTY;
         String customerId2 = Strings.EMPTY;
         String paymentCode = Strings.EMPTY;
+        String customerId = Strings.EMPTY;
+        String customerEmail = Strings.EMPTY;
+        String customerMobile = Strings.EMPTY;
+
 
         log.info("Data => {}", data);
         log.info("BillerDetail => {}", billerDetail);
@@ -266,21 +290,34 @@ public class QuickTellerService implements IThirdPartyService {
             if (Objects.isNull(paramNameValue.getName())){
                 continue;
             }
-
-            if (paramNameValue.getName().equals(billerDetail.getCustomerfield1())){
-                customerId1 = paramNameValue.getValue();
-            }
-
-            if (paramNameValue.getName().equals(billerDetail.getCustomerfield2())){
-                customerId2 = paramNameValue.getValue();
-            }
-
-            if (paramNameValue.getName().equals(SELECTED_ITEM_PARAM_NAME)){
+            if (paramNameValue.getName().equalsIgnoreCase(billerDetail.getPaymentCode())){
                 paymentCode = paramNameValue.getValue();
             }
+            if (paramNameValue.getName().equalsIgnoreCase(billerDetail.getCustomerId())){
+                customerId = paramNameValue.getValue();
+            }
+            if (paramNameValue.getName().equalsIgnoreCase(billerDetail.getCustomerEmail())){
+                customerEmail = paramNameValue.getValue();
+            }
+            if (paramNameValue.getName().equalsIgnoreCase(billerDetail.getCustomerMobile())){
+                customerMobile = paramNameValue.getValue();
+            }
+
+//            if (paramNameValue.getName().equals(billerDetail.getCustomerfield1())){
+//                customerId1 = paramNameValue.getValue();
+//            }
+//
+//            if (paramNameValue.getName().equals(billerDetail.getCustomerfield2())){
+//                customerId2 = paramNameValue.getValue();
+//            }
+//
+//            if (paramNameValue.getName().equals(SELECTED_ITEM_PARAM_NAME)){
+//                paymentCode = paramNameValue.getValue();
+//            }
+
         }
 
-        return new QuickTellerUserParam(customerId1, customerId2, paymentCode);
+        return new QuickTellerUserParam(customerId, customerEmail, customerMobile,paymentCode);
     }
 
     private CustomerValidationResponse getCustomerValidationResponse(String categoryId, String billerId, QuickTellerCustomerValidationResponse validationResponse) throws ThirdPartyIntegrationException {
@@ -328,6 +365,8 @@ public class QuickTellerService implements IThirdPartyService {
     private PaymentItemsResponse getPaymentItemResponse(String categoryId, String billerId, GetBillerPaymentItemResponse getBillerPaymentItemResponse) throws ThirdPartyIntegrationException {
         PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(categoryId, billerId);
 
+
+        log.info("HErerere :: " + getBillerPaymentItemResponse);
         BillerDetail billerDetail = billerDetailMap.get(billerId);
         if (Objects.isNull(billerDetail)){
             throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);

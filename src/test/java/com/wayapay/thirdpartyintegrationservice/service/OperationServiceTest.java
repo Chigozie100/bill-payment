@@ -3,14 +3,13 @@ package com.wayapay.thirdpartyintegrationservice.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
+import com.wayapay.thirdpartyintegrationservice.repo.BillsPaymentRefundRepository;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.service.logactivity.LogFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.notification.NotificationFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
-import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferRequest;
-import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
@@ -22,7 +21,6 @@ import feign.RequestTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
@@ -54,11 +52,12 @@ class OperationServiceTest {
     private ProfileFeignClient profileFeignClient;
     private NotificationFeignClient notificationFeignClient;
     private LogFeignClient logFeignClient;
+    private BillsPaymentRefundRepository billsPaymentRefundRepository;
     private static final String testUserName = "10";
 
     @BeforeEach
     void setUp() {
-        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService, profileFeignClient, notificationFeignClient, logFeignClient);
+        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService, profileFeignClient, notificationFeignClient, logFeignClient, billsPaymentRefundRepository);
     }
 
     @Test

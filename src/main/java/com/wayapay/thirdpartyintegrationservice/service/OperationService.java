@@ -273,7 +273,7 @@ public class OperationService {
         paymentTransactionDetail.setTransactionId(transactionId);
         paymentTransactionDetail.setUserAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         paymentTransactionDetail.setUsername(userName);
-        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferenceCode());
+        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferral());
         paymentTransactionDetail.setPhoneNumber(userProfileResponse.getPhoneNumber());
         paymentTransactionDetail.setEmail(userProfileResponse.getEmail());
         return paymentTransactionRepo.save(paymentTransactionDetail);
@@ -294,7 +294,7 @@ public class OperationService {
         paymentTransactionDetail.setTransactionId(transactionId);
         paymentTransactionDetail.setUserAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         paymentTransactionDetail.setUsername(userName);
-        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferenceCode());
+        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferral());
         paymentTransactionDetail.setPhoneNumber(userProfileResponse.getPhoneNumber());
         paymentTransactionDetail.setEmail(userProfileResponse.getEmail());
         return paymentTransactionRepo.save(paymentTransactionDetail);
@@ -313,7 +313,7 @@ public class OperationService {
         paymentTransactionDetail.setTransactionId(transactionId);
         paymentTransactionDetail.setUserAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         paymentTransactionDetail.setUsername(userName);
-        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferenceCode());
+        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferral());
         return paymentTransactionRepo.save(paymentTransactionDetail);
     }
 

@@ -59,6 +59,7 @@ app:
       send-payment-advice-url: ${QUICK_TELLER_SEND_PAYMENT_ADVICE_URL}
       transaction-ref-code: ${QUICK_TELLER_TRANSACTION_REF_CODE}
       terminal-id: ${QUICK_TELLER_TERMIAL_ID}
+      ussd-url: ${QUICK_TELLER_USSD}
     baxi:
       base-url: ${BAXI_BASE}
       x-api-key: ${BAXI_X_API_KEY}

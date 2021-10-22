@@ -3,6 +3,7 @@ package com.wayapay.thirdpartyintegrationservice.service;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
+import com.wayapay.thirdpartyintegrationservice.service.auth.AuthFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
 import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
@@ -68,6 +69,9 @@ class BillsPaymentServiceTest {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private AuthFeignClient authFeignClient;
 //
 //    @Autowired
 //    private ProfileFeignClient profileFeignClient;
@@ -78,7 +82,7 @@ class BillsPaymentServiceTest {
 
     @BeforeEach
     void setUp() {
-        billsPaymentService = new BillsPaymentService(itexService, baxiService, quickTellerService, paymentTransactionRepo, disputeService, operationService, billerConsumerFeeService, commissionOperationService, notificationService, categoryService, billerService, thirdPartyService);
+        billsPaymentService = new BillsPaymentService(itexService, baxiService, quickTellerService, paymentTransactionRepo, disputeService, operationService, billerConsumerFeeService, commissionOperationService, notificationService, categoryService, billerService, thirdPartyService, authFeignClient);
     }
 
     @Test

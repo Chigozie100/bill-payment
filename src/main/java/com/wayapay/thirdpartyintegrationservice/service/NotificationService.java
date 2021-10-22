@@ -1,9 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.service;
 
-import com.wayapay.thirdpartyintegrationservice.dto.ParamNameValue;
-import com.wayapay.thirdpartyintegrationservice.dto.PaymentResponse;
-import com.wayapay.thirdpartyintegrationservice.dto.TransferFromWalletPojo;
-import com.wayapay.thirdpartyintegrationservice.dto.WalletTransactionPojo;
+import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseObj;
@@ -12,6 +9,7 @@ import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileService;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import com.wayapay.thirdpartyintegrationservice.util.EventType;
+import com.wayapay.thirdpartyintegrationservice.util.SMSEventStatus;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +58,7 @@ public class NotificationService {
 
         return inAppEvent;
     }
+
     private InAppEvent buildInAppNotificationObject(Map<String, String> map, String token, EventType eventType, List<WalletTransactionPojo> mainWalletResponseList){
         InAppEvent inAppEvent = new InAppEvent();
         inAppEvent.setEventType(eventType.name());
@@ -130,7 +129,7 @@ public class NotificationService {
     public void sendEmailNotification(EmailEvent emailEvent, String token) throws ThirdPartyIntegrationException {
 
         try {
-            ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.emailNotifyUser(emailEvent,token);
+            ResponseEntity<ResponseObj> responseEntity = notificationFeignClient.emailNotifyUser(emailEvent,token);
             ResponseObj infoResponse = responseEntity.getBody();
             log.info("userProfileResponse email sent status :: " +infoResponse.status);
         } catch (Exception e) {
@@ -140,18 +139,15 @@ public class NotificationService {
 
     }
 
-    @Async("threadPoolTaskExecutor")
-    public CompletableFuture<Boolean> smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
-
+    public Boolean smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
         try {
-
+            log.info("about to send SMS :: " +smsEvent);
             ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.smsNotifyUser(smsEvent,token);
-
             ResponseObj infoResponse = responseEntity.getBody();
             log.info("userProfileResponse sms sent status :: " +infoResponse.status);
-            return CompletableFuture.completedFuture(infoResponse.status);
+            return infoResponse.status;
         } catch (Exception e) {
-            log.error("Unable to generate transaction Id", e);
+            log.error("Unable to send SMS", e.getMessage());
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
         }
 
@@ -212,6 +208,7 @@ public class NotificationService {
     public void pushEMAIL(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse,UserProfileResponse userProfileResponse) throws ThirdPartyIntegrationException {
 
         EmailEvent emailEvent = new EmailEvent();
+
         emailEvent.setEventType(EventType.EMAIL.name());
         EmailPayload data = new EmailPayload();
 
@@ -255,6 +252,15 @@ public class NotificationService {
         SmsEvent smsEvent = new SmsEvent();
         SmsPayload data = new SmsPayload();
         data.setMessage(formatMessageSMS(paymentResponse, paymentTransactionDetail));
+        smsEvent.setPaymentResponse(paymentResponse);
+
+        data.setSmsEventStatus(SMSEventStatus.BILLSPAYMENT);
+
+        PaymentTransactionDetailDto paymentTransactionDetailDto = new PaymentTransactionDetailDto();
+        paymentTransactionDetailDto.setAmount(paymentTransactionDetail.getAmount().doubleValue());
+        paymentTransactionDetailDto.setTransactionId(paymentTransactionDetail.getTransactionId());
+        smsEvent.setPaymentTransactionDetail(paymentTransactionDetailDto);
+
 
         SmsRecipient smsRecipient = new SmsRecipient();
         smsRecipient.setEmail(userProfileResponse.getEmail());
@@ -269,7 +275,8 @@ public class NotificationService {
         smsEvent.setInitiator(paymentTransactionDetail.getUsername());
 
         try {
-            // check if User enables SMS charge
+            log.info("smsEvent ::: " + smsEvent);
+
             smsNotification(smsEvent,token);
 
         }catch (ThirdPartyIntegrationException ex){
@@ -287,6 +294,23 @@ public class NotificationService {
         message=message+"\n"+"Phone Number :"+"dto "+"\n";
         message=message+"\n"+"Narration :"+"dto "+"  "+"\n";
         return message;
+    }
+
+    public PaymentResponse buildRequest(PaymentResponse paymentResponse){
+       // ParamNameValue paramNameValue = new ParamNameValue();
+        List<ParamNameValue> valueList = paymentResponse.getData();
+        for (int i = 0; i < valueList.size(); i++) {
+            ParamNameValue value = new ParamNameValue();
+            value.setName(valueList.get(i).getName());
+            value.setValue(valueList.get(i).getValue());
+
+//            paramNameValue.setValue(valueList.get(i).getValue());
+//            paramNameValue.setName(valueList.get(i).getName());
+            valueList.add(value);
+        }
+        paymentResponse.setData(valueList);
+
+        return paymentResponse;
     }
 
     public String formatMessageSMS(PaymentResponse paymentResponse, PaymentTransactionDetail paymentTransactionDetail){

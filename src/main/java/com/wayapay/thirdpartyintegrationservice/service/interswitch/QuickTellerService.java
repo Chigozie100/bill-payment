@@ -29,6 +29,19 @@ public class QuickTellerService implements IThirdPartyService {
     private AppConfig appConfig;
     private QuickTellerFeignClient feignClient;
     private static Map<String, BillerDetail> billerDetailMap = new HashMap<>();
+    private static final String CUSTOMER_PHONE = "customerMobile";
+    private static final String CUSTOMER_ID = "customerId";
+    private static final String CUSTOMER_EMAIL = "customerEmail";
+    private static final String PAYMENT_CODE = "paymentCode";
+    private static final String CODE = "code";
+    private static final String CURRENCY_CODE = "currencyCode";
+    private static final String CURRENCY_SYMBOL = "currencySymbol";
+    private static final String ITEM_CURRENCY_SYMBOL = "itemCurrencySymbol";
+    private static final String SORTED_ORDER = "sortOrder";
+    private static final String PICTURE_ID = "pictureId";
+    private static final String ITEM_FEE = "itemFee";
+    private static final String PAY_DIRECT_ITEM_CODE = "paydirectItemCode";
+
     private static List<BillerResponse> categoryAirtime = Arrays.asList(new BillerResponse("109", "Airtel Mobile Top-Up", "4"), new BillerResponse("108", "Airtel Recharge Pins", "4"), new BillerResponse("120", "Etisalat Recharge Top-Up", "4"),
             new BillerResponse("402", "Glo QuickCharge", "4"),
             new BillerResponse("109", "MTN e-Charge Prepaid", "4"),
@@ -148,13 +161,14 @@ public class QuickTellerService implements IThirdPartyService {
         Optional<QuickTellerCustomerValidationResponse> quickTellerCustomerValidationResponseOptional = Optional.empty();
         try {
             BillerDetail billerDetail = billerDetailMap.get(request.getBillerId());
-            if (Objects.isNull(billerDetail)){
-                throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
-            }
+//            if (Objects.isNull(billerDetail)){
+//                throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
+//            }
 
             log.info("Request is {}", request);
 
             QuickTellerCustomerValidationRequest validationRequest = generateValidationRequest(request, new QuickTellerCustomerValidationRequest(), billerDetail);
+          log.info("validateRequest:::: " + validationRequest);
             Map<String, String> headers = generateHeader(HttpMethod.POST, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getCustomerValidationUrl());
             quickTellerCustomerValidationResponseOptional = Optional.of(feignClient.validateCustomerInfo(validationRequest, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
         } catch (FeignException e) {
@@ -180,6 +194,7 @@ public class QuickTellerService implements IThirdPartyService {
                 throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
             }
 
+            log.info("Payment Advice request :: " + request);
             Map<String, String> headers = generateHeader(HttpMethod.POST, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getSendPaymentAdviceUrl());
             SendPaymentAdviceRequest sendPaymentAdviceRequest = generateRequest(request, billerDetail, getTimeStamp(headers));
             sendPaymentAdviceResponseOptional = Optional.of(feignClient.sendPaymentAdvice(sendPaymentAdviceRequest, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
@@ -241,14 +256,55 @@ public class QuickTellerService implements IThirdPartyService {
 
     private SendPaymentAdviceRequest generateRequest(PaymentRequest paymentRequest, BillerDetail billerDetail, String timeStamp){
         QuickTellerUserParam userParam = getUserParam(paymentRequest.getData(), billerDetail);
+        String paymentCode = Strings.EMPTY;
+        String customerId = Strings.EMPTY;
+        String customerEmail = Strings.EMPTY;
+        String customerMobile = Strings.EMPTY;
+        String paydirectItemCode = Strings.EMPTY;
+        String code = Strings.EMPTY;
+        for (ParamNameValue paramNameValue : paymentRequest.getData()) {
+            if (paramNameValue.getName().equalsIgnoreCase(PAYMENT_CODE)){
+                log.info("PAYMENT_CODE ::: " + paramNameValue.getValue());
+                paymentCode = paramNameValue.getValue();
+            }
+            if (paramNameValue.getName().equalsIgnoreCase(CUSTOMER_ID)){
+                log.info("getCustomerId ::: " + paramNameValue.getValue());
+                customerId = paramNameValue.getValue();
+            }
+            if (paramNameValue.getName().equalsIgnoreCase(CUSTOMER_EMAIL)){
+                log.info("CUSTOMER_EMAIL ::: " + paramNameValue.getValue());
+                customerEmail = paramNameValue.getValue();
+            }
+            if (paramNameValue.getName().equalsIgnoreCase(CUSTOMER_PHONE)){
+                log.info("CUSTOMER_PHONE ::: " + paramNameValue.getValue());
+                customerMobile = paramNameValue.getValue();
+            }
+            if (paramNameValue.getName().equalsIgnoreCase(PAY_DIRECT_ITEM_CODE)){
+                log.info("PAY_DIRECT_ITEM_CODE ::: " + paramNameValue.getValue());
+                paydirectItemCode = paramNameValue.getValue();
+            }
+            if (paramNameValue.getName().equalsIgnoreCase(CODE)){
+                log.info("CODE ::: " + paramNameValue.getValue());
+                code = paramNameValue.getValue();
+            }
+
+        }
         SendPaymentAdviceRequest request = new SendPaymentAdviceRequest();
         request.setAmount(getAmountInKobo(String.valueOf(paymentRequest.getAmount())));
-        request.setCustomerId(userParam.getCustomerId());
-        request.setCustomerMobile(userParam.getCustomerMobile());
-        request.setPaymentCode(userParam.getPaymentCode());
+        request.setCustomerId(customerId);
+        request.setCustomerMobile(customerMobile);
+        request.setPaymentCode(paymentCode);
+        request.setCustomerEmail(customerEmail);
         request.setTerminalId(appConfig.getQuickteller().getTerminalId());
         request.setRequestReference(appConfig.getQuickteller().getTransactionRefCode()+timeStamp);
         return request;
+    }
+
+    private String generateCustomerID(){
+        Random random = new Random();
+        String refCode = String.format("%011d", random.nextInt(10000));
+        log.info("refCode :: " + refCode);
+       return refCode;
     }
 
     private SendPaymentAdviceRequest generateRequestMultiple(MultiplePaymentRequest paymentRequest, BillerDetail billerDetail, String timeStamp){
@@ -267,7 +323,10 @@ public class QuickTellerService implements IThirdPartyService {
                                                                            QuickTellerCustomerValidationRequest validationRequest,
                                                                            BillerDetail billerDetail){
 
+
         QuickTellerUserParam userParam = getUserParam(request.getData(), billerDetail);
+        userParam.setCustomerId(request.getData().get(0).getValue());
+        userParam.setPaymentCode(request.getData().get(1).getValue());
         validationRequest.getCustomers().add(new ValidationRequest(userParam.getCustomerId(), userParam.getPaymentCode()));
 //        validationRequest.getCustomers().add(new ValidationRequest(customerId2, paymentCode));
         return validationRequest;
@@ -281,7 +340,7 @@ public class QuickTellerService implements IThirdPartyService {
         String customerEmail = Strings.EMPTY;
         String customerMobile = Strings.EMPTY;
 
-
+        BillerDetail billerDetail2 = new BillerDetail();
         log.info("Data => {}", data);
         log.info("BillerDetail => {}", billerDetail);
 
@@ -290,16 +349,21 @@ public class QuickTellerService implements IThirdPartyService {
             if (Objects.isNull(paramNameValue.getName())){
                 continue;
             }
-            if (paramNameValue.getName().equalsIgnoreCase(billerDetail.getPaymentCode())){
+
+            if (paramNameValue.getName().equalsIgnoreCase(PAYMENT_CODE)){
+                log.info("PAYMENT_CODE ::: " + paramNameValue.getValue());
                 paymentCode = paramNameValue.getValue();
             }
-            if (paramNameValue.getName().equalsIgnoreCase(billerDetail.getCustomerId())){
+            if (paramNameValue.getName().equalsIgnoreCase(billerDetail2.getCustomerId())){
+                log.info("getCustomerId ::: " + paramNameValue.getValue());
                 customerId = paramNameValue.getValue();
             }
-            if (paramNameValue.getName().equalsIgnoreCase(billerDetail.getCustomerEmail())){
+            if (paramNameValue.getName().equalsIgnoreCase(CUSTOMER_EMAIL)){
+                log.info("CUSTOMER_EMAIL ::: " + paramNameValue.getValue());
                 customerEmail = paramNameValue.getValue();
             }
-            if (paramNameValue.getName().equalsIgnoreCase(billerDetail.getCustomerMobile())){
+            if (paramNameValue.getName().equalsIgnoreCase(CUSTOMER_PHONE)){
+                log.info("CUSTOMER_PHONE ::: " + paramNameValue.getValue());
                 customerMobile = paramNameValue.getValue();
             }
 
@@ -317,7 +381,7 @@ public class QuickTellerService implements IThirdPartyService {
 
         }
 
-        return new QuickTellerUserParam(customerId, customerEmail, customerMobile,paymentCode);
+        return new QuickTellerUserParam(customerId, customerEmail, customerMobile, paymentCode);
     }
 
     private CustomerValidationResponse getCustomerValidationResponse(String categoryId, String billerId, QuickTellerCustomerValidationResponse validationResponse) throws ThirdPartyIntegrationException {
@@ -367,14 +431,22 @@ public class QuickTellerService implements IThirdPartyService {
 
 
         log.info("HErerere :: " + getBillerPaymentItemResponse);
-        BillerDetail billerDetail = billerDetailMap.get(billerId);
-        if (Objects.isNull(billerDetail)){
-            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
-        }
+        BillerDetail billerDetail = new BillerDetail();
+                //billerDetailMap.get(billerId);
+//       List<PaymentItem> paymentitems =  getBillerPaymentItemResponse.getPaymentitems();
+//        for (int i = 0; i < paymentitems.size(); i++) {
+//            paymentItemsResponse.getItems().add(new Item(paymentitems.get(i).getPaymentitemname()));
+//        }
+//        if (Objects.isNull(billerDetail)){
+//            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
+//        }
 
-        paymentItemsResponse.getItems().add(new Item(billerDetail.getCustomerfield1()));
-        paymentItemsResponse.getItems().add(new Item(billerDetail.getCustomerfield2()));
+        paymentItemsResponse.getItems().add(new Item(billerDetail.getCustomerEmail()));
+        paymentItemsResponse.getItems().add(new Item(billerDetail.getCustomerId()));
+        paymentItemsResponse.getItems().add(new Item(billerDetail.getCustomerMobile()));
+        paymentItemsResponse.getItems().add(new Item(billerDetail.getPaymentCode()));
         paymentItemsResponse.setIsValidationRequired(true);
+
         Item item = new Item(SELECTED_ITEM_PARAM_NAME);
 
         getBillerPaymentItemResponse.getPaymentitems().forEach(paymentItem -> {

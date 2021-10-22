@@ -179,37 +179,37 @@ public class OperationService {
         return smsGatewayResponse;
     }
 
-    @Async("threadPoolTaskExecutor")
-    public CompletableFuture<Boolean>  smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
-
-
-        //String checkSMSGateway = getActiveSMSGateway(token).getName();
-        try {
-
-//        switch(checkSMSGateway) {
-//            case "ATALKING":
-//                responseEntity = notificationFeignClient.smsNotifyUserAtalking(smsEvent,token);
-//                break;
-//            case "INFOBIP":
-//                responseEntity = notificationFeignClient.smsNotifyUserInfobip(smsEvent,token);
-//                break;
-//            case "TWILIO":
-//                responseEntity = notificationFeignClient.smsNotifyUserTwilio(smsEvent,token);
-//                break;
-//            default:
-//                responseEntity = notificationFeignClient.smsNotifyUserTwilio(smsEvent,token);
+//    @Async("threadPoolTaskExecutor")
+//    public CompletableFuture<Boolean>  smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
+//
+//
+//        //String checkSMSGateway = getActiveSMSGateway(token).getName();
+//        try {
+//
+////        switch(checkSMSGateway) {
+////            case "ATALKING":
+////                responseEntity = notificationFeignClient.smsNotifyUserAtalking(smsEvent,token);
+////                break;
+////            case "INFOBIP":
+////                responseEntity = notificationFeignClient.smsNotifyUserInfobip(smsEvent,token);
+////                break;
+////            case "TWILIO":
+////                responseEntity = notificationFeignClient.smsNotifyUserTwilio(smsEvent,token);
+////                break;
+////            default:
+////                responseEntity = notificationFeignClient.smsNotifyUserTwilio(smsEvent,token);
+////        }
+//            ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.smsNotifyUser(smsEvent,token);
+//
+//            ResponseObj infoResponse = responseEntity.getBody();
+//            log.info("userProfileResponse sms sent status :: " +infoResponse.status);
+//            return CompletableFuture.completedFuture(infoResponse.status);
+//        } catch (Exception e) {
+//            log.error("Unable to generate transaction Id", e);
+//            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
 //        }
-            ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.smsNotifyUser(smsEvent,token);
-
-            ResponseObj infoResponse = responseEntity.getBody();
-            log.info("userProfileResponse sms sent status :: " +infoResponse.status);
-            return CompletableFuture.completedFuture(infoResponse.status);
-        } catch (Exception e) {
-            log.error("Unable to generate transaction Id", e);
-            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-        }
-
-    }
+//
+//    }
 
 
     public SMSChargeResponse getSMSCharges(String token) throws ThirdPartyIntegrationException {
@@ -273,7 +273,7 @@ public class OperationService {
         paymentTransactionDetail.setTransactionId(transactionId);
         paymentTransactionDetail.setUserAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         paymentTransactionDetail.setUsername(userName);
-        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferral());
+        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferenceCode());
         paymentTransactionDetail.setPhoneNumber(userProfileResponse.getPhoneNumber());
         paymentTransactionDetail.setEmail(userProfileResponse.getEmail());
         return paymentTransactionRepo.save(paymentTransactionDetail);
@@ -294,7 +294,7 @@ public class OperationService {
         paymentTransactionDetail.setTransactionId(transactionId);
         paymentTransactionDetail.setUserAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         paymentTransactionDetail.setUsername(userName);
-        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferral());
+        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferenceCode());
         paymentTransactionDetail.setPhoneNumber(userProfileResponse.getPhoneNumber());
         paymentTransactionDetail.setEmail(userProfileResponse.getEmail());
         return paymentTransactionRepo.save(paymentTransactionDetail);
@@ -313,7 +313,7 @@ public class OperationService {
         paymentTransactionDetail.setTransactionId(transactionId);
         paymentTransactionDetail.setUserAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         paymentTransactionDetail.setUsername(userName);
-        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferral());
+        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferenceCode());
         return paymentTransactionRepo.save(paymentTransactionDetail);
     }
 

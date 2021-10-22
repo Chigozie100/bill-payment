@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -84,14 +85,21 @@ public class CommissionOperationService {
 //        }
 //    }
 
-    public void payUserCommission(UserType userType, String token, String userId) throws ThirdPartyIntegrationException {
+    private BigDecimal computePercentage(BigDecimal amount, BigDecimal percentageValue){
+        BigDecimal per = BigDecimal.valueOf(percentageValue.doubleValue() / 100);
+        BigDecimal ans = BigDecimal.valueOf(per.doubleValue() * amount.doubleValue());
+        return ans;
+    }
+
+    public void payUserCommission(UserType userType,String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
+        log.info("Inside payUserCommission ::: " + userType);
         TransferFromWalletPojo transfer = new TransferFromWalletPojo();
 
         //String token = BearerTokenUtil.getBearerTokenHeader();
         UserCommissionDto userCommissionDto = findUserCommission(userType,token);
         NewWalletResponse userCommissionWallet = getUserCommissionWallet(userId,token); // get user commission wallet
 
-        transfer.setAmount(userCommissionDto.getCommissionValue());
+        transfer.setAmount(computePercentage(amount,userCommissionDto.getCommissionValue()));
         transfer.setEventId(EventCharges.COMPAYM.name());
         transfer.setPaymentReference(CommonUtils.generatePaymentTransactionId());
         transfer.setCustomerAccountNumber(userCommissionWallet != null ? userCommissionWallet.getAccountNo() : null);
@@ -130,11 +138,11 @@ public class CommissionOperationService {
         inAppRecipient.add(userId);
 
         Map<String, String> dto = new HashMap<>();
-        dto.put("userId",transfer.getUserId().toString());
+        dto.put("userId",userId);
         dto.put("ref", transfer.getPaymentReference());
         dto.put("amount", transfer.getAmount().toString());
         dto.put("sender", "WAYA-ADMIN");
-        dto.put("initiator", "system");
+        dto.put("initiator", userId);
         dto.put("in_app_recipient", inAppRecipient.toString());
 
 
@@ -167,7 +175,7 @@ public class CommissionOperationService {
 
     private NewWalletResponse getUserCommissionWallet(String userId, String token) throws ThirdPartyIntegrationException {
         try {
-            ResponseEntity<ApiResponseBody<NewWalletResponse>> commissionWallet = walletFeignClient.getUserCommissionWallet(token,userId);
+            ResponseEntity<ApiResponseBody<NewWalletResponse>> commissionWallet = walletFeignClient.getUserCommissionWallet(userId,token);
             ApiResponseBody<NewWalletResponse> commissionWalletBody = commissionWallet.getBody();
 
             return commissionWalletBody != null ? commissionWalletBody.getData() : null;

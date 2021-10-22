@@ -112,66 +112,44 @@ public class CommissionOperationService {
         List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
         List<WalletTransactionPojo> walletTransactionPojoList = new ArrayList<>(Objects.requireNonNull(mainWalletResponseList));
 
-        CompletableFuture.runAsync(() -> {
-            CommissionDto commissionDto = new CommissionDto();
+        log.info(" about to Save ::: payUserCommission ");
+        saveCommissionHistory(userId,transfer, walletTransactionPojoList,userType,token);
 
-            commissionDto.setUserId(userId);
-            commissionDto.setCommissionValue(transfer.getAmount());
-            commissionDto.setJsonRequest(transfer);
-            commissionDto.setJsonResponse(walletTransactionPojoList);
-            commissionDto.setTransactionType(TransactionType.TRANSFER);
-            commissionDto.setUserType(userType);
+        inAppNotification(userId, transfer, walletTransactionPojoList, token, infoResponse);
 
-            ResponseEntity<ApiResponseBody<CommissionDto>> resp = commissionFeignClient.addCommissionHistory(commissionDto, token);
-            ApiResponseBody<CommissionDto> commissionDtoApiResponseBody = resp.getBody();
-            log.info(String.format("Bills-payment: payUserCommission response :: {} %s", commissionDtoApiResponseBody != null ? commissionDtoApiResponseBody.getData() : null));
-        });
-
-//        Map<String, String> map = new HashMap<>();
-//        map.put("request", buildTransJson(transfer).toString());
-//        map.put("module", "CommissionWalletController");
-//        map.put("action", "CREATE");
-//        map.put("message", "FIXED-PAYMENT-FOR-COMMISSION");
-//        map.put("response", buildTransJsonResponse(mainWalletResponseList).toString());
-//
-        List<String> inAppRecipient = new ArrayList<>();
-        inAppRecipient.add(userId);
-
-        Map<String, String> dto = new HashMap<>();
-        dto.put("userId",userId);
-        dto.put("ref", transfer.getPaymentReference());
-        dto.put("amount", transfer.getAmount().toString());
-        dto.put("sender", "WAYA-ADMIN");
-        dto.put("initiator", userId);
-        dto.put("in_app_recipient", inAppRecipient.toString());
-
-
-        if (infoResponse.getStatus()){
-            dto.put("message", "Fund Merchant Commission Wallet Successful:: " + transfer.getUserId());
-        }else{
-            dto.put("message", "Error Funding Merchant Commission Wallet :: " + transfer.getUserId());
-        }
-
-        CompletableFuture.runAsync(() -> {
-            try {
-                notificationService.pushINAPP(dto, token, null,walletTransactionPojoList);
-//                notificationService.pushINAPP(dto,token);
-            } catch (ThirdPartyIntegrationException e) {
-                e.printStackTrace();
-            }
-        });
-
-//        CompletableFuture.runAsync(() -> {
-//            try {
-//                UserProfileResponse userProfileResponse = profileService.getUserProfile(transfer.getUserId().toString(),token);
-//                notificationService.pushSMS(dto,token, userProfileResponse);
-//            } catch (CommissionException e) {
-//                e.printStackTrace();
-//            }
-//        });
 
     }
 
+    public void payOrganisationCommission(UserType userType,String billerId,String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
+
+        log.info("inside payOrganisationCommission ::: ");
+        TransferFromWalletPojo transfer = new TransferFromWalletPojo();
+
+        //String token = BearerTokenUtil.getBearerTokenHeader();
+        OrganisationCommissionResponse orgCommission = getOrgCommission(billerId,token);   // find organisation Commission Details
+        NewWalletResponse userCommissionWallet = getUserCommissionWallet(orgCommission.getCorporateUserId(),token); // get user commission wallet
+
+        transfer.setAmount(computePercentage(amount,BigDecimal.valueOf(orgCommission.getCommissionValue())));
+        transfer.setEventId(EventCharges.COMPAYM.name());
+        transfer.setPaymentReference(CommonUtils.generatePaymentTransactionId());
+        transfer.setCustomerAccountNumber(userCommissionWallet != null ? userCommissionWallet.getAccountNo() : null);
+        transfer.setTranCrncy("NGN");
+        transfer.setTranNarration("COMMISSION-PAYMENT-TRANSACTION");
+
+        ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialCommissionToUserCommission(transfer,token);
+        ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
+
+        List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
+        List<WalletTransactionPojo> walletTransactionPojoList = new ArrayList<>(Objects.requireNonNull(mainWalletResponseList));
+
+        log.info(" about to Save ::: payUserCommission ");
+        saveCommissionHistory(userId,transfer, walletTransactionPojoList,userType,token);
+
+        inAppNotification(userId, transfer, walletTransactionPojoList, token, infoResponse);
+
+        emailNotification(orgCommission, userId, transfer, walletTransactionPojoList, token,infoResponse);
+
+    }
 
     private NewWalletResponse getUserCommissionWallet(String userId, String token) throws ThirdPartyIntegrationException {
         try {
@@ -198,9 +176,93 @@ public class CommissionOperationService {
     }
 
 
+    private OrganisationCommissionResponse getOrgCommission(String biller, String token) throws ThirdPartyIntegrationException {
+        try {
+            ResponseEntity<ApiResponseBody<OrganisationCommissionResponse>> responseEntity = commissionFeignClient.getOrgCommission(biller,token);
+            ApiResponseBody<OrganisationCommissionResponse> responseBody = responseEntity.getBody();
+            log.info("Billspyament:: {} in here saveMerchantCommission ::: " + responseBody.getData());
+            return responseBody != null ? responseBody.getData() : null;
+        }catch (Exception exception){
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, exception.getMessage());
+        }
+    }
 
 
 
+    private void saveCommissionHistory(String userId,TransferFromWalletPojo transfer, List<WalletTransactionPojo> walletTransactionPojoList, UserType userType, String token){
+        CompletableFuture.runAsync(() -> {
+            CommissionDto commissionDto = new CommissionDto();
+
+            commissionDto.setUserId(userId);
+            commissionDto.setCommissionValue(transfer.getAmount());
+            commissionDto.setJsonRequest(transfer);
+            commissionDto.setJsonResponse(walletTransactionPojoList);
+            commissionDto.setTransactionType(TransactionType.TRANSFER);
+            commissionDto.setUserType(userType);
+
+            ResponseEntity<ApiResponseBody<CommissionDto>> resp = commissionFeignClient.addCommissionHistory(commissionDto, token);
+            ApiResponseBody<CommissionDto> commissionDtoApiResponseBody = resp.getBody();
+            log.info(String.format("Bills-payment: payUserCommission response :: {} %s", commissionDtoApiResponseBody != null ? commissionDtoApiResponseBody.getData() : null));
+        });
+
+    }
+
+    private void inAppNotification(String userId, TransferFromWalletPojo transfer, List<WalletTransactionPojo> walletTransactionPojoList, String token, ApiResponseBody<List<WalletTransactionPojo>> infoResponse){
+        List<String> inAppRecipient = new ArrayList<>();
+        inAppRecipient.add(userId);
+
+        Map<String, String> dto = new HashMap<>();
+        dto.put("userId",userId);
+        dto.put("ref", transfer.getPaymentReference());
+        dto.put("amount", transfer.getAmount().toString());
+        dto.put("sender", "WAYA-ADMIN");
+        dto.put("initiator", userId);
+        dto.put("in_app_recipient", inAppRecipient.toString());
+
+
+        if (infoResponse.getStatus()){
+            dto.put("message", "Fund Merchant Commission Wallet Successful:: " + transfer.getUserId());
+        }else{
+            dto.put("message", "Error Funding Merchant Commission Wallet :: " + transfer.getUserId());
+        }
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                notificationService.pushINAPP(dto, token);
+            } catch (ThirdPartyIntegrationException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void emailNotification(OrganisationCommissionResponse response, String userId, TransferFromWalletPojo transfer, List<WalletTransactionPojo> walletTransactionPojoList, String token, ApiResponseBody<List<WalletTransactionPojo>> infoResponse){
+        List<String> inAppRecipient = new ArrayList<>();
+        inAppRecipient.add(userId);
+
+        Map<String, String> map = new HashMap<>();
+
+        map.put("paymentTransactionAmount", transfer.getAmount().toString());
+        map.put("userId", response.getCorporateUserId());
+        map.put("email", response.getCorporateUserEmail());
+        map.put("phoneNumber", response.getCorporateUserPhoneNumber());
+        map.put("surname", response.getCorporateUserId());
+        map.put("firstName", response.getMerchantName());
+        map.put("middleName", response.getMerchantName());
+
+        if (infoResponse.getStatus()){
+            map.put("message", "Fund Merchant Commission Wallet Successful:: " + transfer.getUserId());
+        }else{
+            map.put("message", "Error Funding Merchant Commission Wallet :: " + transfer.getUserId());
+        }
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                notificationService.pushEMAIL(map, token);
+            } catch (ThirdPartyIntegrationException e) {
+                e.printStackTrace();
+            }
+        });
+    }
 
 //
 ////    public TransactionRequest fundDefaultWallet(TransferFromWalletPojo walletDto, String token) throws ThirdPartyIntegrationException {

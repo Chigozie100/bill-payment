@@ -36,17 +36,16 @@ public class NotificationService {
     private final NotificationFeignClient notificationFeignClient;
     private final ProfileService profileService;
 
-
-    private InAppEvent buildInAppNotificationObject(PaymentTransactionDetail paymentTransactionDetail, String token, EventType eventType, PaymentResponse paymentResponse){
+    private InAppEvent buildInAppNotificationObject(Map<String, String> map, String token, EventType eventType){
         InAppEvent inAppEvent = new InAppEvent();
         inAppEvent.setEventType(eventType.name());
 
         InAppPayload data = new InAppPayload();
-        data.setMessage(getMessageDetails(paymentResponse, paymentTransactionDetail));
+        data.setMessage(map.get("message"));
         data.setType(eventType.name());
 
         InAppRecipient inAppRecipient = new InAppRecipient();
-        inAppRecipient.setUserId(paymentTransactionDetail.getUsername());
+        inAppRecipient.setUserId(map.get("userId"));
 
         List<InAppRecipient> addUserId = new ArrayList<>();
         addUserId.add(inAppRecipient);
@@ -54,65 +53,20 @@ public class NotificationService {
         data.setUsers(addUserId);
 
         inAppEvent.setData(data);
-        inAppEvent.setInitiator(paymentTransactionDetail.getUsername());
-
-        return inAppEvent;
-    }
-
-    private InAppEvent buildInAppNotificationObject(Map<String, String> map, String token, EventType eventType, List<WalletTransactionPojo> mainWalletResponseList){
-        InAppEvent inAppEvent = new InAppEvent();
-        inAppEvent.setEventType(eventType.name());
-
-        InAppPayload data = new InAppPayload();
-        data.setMessage(formatMessage(map));
-        data.setType(eventType.name());
-
-        InAppRecipient inAppRecipient = new InAppRecipient();
-        inAppRecipient.setUserId(map.get("userId").toString());
-
-        List<InAppRecipient> addUserId = new ArrayList<>();
-        addUserId.add(inAppRecipient);
-
-        data.setUsers(addUserId);
-
-        inAppEvent.setData(data);
-        inAppEvent.setInitiator(map.get("userId").toString());
+        inAppEvent.setInitiator(map.get("userId"));
 
         return inAppEvent;
     }
 
 
-    public NotificationDto buildInAppNotificationObject(PaymentTransactionDetail paymentTransactionDetail, String token, EventType eventType, PaymentResponse paymentResponse, String data){
+    public NotificationDto buildInAppNotificationObject(Map<String, Object> map, String token, EventType eventType, PaymentResponse paymentResponse, String data){
         NotificationDto notificationDto = new NotificationDto();
-        notificationDto.setMessage(getMessageDetails(paymentResponse,paymentTransactionDetail));
+        notificationDto.setMessage(map.get("message").toString());
         notificationDto.setType(eventType.name());
-        notificationDto.setUserId(paymentTransactionDetail.getUsername());
+        notificationDto.setUserId(map.get("userId").toString());
         notificationDto.setEventType(eventType.name());
-        notificationDto.setInitiator(paymentTransactionDetail.getUsername());
+        notificationDto.setInitiator(map.get("userId").toString());
         return notificationDto;
-    }
-
-    public EmailDto buildInEmailObject(PaymentTransactionDetail paymentTransactionDetail, String token, EventType eventType, PaymentResponse paymentResponse) throws ThirdPartyIntegrationException {
-        EmailDto emailDto = new EmailDto();
-        UserProfileResponse userProfileResponse = profileService.getUserProfile(paymentTransactionDetail.getUsername(),token);
-        emailDto.setMessage(getMessageDetails(paymentResponse, paymentTransactionDetail));
-        emailDto.setEmail(userProfileResponse.getEmail());
-        emailDto.setFullName(userProfileResponse.getSurname()+ " " +userProfileResponse.getFirstName() + " " +userProfileResponse.getMiddleName());
-        emailDto.setEventType(eventType.name());
-        emailDto.setInitiator(paymentTransactionDetail.getUsername());
-        return emailDto;
-    }
-
-    public SMSDto buildSMSObject(PaymentTransactionDetail paymentTransactionDetail, String token, EventType eventType, PaymentResponse paymentResponse) throws ThirdPartyIntegrationException {
-        SMSDto smsDto = new SMSDto();
-        UserProfileResponse userProfileResponse = profileService.getUserProfile(paymentTransactionDetail.getUsername(),token);
-        smsDto.setMessage(getMessageDetails(paymentResponse, paymentTransactionDetail));
-        smsDto.setEmail(userProfileResponse.getEmail());
-        smsDto.setTelephone(userProfileResponse.getPhoneNumber());
-        smsDto.setUsername(paymentTransactionDetail.getUsername());
-        smsDto.setEventType(eventType.name());
-        smsDto.setInitiator(paymentTransactionDetail.getUsername());
-        return smsDto;
     }
 
     public void sendInAppNotification(InAppEvent inAppEvent, String token) throws ThirdPartyIntegrationException {
@@ -154,9 +108,8 @@ public class NotificationService {
     }
 
 
-
-    public void pushINAPP(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse) throws ThirdPartyIntegrationException {
-        InAppEvent inAppEvent = buildInAppNotificationObject(paymentTransactionDetail, token, EventType.IN_APP, paymentResponse);
+    public void pushINAPP(Map<String, String> map, String token) throws ThirdPartyIntegrationException {
+        InAppEvent inAppEvent = buildInAppNotificationObject(map, token, EventType.IN_APP);
         try {
             sendInAppNotification(inAppEvent, token);
         }catch (ThirdPartyIntegrationException ex){
@@ -165,65 +118,26 @@ public class NotificationService {
 
     }
 
-    public void pushINAPP(Map<String, String> map, String token, PaymentResponse paymentResponse, List<WalletTransactionPojo> mainWalletResponseList) throws ThirdPartyIntegrationException {
-        InAppEvent inAppEvent = buildInAppNotificationObject(map, token, EventType.IN_APP, mainWalletResponseList);
-        try {
-            sendInAppNotification(inAppEvent, token);
-        }catch (ThirdPartyIntegrationException ex){
-            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
-        }
 
-    }
-
-//    public void pushINAPP(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse) throws ThirdPartyIntegrationException {
-//        NotificationDto notificationDto2 = buildInAppNotificationObject(paymentTransactionDetail, token, EventType.IN_APP, paymentResponse);
-//        try {
-//            inAppNotification(notificationDto2, token);
-//        }catch (ThirdPartyIntegrationException  ex){
-//            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
-//        }
-//
-//    }
-//    public void pushINAPP(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse, String data) throws ThirdPartyIntegrationException {
-//        NotificationDto notificationDto2 = buildInAppNotificationObject(paymentTransactionDetail, token, EventType.IN_APP, paymentResponse);
-//        try {
-//            inAppNotification(notificationDto2, token);
-//        }catch (ThirdPartyIntegrationException ex){
-//            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
-//        }
-//
-//    }
-
-//    public void pushEMAIL(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse) throws ThirdPartyIntegrationException {
-//        EmailDto emailDto = buildInEmailObject(paymentTransactionDetail, token, EventType.EMAIL, paymentResponse);
-//        try {
-//            emailNotification(emailDto,token);
-//            sendEmailNotification(emailDto,token);
-//        }catch (ThirdPartyIntegrationException ex){
-//            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
-//        }
-//
-//    }
-
-    public void pushEMAIL(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse,UserProfileResponse userProfileResponse) throws ThirdPartyIntegrationException {
+    public void pushEMAIL(Map<String, String> map, String token) throws ThirdPartyIntegrationException {
 
         EmailEvent emailEvent = new EmailEvent();
 
         emailEvent.setEventType(EventType.EMAIL.name());
         EmailPayload data = new EmailPayload();
 
-        data.setMessage(getMessageDetails(paymentResponse, paymentTransactionDetail));
+        data.setMessage(map.get("message"));
 
         EmailRecipient emailRecipient = new EmailRecipient();
-        emailRecipient.setFullName(userProfileResponse.getSurname()+ " " +userProfileResponse.getFirstName() + " " +userProfileResponse.getMiddleName());
-        emailRecipient.setEmail(userProfileResponse.getEmail());
+        emailRecipient.setFullName(map.get("surname") + " " +map.get("firstName") + " " + map.get("middleName"));
+        emailRecipient.setEmail(map.get("email"));
 
         List<EmailRecipient> addUserId = new ArrayList<>();
         addUserId.add(emailRecipient);
         data.setNames(addUserId);
 
         emailEvent.setData(data);
-        emailEvent.setInitiator(paymentTransactionDetail.getUsername());
+        emailEvent.setInitiator(map.get("userId"));
 
         try {
             sendEmailNotification(emailEvent, token);
@@ -337,17 +251,19 @@ public class NotificationService {
     }
 
 
-    public String getMessageDetails(PaymentResponse paymentResponse, PaymentTransactionDetail paymentTransactionDetail){
+    public String getMessageDetails(Map<String, Object> map){
         PaymentResponse data = new PaymentResponse();
-
-        List<ParamNameValue> valueList = paymentResponse.getData();
+//        map.put("paymentTransactionAmount", paymentTransactionDetail.getAmount());
+//        map.put("paramNameValueList",paymentResponse.getData());
+        List<ParamNameValue> valueList = (List<ParamNameValue>) map.get("paramNameValueList");
+        //paymentResponse.getData();
         String message = null;
         for (int i = 0; i < valueList.size(); i++) {
             ParamNameValue value = new ParamNameValue();
             value.setName(valueList.get(i).getName());
             value.setValue(valueList.get(i).getValue());
             message = "Your account has "+ "\n" +
-                    ""+"been credited with:" + paymentTransactionDetail.getAmount() +" \n" +
+                    ""+"been credited with:" + map.get("paymentTransactionAmount") +" \n" +
                     "" + value.getValue();
 //            message = "name :" + value.getName() +"  \"<br>\"" +
 //            " \n" +  "Value : " + value.getValue();

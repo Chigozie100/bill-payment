@@ -205,14 +205,18 @@ public class BillsPaymentService {
                 // call the receipt service
                 CompletableFuture.runAsync(() -> {
                     try {
-                        notificationService.pushINAPP(paymentTransactionDetail,token,paymentResponse);
+                        Map<String, String> map = inAppMessageBuilder(paymentResponse,paymentTransactionDetail,transactionId);
+
+                        notificationService.pushINAPP(map,token);
                     } catch (ThirdPartyIntegrationException e) {
                         e.printStackTrace();
                     }
                 });
+
                 CompletableFuture.runAsync(() -> {
                     try {
-                        notificationService.pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
+                        Map<String, String> map = emailMessageBuilder(paymentResponse,paymentTransactionDetail,userProfileResponse);
+                        notificationService.pushEMAIL(map,token);
                     } catch (ThirdPartyIntegrationException e) {
                         e.printStackTrace();
                     }
@@ -229,15 +233,23 @@ public class BillsPaymentService {
                     }
                 });
 
-                getCommissionForMakingBillsPayment(userName,token, paymentRequest.getAmount());
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        getCommissionForMakingBillsPayment(userName,token, paymentRequest.getAmount());
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
 
-//                CompletableFuture.runAsync(() -> {
-//                    try {
-//
-//                    } catch (ThirdPartyIntegrationException e) {
-//                        e.printStackTrace();
-//                    }
-//                });
+                //ThirdParty thirdParty, String billerId, UserType userType,String userName, String token, BigDecimal amount
+
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        calculateMerchantPercentage(paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
 
 
                 Map<String,String> map = new HashMap<>();
@@ -264,6 +276,59 @@ public class BillsPaymentService {
 
         log.error("Unable to secure fund from user's wallet");
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private String extractData(PaymentResponse paymentResponse, PaymentTransactionDetail paymentTransactionDetail){
+        List<ParamNameValue> listValue = paymentResponse.getData();
+        String message = null;
+        for (int i = 0; i < listValue.size(); i++) {
+            ParamNameValue value = new ParamNameValue();
+            value.setName(listValue.get(i).getName());
+            value.setValue(listValue.get(i).getValue());
+            message = "Your account has "+ "\n" +
+                    ""+"been credited with:" +paymentTransactionDetail.getAmount() +" \n" +
+                    "" + value.getValue();
+        }
+        return message;
+    }
+
+
+    private Map<String, String> smsMessageBuilder(PaymentResponse paymentResponse,PaymentTransactionDetail paymentTransactionDetail){
+        Map<String, String> map = new HashMap<>();
+        map.put("paymentTransactionAmount", paymentTransactionDetail.getAmount().toString());
+        map.put("userId", paymentTransactionDetail.getUsername());
+        map.put("message", extractData(paymentResponse,paymentTransactionDetail));
+        return map;
+    }
+
+    private Map<String, String> emailMessageBuilder(PaymentResponse paymentResponse,PaymentTransactionDetail paymentTransactionDetail, UserProfileResponse userProfileResponse){
+        Map<String, String> map = new HashMap<>();
+        map.put("paymentTransactionAmount", paymentTransactionDetail.getAmount().toString());
+        map.put("userId", paymentTransactionDetail.getUsername());
+        map.put("message", extractData(paymentResponse,paymentTransactionDetail));
+        map.put("email", userProfileResponse.getEmail());
+        map.put("phoneNumber", userProfileResponse.getPhoneNumber());
+        map.put("surname", userProfileResponse.getSurname());
+        map.put("firstName", userProfileResponse.getFirstName());
+        map.put("middleName", userProfileResponse.getMiddleName());
+        return map;
+    }
+
+
+
+    private Map<String, String> inAppMessageBuilder(PaymentResponse paymentResponse,PaymentTransactionDetail paymentTransactionDetail, String transactionId){
+        List<String> inAppRecipient = new ArrayList<>();
+        inAppRecipient.add(paymentTransactionDetail.getUsername());
+
+        Map<String, String> dto = new HashMap<>();
+        dto.put("userId",paymentTransactionDetail.getUsername());
+        dto.put("ref", transactionId);
+        dto.put("amount", paymentTransactionDetail.getAmount().toString());
+        dto.put("sender", "WAYA-ADMIN");
+        dto.put("initiator", paymentTransactionDetail.getUsername());
+        dto.put("in_app_recipient", inAppRecipient.toString());
+        dto.put("message", extractData(paymentResponse,paymentTransactionDetail));
+        return dto;
     }
 
     public PaymentResponse processMultiplePayment(MultiplePaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
@@ -559,7 +624,6 @@ public class BillsPaymentService {
 
     }
 
-
     public Map<String, Object> search(String username, int pageNumber, int pageSize){
         Pageable paging = getPageable(pageNumber, pageSize);
         Page<TransactionDetail> transactionDetailPage = null;
@@ -751,11 +815,17 @@ public class BillsPaymentService {
     }
 
     //as a merchant user anytime i sell billspayment a certain % amount of the item sold amount is transferred on real time to my commission wallet from WAYA
-    private void calculateMerchantPercentage(ThirdParty thirdParty, UserType userType,String userName, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
-        commissionOperationService.payUserCommission(userType,userName,token, amount); // log commission
+    private void calculateMerchantPercentage(String billerId, String userName, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
+        UserType userType = getUserType(userName,token);
+        commissionOperationService.payOrganisationCommission(userType,billerId,userName,token, amount); // log commission
 
         /**
          * 1. get the biller
+         * 2. find the biller commission
+         * 3. find the corporate user Id
+         * 4. compute the Percetage
+         * 5. credit the commission wallet
+         * 6 end
          *
          */
     }

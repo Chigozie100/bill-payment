@@ -98,8 +98,8 @@ class BillsPaymentServiceTest {
         processBillsPayment("Airtime Recharge", ThirdPartyNames.BAXI);
 
         //INTERSWITCH
-        Mockito.when(categoryService.findThirdPartyByCategoryAggregatorCode(Mockito.anyString())).thenReturn(Optional.of(ThirdPartyNames.QUICKTELLER));
-        processBillsPayment("108", ThirdPartyNames.QUICKTELLER);
+//        Mockito.when(categoryService.findThirdPartyByCategoryAggregatorCode(Mockito.anyString())).thenReturn(Optional.of(ThirdPartyNames.QUICKTELLER));
+//        processBillsPayment("108", ThirdPartyNames.QUICKTELLER);
 
     }
 

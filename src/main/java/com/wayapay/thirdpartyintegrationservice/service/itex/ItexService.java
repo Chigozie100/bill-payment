@@ -152,6 +152,8 @@ public class ItexService implements IThirdPartyService {
     @Override
     public PaymentItemsResponse getCustomerValidationFormByBiller(String categoryId, String billerId) throws ThirdPartyIntegrationException {
 
+        log.info("Category :: " + categoryId);
+        log.info("billerId :: " + billerId);
         if (CommonUtils.isEmpty(categoryId) || CommonUtils.isEmpty(billerId)){
             log.error("categoryId => {} or billerId => {} is empty/null ", categoryId, billerId);
             throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Invalid category or biller provided");
@@ -516,7 +518,9 @@ public class ItexService implements IThirdPartyService {
         DataValidationRequest dataValidationRequest = new DataValidationRequest();
         dataValidationRequest.setService(request.getBillerId());
         request.getData().forEach(paramNameValue -> {
-            if (CHANNEL.equals(paramNameValue.getName())){ dataValidationRequest.setChannel(paramNameValue.getValue()); }
+            if (CHANNEL.equals(paramNameValue.getName())){
+                dataValidationRequest.setChannel(paramNameValue.getValue());
+            }
         });
         return dataValidationRequest;
     }
@@ -785,7 +789,7 @@ public class ItexService implements IThirdPartyService {
         try {
             airtimePaymentResponseOptional = Optional.of(feignClient.airtimePayment(airtimePaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(airtimePaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
         } catch (FeignException e) {
-            log.error("Unable to process customer electricity payment via itex ", e);
+            log.error("Unable to process customer airtime payment via itex ", e);
         }
 
         AirtimePaymentResponse airtimePaymentResponse = airtimePaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
@@ -1063,6 +1067,8 @@ public class ItexService implements IThirdPartyService {
         dataPaymentRequest.setClientReference(transactionId);
         dataPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
         dataPaymentRequest.setService(paymentRequest.getBillerId());
+//        dataPaymentRequest.setCode("103");
+//        dataPaymentRequest.setProductCode("code");
         paymentRequest.getData().forEach(paramNameValue -> {
             if (PHONE.equals(paramNameValue.getName())){ dataPaymentRequest.setPhone(paramNameValue.getValue()); }
             if (PAYMENT_METHOD.equals(paramNameValue.getName())){ dataPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
@@ -1137,8 +1143,11 @@ public class ItexService implements IThirdPartyService {
 
     private PaymentItemsResponse getDataPaymentItems(String billerId, String categoryId){
         PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(categoryId, billerId);
+        paymentItemsResponse.getItems().add(new Item(CODE));
         paymentItemsResponse.setIsValidationRequired(true);
         paymentItemsResponse.getItems().add(getChannelsAsItem());
+
+        log.info("getDataPaymentItems ::: " + paymentItemsResponse);
         return paymentItemsResponse;
     }
 

@@ -5,7 +5,9 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.BillsPaymentService;
+import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.service.OperationService;
+import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -39,6 +41,7 @@ public class AdminController {
 
     private final BillsPaymentService billsPaymentService;
     private final OperationService operationService;
+    private final QuickTellerService iThirdPartyService;
 
     @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 8)
     @ApiResponses(value = {
@@ -170,6 +173,26 @@ public class AdminController {
         List<WalletTransactionPojo> transactionDetailPage = operationService.refundFailedTransaction(transfer, token);
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
+
+
+    @GetMapping("/getCategories")
+    public ResponseEntity<ResponseHelper> getInterswitchCategories() throws ThirdPartyIntegrationException {
+         return ResponseEntity.ok(new SuccessResponse(iThirdPartyService.getCategory()));
+    }
+
+    @GetMapping("/getBillersByCategories/{category_id}")
+    public ResponseEntity<ResponseHelper> getAllInterswitchBillersByCategory(@PathVariable String category_id) throws ThirdPartyIntegrationException {
+        return ResponseEntity.ok(new SuccessResponse(iThirdPartyService.getAllBillersByCategory(category_id)));
+    }
+
+    @GetMapping("/getBillersByCategories/{category_id}/biller/{biller_id}")
+    public ResponseEntity<ResponseHelper> getCustomerValidationFormByBiller(@PathVariable String category_id, @PathVariable String biller_id) throws ThirdPartyIntegrationException {
+        return ResponseEntity.ok(new SuccessResponse(iThirdPartyService.getCustomerValidationFormByBiller(category_id, biller_id)));
+    }
+
+
+
+
 
 
 

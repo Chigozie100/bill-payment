@@ -1,6 +1,7 @@
 package com.wayapay.thirdpartyintegrationservice.service.commission;
 
 import com.wayapay.thirdpartyintegrationservice.dto.ApiResponseBody;
+import com.wayapay.thirdpartyintegrationservice.dto.OrganisationCommissionResponse;
 import com.wayapay.thirdpartyintegrationservice.util.TransactionType;
 import com.wayapay.thirdpartyintegrationservice.util.UserType;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -22,6 +23,9 @@ public interface CommissionFeignClient {
 
     @PostMapping("/api/v1/user/track/merchant-commission")
     ResponseEntity<ApiResponseBody<MerchantCommissionTrackerDto>> recordMerchantCommission(@RequestBody MerchantCommissionTrackerDto request, @RequestHeader("Authorization") String token);
+
+    @GetMapping("/api/v1/organisation/commission/biller/{biller}")
+    ResponseEntity<ApiResponseBody<OrganisationCommissionResponse>> getOrgCommission(@PathVariable String biller, @RequestHeader("Authorization") String token);
 
 
 }

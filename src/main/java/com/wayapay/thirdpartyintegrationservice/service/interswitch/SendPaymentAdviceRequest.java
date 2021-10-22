@@ -17,4 +17,5 @@ public class SendPaymentAdviceRequest {
     private String customerEmail;
     private String amount;
     private String requestReference;
+    private String paydirectItemCode;
 }

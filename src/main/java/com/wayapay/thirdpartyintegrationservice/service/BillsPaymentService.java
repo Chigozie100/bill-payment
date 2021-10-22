@@ -8,6 +8,7 @@ import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.model.ThirdParty;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
+import com.wayapay.thirdpartyintegrationservice.service.auth.AuthFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
 import com.wayapay.thirdpartyintegrationservice.service.commission.MerchantCommissionTrackerDto;
 import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeService;
@@ -59,6 +60,7 @@ public class BillsPaymentService {
     private final CategoryService categoryService;
     private final BillerService billerService;
     private final ThirdPartyService thirdPartyService;
+    private final AuthFeignClient authFeignClient;
 
     //getAllCategories
     public List<CategoryResponse> getAllCategories() throws ThirdPartyIntegrationException {
@@ -154,6 +156,7 @@ public class BillsPaymentService {
                 List<BillerResponse> billerResponseListFromApi;
                 try {
                     billerResponseListFromApi = getBillsPaymentService(category.getThirdParty().getThirdPartyNames()).getAllBillersByCategory(category.getCategoryAggregatorCode());
+
                 } catch (ThirdPartyIntegrationException e) {
                     log.error("Unable to fetch all billers from {}", category.getThirdParty().getThirdPartyNames(), e);
                     continue;
@@ -202,20 +205,27 @@ public class BillsPaymentService {
                 // call the receipt service
                 CompletableFuture.runAsync(() -> {
                     try {
-                        notificationService.pushINAPP(paymentTransactionDetail,token,paymentResponse);
+                        Map<String, String> map = inAppMessageBuilder(paymentResponse,paymentTransactionDetail,transactionId);
+
+                        notificationService.pushINAPP(map,token);
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        Map<String, String> map = emailMessageBuilder(paymentResponse,paymentTransactionDetail,userProfileResponse);
+                        notificationService.pushEMAIL(map,token);
                     } catch (ThirdPartyIntegrationException e) {
                         e.printStackTrace();
                     }
                 });
                 CompletableFuture.runAsync(() -> {
                     try {
-                        notificationService.pushEMAIL(paymentTransactionDetail,token,paymentResponse, userProfileResponse);
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
-                CompletableFuture.runAsync(() -> {
-                    try {
+                        log.info("paymentTransactionDetail :: " +paymentTransactionDetail);
+                        log.info("paymentResponse :: " +paymentResponse);
+                        log.info("userProfileResponse :: " +userProfileResponse);
                        notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
                     } catch (ThirdPartyIntegrationException e) {
@@ -223,15 +233,23 @@ public class BillsPaymentService {
                     }
                 });
 
-                getCommissionForMakingBillsPayment(token, userName);
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        getCommissionForMakingBillsPayment(userName,token, paymentRequest.getAmount());
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
 
-//                CompletableFuture.runAsync(() -> {
-//                    try {
-//
-//                    } catch (ThirdPartyIntegrationException e) {
-//                        e.printStackTrace();
-//                    }
-//                });
+                //ThirdParty thirdParty, String billerId, UserType userType,String userName, String token, BigDecimal amount
+
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        calculateMerchantPercentage(paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
 
 
                 Map<String,String> map = new HashMap<>();
@@ -248,6 +266,7 @@ public class BillsPaymentService {
 
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
+                log.info("Error in billspayment :: " +e.getMessage());
                 operationService.saveFailedTransactionDetail(userProfileResponse,paymentRequest, fee, null, userName, null);
 
                 disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
@@ -259,8 +278,62 @@ public class BillsPaymentService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
+    private String extractData(PaymentResponse paymentResponse, PaymentTransactionDetail paymentTransactionDetail){
+        List<ParamNameValue> listValue = paymentResponse.getData();
+        String message = null;
+        for (int i = 0; i < listValue.size(); i++) {
+            ParamNameValue value = new ParamNameValue();
+            value.setName(listValue.get(i).getName());
+            value.setValue(listValue.get(i).getValue());
+            message = "Your account has "+ "\n" +
+                    ""+"been credited with:" +paymentTransactionDetail.getAmount() +" \n" +
+                    "" + value.getValue();
+        }
+        return message;
+    }
+
+
+    private Map<String, String> smsMessageBuilder(PaymentResponse paymentResponse,PaymentTransactionDetail paymentTransactionDetail){
+        Map<String, String> map = new HashMap<>();
+        map.put("paymentTransactionAmount", paymentTransactionDetail.getAmount().toString());
+        map.put("userId", paymentTransactionDetail.getUsername());
+        map.put("message", extractData(paymentResponse,paymentTransactionDetail));
+        return map;
+    }
+
+    private Map<String, String> emailMessageBuilder(PaymentResponse paymentResponse,PaymentTransactionDetail paymentTransactionDetail, UserProfileResponse userProfileResponse){
+        Map<String, String> map = new HashMap<>();
+        map.put("paymentTransactionAmount", paymentTransactionDetail.getAmount().toString());
+        map.put("userId", paymentTransactionDetail.getUsername());
+        map.put("message", extractData(paymentResponse,paymentTransactionDetail));
+        map.put("email", userProfileResponse.getEmail());
+        map.put("phoneNumber", userProfileResponse.getPhoneNumber());
+        map.put("surname", userProfileResponse.getSurname());
+        map.put("firstName", userProfileResponse.getFirstName());
+        map.put("middleName", userProfileResponse.getMiddleName());
+        return map;
+    }
+
+
+
+    private Map<String, String> inAppMessageBuilder(PaymentResponse paymentResponse,PaymentTransactionDetail paymentTransactionDetail, String transactionId){
+        List<String> inAppRecipient = new ArrayList<>();
+        inAppRecipient.add(paymentTransactionDetail.getUsername());
+
+        Map<String, String> dto = new HashMap<>();
+        dto.put("userId",paymentTransactionDetail.getUsername());
+        dto.put("ref", transactionId);
+        dto.put("amount", paymentTransactionDetail.getAmount().toString());
+        dto.put("sender", "WAYA-ADMIN");
+        dto.put("initiator", paymentTransactionDetail.getUsername());
+        dto.put("in_app_recipient", inAppRecipient.toString());
+        dto.put("message", extractData(paymentResponse,paymentTransactionDetail));
+        return dto;
+    }
+
     public PaymentResponse processMultiplePayment(MultiplePaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
         // get user profile
+        System.out.println("paymentRequest.getUsername()" + paymentRequest);
         System.out.println("paymentRequest.getUsername()" + paymentRequest.getUsername());
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
 
@@ -299,13 +372,6 @@ public class BillsPaymentService {
                  * credit the merchant user's commission wallet
                  */
 
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        payCommissionToMerchant(token, userName, fee);
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
 
                 //logTransaction(paymentRequest,paymentResponse,token,userName);
                 Map<String, String> map = new HashMap<>();
@@ -550,14 +616,13 @@ public class BillsPaymentService {
 
         try {
             // check if User enables SMS charge
-            operationService.smsNotification(smsEvent,token);
+            notificationService.smsNotification(smsEvent,token);
 
         }catch (ThirdPartyIntegrationException ex){
             throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
         }
 
     }
-
 
     public Map<String, Object> search(String username, int pageNumber, int pageSize){
         Pageable paging = getPageable(pageNumber, pageSize);
@@ -702,10 +767,9 @@ public class BillsPaymentService {
 //    // get commission from commission user table
 //
 //    // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment
-    public void getCommissionForMakingBillsPayment(String token, String userId) throws ThirdPartyIntegrationException {
-
-        UserType userType = getUserType() != null ? getUserType() : null;
-
+    public void getCommissionForMakingBillsPayment(String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
+        log.info("Inside getCommissionForMakingBillsPayment::: " +userId );
+        UserType userType = getUserType(userId,token);
         log.info("Billspyament:: {} ::: " + userType);
 
         if (userType !=null){
@@ -716,76 +780,63 @@ public class BillsPaymentService {
             trackerDto.setCommissionValue(BigDecimal.ONE.doubleValue());
             trackerDto.setTransactionType(TransactionType.BILLS_PAYMENT);
             commissionOperationService.saveMerchantCommission(trackerDto,token);
+
+            payCommissionToMerchant(userType,userId,token, amount);  // pay user commission
+
         }
 
     }
 
-
-    private UserType getUserType() throws ThirdPartyIntegrationException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Set<String> roles = null;
-        try{
-           roles = authentication.getAuthorities().stream()
-                    .map(r -> r.getAuthority()).collect(Collectors.toSet());
-        }catch(Exception exception){
-            roles = Collections.singleton("ROLE_" + UserType.ROLE_CORP_ADMIN);
-            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, exception.getMessage());
+    private UserProfileResponsePojo getUserProfile(String userId, String token) throws ThirdPartyIntegrationException {
+        try {
+            ResponseEntity<ApiResponseBody<UserProfileResponsePojo>> userProfile = authFeignClient.getUserByUserId(userId, token);
+            ApiResponseBody<UserProfileResponsePojo> responseBody = userProfile.getBody();
+            return responseBody.getData();
+        }catch (Exception e){
+            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, e.getMessage());
         }
 
-        UserType  userType = null;
-        if (!roles.isEmpty() || roles !=null){
-            for(String role : roles) {
-                if (role.equalsIgnoreCase("ROLE_"+UserType.ROLE_CORP)){
-                    userType = UserType.ROLE_CORP;
-                }else if (role.equalsIgnoreCase("ROLE_"+UserType.ROLE_CORP_ADMIN)){
-                    userType = UserType.ROLE_CORP;
+    }
+        private UserType getUserType(String userId, String token) throws ThirdPartyIntegrationException {
+            UserProfileResponsePojo userProfile =  getUserProfile(userId, token);
+            log.info("userProfile :: " +userProfile.getRoles());
+                for(String role : userProfile.getRoles()) {
+                    if(UserType.ROLE_CORP.name().equalsIgnoreCase(role) || UserType.ROLE_CORP_ADMIN.name().equalsIgnoreCase(role)){
+                        return UserType.ROLE_CORP ==null ? UserType.ROLE_CORP_ADMIN : UserType.ROLE_CORP;
+                    }
                 }
-            }
-        }
+        return null;
+
+    }
 
 
-        return userType != null ? userType : null;
-
+    public void payCommissionToMerchant(UserType userType,String userName, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
+        commissionOperationService.payUserCommission(userType,userName,token, amount); // log commission
     }
 
     //as a merchant user anytime i sell billspayment a certain % amount of the item sold amount is transferred on real time to my commission wallet from WAYA
-    public String payCommissionToMerchant(String token, String userName, BigDecimal fee) throws ThirdPartyIntegrationException {
-        UserType userType = null;
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Set<String> roles = authentication.getAuthorities().stream()
-                .map(r -> r.getAuthority()).collect(Collectors.toSet());
-        for(String role : roles){
-            System.out.println("###########  HERE stock ######### " +role);
-            if (UserType.ROLE_CORP.equals(role)){
-                userType = UserType.ROLE_CORP;
-            }else if (UserType.ROLE_CORP_ADMIN.equals(role)){
-                userType = UserType.ROLE_CORP_ADMIN;
-            }else{
-                return null;
-            }
-        }
-        boolean corp_user_aggre = authentication.getAuthorities().stream()
-                .anyMatch(r -> r.getAuthority().equals(UserType.ROLE_CORP));
-        boolean corp_user_agent = authentication.getAuthorities().stream()
-                .anyMatch(r -> r.getAuthority().equals(UserType.ROLE_CORP_ADMIN));
+    private void calculateMerchantPercentage(String billerId, String userName, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
+        UserType userType = getUserType(userName,token);
+        commissionOperationService.payOrganisationCommission(userType,billerId,userName,token, amount); // log commission
 
-
-        PayRequest payRequest = new PayRequest();
-        payRequest.setAmount(fee);
-        if (corp_user_aggre || corp_user_agent ){
-
-             commissionOperationService.payUserCommission(userType,token,userName); // log commission
-            // save this transaction on commission service
-        }
-            //commissionOperationService.payUserCommission(userType,token,userName); // log commission
-
-        return null;
+        /**
+         * 1. get the biller
+         * 2. find the biller commission
+         * 3. find the corporate user Id
+         * 4. compute the Percetage
+         * 5. credit the commission wallet
+         * 6 end
+         *
+         */
     }
 
+    /**
+     *
+     * @return
+     */
     //check for the userType who's Item has been purchased
     public ThirdParty checkCustomerWhosItemIsBeanPurchased(){
         ThirdParty thirdParty = new ThirdParty();
-
         return thirdParty;
     }
 

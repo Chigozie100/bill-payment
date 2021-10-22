@@ -1,5 +1,9 @@
 package com.wayapay.thirdpartyintegrationservice.service.notification;
 
+import com.wayapay.thirdpartyintegrationservice.dto.PaymentResponse;
+import com.wayapay.thirdpartyintegrationservice.dto.PaymentTransactionDetailDto;
+import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
+import com.wayapay.thirdpartyintegrationservice.util.SMSEventStatus;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -22,4 +26,9 @@ public class SmsPayload {
     @NotNull(message = "make sure you entered the right key *recipients* , and the value must not be null")
     @NotEmpty(message = "recipients list cannot be empty. also make sure you use the right key *recipients*")
     private List<SmsRecipient> recipients;
+
+    @NotNull(message = "make sure you entered the right key *smsEventStatus* , and the value must not be null")
+    @NotBlank(message = "smsEventStatus cannot be blank, and make sure you use the right key *smsEventStatus*")
+    private SMSEventStatus smsEventStatus;
+
 }

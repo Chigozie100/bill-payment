@@ -87,6 +87,8 @@ app:
       base-url: ${LOG_SERVICE_BASE}
     commission:
       base-url: ${COMMISSION_BASE}
+    referral:
+      base-url: ${REFERRAL_SERVICE}
 
     kafka:
       transaction-topic: ${TRANSACTION_TOPIC}

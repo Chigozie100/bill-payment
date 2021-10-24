@@ -19,7 +19,7 @@ public interface CommissionFeignClient {
     //localhost:8281/commission/api/v1/user/get-user-commission-external/userType/CORPORATE_USER/transactionType/BILLS_PAYMENT
 
     @PostMapping(path = "/api/v1/user/add-commission-history")
-    ResponseEntity<ApiResponseBody<CommissionDto>> addCommissionHistory(@RequestBody CommissionDto commissionDto, @RequestHeader("Authorization") String token);
+    ResponseEntity<ApiResponseBody<CommissionDto>> addCommissionHistory(@RequestBody CommissionHistoryRequest commissionDto, @RequestHeader("Authorization") String token);
 
     @PostMapping("/api/v1/user/track/merchant-commission")
     ResponseEntity<ApiResponseBody<MerchantCommissionTrackerDto>> recordMerchantCommission(@RequestBody MerchantCommissionTrackerDto request, @RequestHeader("Authorization") String token);

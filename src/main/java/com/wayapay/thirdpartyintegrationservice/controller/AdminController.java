@@ -2,12 +2,14 @@ package com.wayapay.thirdpartyintegrationservice.controller;
 
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
+import com.wayapay.thirdpartyintegrationservice.model.TransactionTracker;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.BillsPaymentService;
 import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.service.OperationService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
+import com.wayapay.thirdpartyintegrationservice.service.referral.ReferralCodePojo;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -188,6 +190,27 @@ public class AdminController {
     @GetMapping("/getBillersByCategories/{category_id}/biller/{biller_id}")
     public ResponseEntity<ResponseHelper> getCustomerValidationFormByBiller(@PathVariable String category_id, @PathVariable String biller_id) throws ThirdPartyIntegrationException {
         return ResponseEntity.ok(new SuccessResponse(iThirdPartyService.getCustomerValidationFormByBiller(category_id, biller_id)));
+    }
+
+
+    @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @PostMapping("/admin/test-tracker")
+    public ResponseEntity<ResponseHelper> testTracker(@Valid @RequestBody TransactionTracker transfer, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
+        TransactionTracker transactionTracker = operationService.testTracker(transfer);
+        return ResponseEntity.ok(new SuccessResponse(transactionTracker));
+    }
+
+    @ApiOperation(value = "Test : Test view referralCode")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @GetMapping("/admin/test-tracker/{referralCode}")
+    public ResponseEntity<ResponseHelper> getReferralDetails(@PathVariable String referralCode,@ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
+        ReferralCodePojo transactionTracker = operationService.getReferralDetails(referralCode,token);
+        return ResponseEntity.ok(new SuccessResponse(transactionTracker));
     }
 
 

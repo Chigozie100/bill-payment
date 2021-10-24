@@ -5,11 +5,13 @@ import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.repo.BillsPaymentRefundRepository;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
+import com.wayapay.thirdpartyintegrationservice.repo.TransactionTrackerRepository;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.service.logactivity.LogFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.notification.NotificationFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
+import com.wayapay.thirdpartyintegrationservice.service.referral.ReferralFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
@@ -54,14 +56,16 @@ class OperationServiceTest {
     private LogFeignClient logFeignClient;
     private BillsPaymentRefundRepository billsPaymentRefundRepository;
     private static final String testUserName = "10";
+    private TransactionTrackerRepository transactionTrackerRepository;
+    private ReferralFeignClient referralFeignClient;
 
     @BeforeEach
     void setUp() {
-        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService, profileFeignClient, notificationFeignClient, logFeignClient, billsPaymentRefundRepository);
+        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService, profileFeignClient, notificationFeignClient, logFeignClient, billsPaymentRefundRepository,transactionTrackerRepository,referralFeignClient);
     }
 
     @Test
-    void secureFund() throws ThirdPartyIntegrationException, NoSuchAlgorithmException, JsonProcessingException, URISyntaxException {
+    void secureFund() throws ThirdPartyIntegrationException, NoSuchAlgorithmException, JsonProcessingException {
 
         String sourceUserAccount = "992";
         String sampleToken = "serial eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZ2JlLnRlcnNlZXJAZ21haWwuY29tIiwiZXhwIjoxNjYxMzc0NDA0fQ.PxESICAYmiBTNf622maXdlyy0cJs3nX6QIe88OY_7Sw";

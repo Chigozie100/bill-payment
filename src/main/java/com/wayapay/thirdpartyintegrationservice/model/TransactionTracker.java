@@ -32,5 +32,6 @@ public class TransactionTracker  extends SuperModel {
     @Column(name = "transaction_type")
     private TransactionType transactionType;
 
+    private boolean isPaid=false;
 
 }

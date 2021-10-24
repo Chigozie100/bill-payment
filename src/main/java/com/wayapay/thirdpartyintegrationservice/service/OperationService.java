@@ -410,6 +410,28 @@ public class OperationService {
         return transactionTrackerRepository.save(transactionTracker);
     }
 
+    public List<TransactionTracker> getListOfTransactions(String referralCode) throws ThirdPartyIntegrationException {
+        try{
+        List<TransactionTracker> transactionTrackerList = transactionTrackerRepository.findByReferralCode(referralCode);
+    return transactionTrackerList;
+        } catch (Exception  e) {
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
+        }
+    }
+    public TransactionTracker updateTransactionsStatus(Long id) throws ThirdPartyIntegrationException {
+        try{
+            Optional<TransactionTracker> transactionTracker = transactionTrackerRepository.findById(id);
+          if (transactionTracker.isPresent()){
+              transactionTracker.get().setPaid(true);
+              return transactionTrackerRepository.save(transactionTracker.get());
+          }
+
+        } catch (Exception  e) {
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
+        }
+        return null;
+    }
+
 
     public String getErrorMessage(String errorInJson) {
         try {

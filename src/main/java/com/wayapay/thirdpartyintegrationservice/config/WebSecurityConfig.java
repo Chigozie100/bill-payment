@@ -47,6 +47,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         // We don't need CSRF for this example
         httpSecurity.cors().and().csrf().disable().authorizeRequests()
                 .antMatchers("/","/actuator/**").permitAll()
+                .antMatchers("/api/v1/commission/get-transactions-by-referralCode/{referralCode}").permitAll()
                 .antMatchers(SWAGGER_WHITELIST).permitAll()
                 .antMatchers(HttpMethod.GET, API_V1+"/config/fee/**").hasRole("ADMIN")
                 .antMatchers(HttpMethod.POST, API_V1+"/config/fee/**").hasRole("ADMIN")

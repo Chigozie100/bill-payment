@@ -144,4 +144,16 @@ public class BillsPaymentController {
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
+    @ApiOperation(value = "User Get Transaction Report By user Id: This API is used to get all transaction report by user")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @GetMapping("/biller/report/user/{userId}")
+    public ResponseEntity<ResponseHelper> adminSearchByUserID(@PathVariable("userId") String userId, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) throws ThirdPartyIntegrationException {
+
+        Map<String, Object> transactionDetailPage = billsPaymentService.search(userId,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
+        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
+    }
+
+
 }

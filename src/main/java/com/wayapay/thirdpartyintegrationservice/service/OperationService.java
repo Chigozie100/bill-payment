@@ -6,14 +6,18 @@ import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.BillsPaymentRefund;
 import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
+import com.wayapay.thirdpartyintegrationservice.model.TransactionTracker;
 import com.wayapay.thirdpartyintegrationservice.repo.BillsPaymentRefundRepository;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
+import com.wayapay.thirdpartyintegrationservice.repo.TransactionTrackerRepository;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseObj;
 import com.wayapay.thirdpartyintegrationservice.service.logactivity.LogFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.logactivity.LogRequest;
 import com.wayapay.thirdpartyintegrationservice.service.notification.*;
 import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
+import com.wayapay.thirdpartyintegrationservice.service.referral.ReferralCodePojo;
+import com.wayapay.thirdpartyintegrationservice.service.referral.ReferralFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.FundTransferResponse;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
 import com.wayapay.thirdpartyintegrationservice.util.*;
@@ -41,6 +45,8 @@ public class OperationService {
     private final NotificationFeignClient notificationFeignClient;
     private final LogFeignClient logFeignClient;
     private final BillsPaymentRefundRepository billsPaymentRefundRepository;
+    private final TransactionTrackerRepository transactionTrackerRepository;
+    private final ReferralFeignClient referralFeignClient;
 
 
 
@@ -315,6 +321,93 @@ public class OperationService {
         paymentTransactionDetail.setUsername(userName);
         paymentTransactionDetail.setReferralCode(userProfileResponse.getReferral());
         return paymentTransactionRepo.save(paymentTransactionDetail);
+    }
+
+
+    public void trackTransactionCount(UserProfileResponse userProfileResponse, String token) throws ThirdPartyIntegrationException {
+        TransactionTracker transactionTracker = new TransactionTracker();
+        ReferralCodePojo referralCodePojo = getReferralDetails(userProfileResponse.getReferral(), token);
+        log.info("referralCodePojo " + referralCodePojo);
+        if (referralCodePojo != null) {
+            // this is for users who have been referred by another user
+            saveCounter(referralCodePojo,userProfileResponse);
+        }else{
+            log.info("referralCodePojo is null ==" + referralCodePojo);
+            // this is for users with no referralCode
+            saveCounter(referralCodePojo,userProfileResponse);
+        }
+  }
+
+  private void saveCounter(ReferralCodePojo referralCodePojo, UserProfileResponse userProfileResponse){
+        String referreeId = userProfileResponse.getUserId();
+        Optional<TransactionTracker> transactionOpt = transactionTrackerRepository.findByReferreeId(referreeId);
+      log.info("transactionOpt is present :: " + transactionOpt.get());
+      log.info("transactionOpt is present :: referralCodePojo" + referralCodePojo);
+
+      if (transactionOpt.isPresent() && referralCodePojo ==null) {
+          // DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL
+          log.info("DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL");
+
+      } else if (transactionOpt.isPresent() && referralCodePojo !=null){
+          // COUNT TRANSACTIONS
+          int newCount = transactionOpt.get().getCount() + 1;
+          transactionOpt.get().setCount(newCount);
+          transactionOpt.get().setReferralCode(userProfileResponse.getReferral());
+          transactionOpt.get().setReferralCodeOwner(referralCodePojo.getUserId()); // if this is null the obj wont save referralCodePojo.getUserId()
+          transactionOpt.get().setReferreeId(userProfileResponse.getUserId());
+          transactionOpt.get().setTransactionType(TransactionType.BILLS_PAYMENT);
+          transactionTrackerRepository.save(transactionOpt.get());
+          log.info("Billspayment counter {} for referralCodePojo !=null :: " + userProfileResponse.getUserId() + "==****==" + newCount);
+      } else if (!transactionOpt.isPresent() && referralCodePojo !=null){
+          // COUNT TRANSACTIONS
+          TransactionTracker transactionTracker = new TransactionTracker();
+          transactionTracker.setCount(1);
+          transactionTracker.setReferralCode(userProfileResponse.getReferral());
+          transactionOpt.get().setReferralCodeOwner(referralCodePojo.getUserId());
+          transactionTracker.setReferreeId(userProfileResponse.getUserId());
+          transactionTrackerRepository.save(transactionTracker);
+          log.info("This is my first time here Last " + transactionTracker);
+      } else if (!transactionOpt.isPresent() && referralCodePojo ==null){
+          // DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL
+          log.info("DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL ");
+      } else {
+          // Create NEW
+          TransactionTracker transactionTracker = new TransactionTracker();
+          transactionTracker.setCount(1);
+          transactionTracker.setReferralCode(userProfileResponse.getReferral());
+          transactionTracker.setReferralCodeOwner("");
+          transactionTracker.setReferreeId(userProfileResponse.getUserId());
+          transactionTracker.setTransactionType(TransactionType.BILLS_PAYMENT);
+          transactionTrackerRepository.save(transactionTracker);
+          log.info("This is my first time here Last " + transactionTracker);
+      }
+  }
+
+    public ReferralCodePojo getReferralDetails(String referralCode, String token) throws ThirdPartyIntegrationException {
+
+        log.info("ReferralCode :: " + referralCode);
+        try{
+            ResponseEntity<ApiResponseBody<ReferralCodePojo>> responseEntity = referralFeignClient.getUserByReferralCode(referralCode,token);
+            ApiResponseBody<ReferralCodePojo> responseBody = responseEntity.getBody();
+            ReferralCodePojo referralCodePojo = responseBody.getData();
+            log.info("referralCodePojo ::: " + referralCodePojo);
+
+            return referralCodePojo;
+        } catch (FeignException exception) {
+            return null;
+            //log.error("FeignException => {}", exception.getCause());
+            //throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, getErrorMessage(exception.contentUTF8()));
+        }
+    }
+
+    public TransactionTracker testTracker(TransactionTracker transactionTracker2){
+        TransactionTracker transactionTracker = new TransactionTracker();
+        transactionTracker.setCount(1);
+        transactionTracker.setReferralCode(transactionTracker2.getReferralCode());
+        transactionTracker.setReferralCodeOwner(transactionTracker2.getReferralCodeOwner());
+        transactionTracker.setReferreeId(transactionTracker2.getReferreeId());
+        transactionTracker.setTransactionType(TransactionType.BILLS_PAYMENT);
+        return transactionTrackerRepository.save(transactionTracker);
     }
 
 

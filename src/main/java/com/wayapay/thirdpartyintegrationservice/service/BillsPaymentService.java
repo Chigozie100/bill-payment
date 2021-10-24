@@ -202,6 +202,16 @@ public class BillsPaymentService {
                 //store the transaction information
                 PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
 
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        if (paymentTransactionDetail !=null){
+                            operationService.trackTransactionCount(userProfileResponse,token);
+                        }
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
+
                 // call the receipt service
                 CompletableFuture.runAsync(() -> {
                     try {
@@ -221,17 +231,17 @@ public class BillsPaymentService {
                         e.printStackTrace();
                     }
                 });
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        log.info("paymentTransactionDetail :: " +paymentTransactionDetail);
-                        log.info("paymentResponse :: " +paymentResponse);
-                        log.info("userProfileResponse :: " +userProfileResponse);
-                       notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
-
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
+//                CompletableFuture.runAsync(() -> {
+//                    try {
+//                        log.info("paymentTransactionDetail :: " +paymentTransactionDetail);
+//                        log.info("paymentResponse :: " +paymentResponse);
+//                        log.info("userProfileResponse :: " +userProfileResponse);
+//                     //  notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
+//
+//                    } catch (ThirdPartyIntegrationException e) {
+//                        e.printStackTrace();
+//                    }
+//                });
 
                 CompletableFuture.runAsync(() -> {
                     try {
@@ -267,7 +277,7 @@ public class BillsPaymentService {
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
                 log.info("Error in billspayment :: " +e.getMessage());
-                operationService.saveFailedTransactionDetail(userProfileResponse,paymentRequest, fee, null, userName, null);
+                operationService.saveFailedTransactionDetail(userProfileResponse,paymentRequest, fee, null, userName, transactionId);
 
                 disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
                 throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
@@ -389,8 +399,8 @@ public class BillsPaymentService {
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
                 log.error("This is the error from payment :::: " + e.getMessage());
-                //   operationService.saveFailedTransactionDetail(paymentRequest, fee, null, userName, null);
-                //   disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
+//                   operationService.saveFailedTransactionDetail(paymentRequest, fee, null, userName, null);
+                   disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
 
                 throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
             }

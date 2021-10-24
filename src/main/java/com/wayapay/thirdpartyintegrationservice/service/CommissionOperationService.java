@@ -2,10 +2,7 @@ package com.wayapay.thirdpartyintegrationservice.service;
 
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
-import com.wayapay.thirdpartyintegrationservice.service.commission.CommissionDto;
-import com.wayapay.thirdpartyintegrationservice.service.commission.CommissionFeignClient;
-import com.wayapay.thirdpartyintegrationservice.service.commission.MerchantCommissionTrackerDto;
-import com.wayapay.thirdpartyintegrationservice.service.commission.UserCommissionDto;
+import com.wayapay.thirdpartyintegrationservice.service.commission.*;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
 import com.wayapay.thirdpartyintegrationservice.util.*;
 import lombok.RequiredArgsConstructor;
@@ -134,7 +131,7 @@ public class CommissionOperationService {
         transfer.setPaymentReference(CommonUtils.generatePaymentTransactionId());
         transfer.setCustomerAccountNumber(userCommissionWallet != null ? userCommissionWallet.getAccountNo() : null);
         transfer.setTranCrncy("NGN");
-        transfer.setTranNarration("COMMISSION-PAYMENT-TRANSACTION");
+        transfer.setTranNarration("MERCHANT-COMMISSION-PAYMENT");
 
         ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialCommissionToUserCommission(transfer,token);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
@@ -145,7 +142,7 @@ public class CommissionOperationService {
         log.info(" about to Save ::: payUserCommission ");
         saveCommissionHistory(userId,transfer, walletTransactionPojoList,userType,token);
 
-        inAppNotification(userId, transfer, walletTransactionPojoList, token, infoResponse);
+        inAppNotification(orgCommission.getCorporateUserId(), transfer, walletTransactionPojoList, token, infoResponse);
 
         emailNotification(orgCommission, userId, transfer, walletTransactionPojoList, token,infoResponse);
 
@@ -191,12 +188,12 @@ public class CommissionOperationService {
 
     private void saveCommissionHistory(String userId,TransferFromWalletPojo transfer, List<WalletTransactionPojo> walletTransactionPojoList, UserType userType, String token){
         CompletableFuture.runAsync(() -> {
-            CommissionDto commissionDto = new CommissionDto();
+            CommissionHistoryRequest commissionDto = new CommissionHistoryRequest();
 
             commissionDto.setUserId(userId);
             commissionDto.setCommissionValue(transfer.getAmount());
-            commissionDto.setJsonRequest(transfer);
-            commissionDto.setJsonResponse(walletTransactionPojoList);
+            commissionDto.setJsonRequest(CommonUtils.objectToJson(transfer).orElse(""));
+            commissionDto.setJsonResponse(CommonUtils.objectToJson(walletTransactionPojoList).orElse(""));
             commissionDto.setTransactionType(TransactionType.TRANSFER);
             commissionDto.setUserType(userType);
 

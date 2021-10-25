@@ -110,6 +110,7 @@ public class OperationLogService {
 
     private void logContactingVendorToProvideValue(JoinPoint joinPoint, Object response,
                                                    Stage stage, FinalStatus finalStatus){
+        log.info("joinPoint :: " + joinPoint);
 //        PaymentRequest request, BigDecimal fee, String transactionId, String username
         PaymentRequest paymentRequest = (PaymentRequest) joinPoint.getArgs()[0];
         OperationLog operationLog = new OperationLog();

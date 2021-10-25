@@ -55,4 +55,6 @@ public class PaymentTransactionDetail extends SuperModel {
 
     private String userAccountNumber;
 
+    private boolean isResolved;
+
 }

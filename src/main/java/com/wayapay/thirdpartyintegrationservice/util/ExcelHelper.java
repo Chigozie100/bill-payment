@@ -97,10 +97,10 @@ public class ExcelHelper {
                     String colName = CellReference.convertNumToColString(cell.getColumnIndex()).toUpperCase();
                     switch (colName) {
                         case "A":
-                            pojo.setCategoryId(defaultStringCell(cell));
+                            pojo.setBillerId(defaultStringCell(cell));
                             break;
                         case "B":
-                            pojo.setBillerId(defaultStringCell(cell));
+                            pojo.setCategoryId(defaultStringCell(cell));
                             break;
                         case "C":
                             pojo.setPhone(defaultStringCell(cell));

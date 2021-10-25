@@ -467,12 +467,10 @@ public class OperationService {
 
 
     public List<WalletTransactionPojo> refundFailedTransaction(TransferFromOfficialToMainWallet transfer, String token) throws ThirdPartyIntegrationException {
-
         try {
+            Optional<PaymentTransactionDetail> transactionDetail = paymentTransactionRepo.findByTransId(Long.parseLong(transfer.getBillsPaymentTransactionId()));
 
-            Optional<TransactionDetail> transactionDetail = paymentTransactionRepo.findByTransactionId(transfer.getBillsPaymentTransactionId());
             if (transactionDetail.isPresent()){
-
             ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> responseEntity =  walletFeignClient.refundFailedTransaction(transfer,token);
 
             ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
@@ -480,11 +478,12 @@ public class OperationService {
             log.info("responseList " + mainWalletResponseList);
 
                 if (responseEntity.getStatusCode().is2xxSuccessful()){
-                    saveBillsPaymentRefund(transfer);
+                    saveBillsPaymentRefund(transfer, mainWalletResponseList);
+                    transactionDetail.get().setResolved(true);
+                    paymentTransactionRepo.save(transactionDetail.get());
                 }
 
             return mainWalletResponseList;
-
             }
         } catch (RestClientException e) {
             System.out.println("Error is here " + e.getMessage());
@@ -495,12 +494,15 @@ public class OperationService {
 
 
 
-    public void saveBillsPaymentRefund(TransferFromOfficialToMainWallet transfer) throws ThirdPartyIntegrationException {
+    public void saveBillsPaymentRefund(TransferFromOfficialToMainWallet transfer,List<WalletTransactionPojo> mainWalletResponseList) throws ThirdPartyIntegrationException {
         try{
             BillsPaymentRefund billsPaymentRefund = new BillsPaymentRefund();
             billsPaymentRefund.setAmount(transfer.getAmount());
             billsPaymentRefund.setUserId(transfer.getUserId());
             billsPaymentRefund.setTransactionId(transfer.getBillsPaymentTransactionId());
+            billsPaymentRefund.setSuccessful(true);
+            billsPaymentRefund.setJsonRequest(CommonUtils.objectToJson(transfer).orElse(""));
+            billsPaymentRefund.setJsonResponse(CommonUtils.objectToJson(mainWalletResponseList).orElse(""));
 
             billsPaymentRefundRepository.save(billsPaymentRefund);
         } catch (Exception e) {

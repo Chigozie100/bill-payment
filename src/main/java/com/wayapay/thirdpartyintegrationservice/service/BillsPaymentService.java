@@ -231,17 +231,14 @@ public class BillsPaymentService {
                         e.printStackTrace();
                     }
                 });
-//                CompletableFuture.runAsync(() -> {
-//                    try {
-//                        log.info("paymentTransactionDetail :: " +paymentTransactionDetail);
-//                        log.info("paymentResponse :: " +paymentResponse);
-//                        log.info("userProfileResponse :: " +userProfileResponse);
-//                     //  notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
-//
-//                    } catch (ThirdPartyIntegrationException e) {
-//                        e.printStackTrace();
-//                    }
-//                });
+                CompletableFuture.runAsync(() -> {
+                    try {
+                       notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
+
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
 
                 CompletableFuture.runAsync(() -> {
                     try {
@@ -426,10 +423,10 @@ public class BillsPaymentService {
 
     PaymentResponse buildBulkPayment(BulkBillsPaymentDTO bulkBillsPaymentDTO,HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
-        log.info("Just entered Here we are " + bulkBillsPaymentDTO);
+        log.info("Just entered Here we are " + bulkBillsPaymentDTO.getPaymentRequestExcels());
 
         PaymentResponse paymentResponse = new PaymentResponse();
-        MultiplePaymentRequest paymentRequest = new MultiplePaymentRequest();
+        PaymentRequest paymentRequest = new PaymentRequest();
         Map<String,String> map = new LinkedHashMap<>();
 
         for (PaymentRequestExcel mPayUser : bulkBillsPaymentDTO.getPaymentRequestExcels()) {
@@ -447,9 +444,9 @@ public class BillsPaymentService {
 
             paymentRequest.setData(data);
 
-            log.info("Here we are " + bulkBillsPaymentDTO);
-
-            processMultiplePayment(paymentRequest, mPayUser.getUserId(), token);
+            log.info("Here is the payment request " + paymentRequest);
+            log.info("Here is the mPayUser.getUserId() " + mPayUser.getUserId());
+            processPayment(paymentRequest, mPayUser.getUserId(), token);
 
         }
 
@@ -461,11 +458,16 @@ public class BillsPaymentService {
         System.out.println("multipleFormPaymentRequest ::: {} " + multipleFormPaymentRequest);
         List<MultiplePaymentRequest> paymentRequestList = multipleFormPaymentRequest;
         PaymentResponse paymentResponse = null;
-        MultiplePaymentRequest paymentRequest = new MultiplePaymentRequest();
+
         for (int i = 0; i < paymentRequestList.size(); i++) {
-            paymentRequest = paymentRequestList.get(i);
+            PaymentRequest paymentRequest = new PaymentRequest();
+            paymentRequest.setAmount(paymentRequestList.get(i).getAmount());
+            paymentRequest.setCategoryId(paymentRequestList.get(i).getCategoryId());
+            paymentRequest.setBillerId(paymentRequestList.get(i).getBillerId());
+            paymentRequest.setData(paymentRequestList.get(i).getData());
             System.out.println(" paymentRequest ::: {} " +paymentRequest );
-            paymentResponse = processMultiplePayment(paymentRequest, username, token);
+            paymentResponse = processPayment(paymentRequest, username, token);
+
 //            MultiplePaymentRequest finalPaymentRequest = paymentRequest;
 //            System.out.println("finalPaymentRequest :: {} " +finalPaymentRequest);
 //            CompletableFuture.runAsync(() -> {
@@ -772,16 +774,10 @@ public class BillsPaymentService {
 
     }
 
-    //    //check for the userType whos Item has been purchased
-//    // take percentage from payment and send as commission to the Agent
-//    // get commission from commission user table
-//
+
 //    // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment
     public void getCommissionForMakingBillsPayment(String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
-        log.info("Inside getCommissionForMakingBillsPayment::: " +userId );
         UserType userType = getUserType(userId,token);
-        log.info("Billspyament:: {} ::: " + userType);
-
         if (userType !=null){
             MerchantCommissionTrackerDto trackerDto= new MerchantCommissionTrackerDto();
             trackerDto.setUserId(userId);
@@ -809,7 +805,6 @@ public class BillsPaymentService {
     }
         private UserType getUserType(String userId, String token) throws ThirdPartyIntegrationException {
             UserProfileResponsePojo userProfile =  getUserProfile(userId, token);
-            log.info("userProfile :: " +userProfile.getRoles());
                 for(String role : userProfile.getRoles()) {
                     if(UserType.ROLE_CORP.name().equalsIgnoreCase(role) || UserType.ROLE_CORP_ADMIN.name().equalsIgnoreCase(role)){
                         return UserType.ROLE_CORP ==null ? UserType.ROLE_CORP_ADMIN : UserType.ROLE_CORP;
@@ -855,9 +850,6 @@ public class BillsPaymentService {
         List<NewWalletResponse> newWalletResponses = operationService.getWayaOfficialWallet(token);
         return newWalletResponses;
     }
-
-    //As a an agent aggregator user, I should receive a certain % amount of commission from WAYA when the agent that signed up with my referral code has received a commision from WAYA for the sell of billspayment
-
 
 
 }

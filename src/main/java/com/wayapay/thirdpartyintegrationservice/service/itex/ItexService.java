@@ -152,8 +152,6 @@ public class ItexService implements IThirdPartyService {
     @Override
     public PaymentItemsResponse getCustomerValidationFormByBiller(String categoryId, String billerId) throws ThirdPartyIntegrationException {
 
-        log.info("Category :: " + categoryId);
-        log.info("billerId :: " + billerId);
         if (CommonUtils.isEmpty(categoryId) || CommonUtils.isEmpty(billerId)){
             log.error("categoryId => {} or billerId => {} is empty/null ", categoryId, billerId);
             throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Invalid category or biller provided");

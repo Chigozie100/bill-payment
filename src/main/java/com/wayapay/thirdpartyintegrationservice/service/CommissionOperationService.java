@@ -89,7 +89,6 @@ public class CommissionOperationService {
     }
 
     public void payUserCommission(UserType userType,String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
-        log.info("Inside payUserCommission ::: " + userType);
         TransferFromWalletPojo transfer = new TransferFromWalletPojo();
 
         //String token = BearerTokenUtil.getBearerTokenHeader();
@@ -109,7 +108,6 @@ public class CommissionOperationService {
         List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
         List<WalletTransactionPojo> walletTransactionPojoList = new ArrayList<>(Objects.requireNonNull(mainWalletResponseList));
 
-        log.info(" about to Save ::: payUserCommission ");
         saveCommissionHistory(userId,transfer, walletTransactionPojoList,userType,token);
 
         inAppNotification(userId, transfer, walletTransactionPojoList, token, infoResponse);
@@ -119,7 +117,6 @@ public class CommissionOperationService {
 
     public void payOrganisationCommission(UserType userType,String billerId,String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
 
-        log.info("inside payOrganisationCommission ::: ");
         TransferFromWalletPojo transfer = new TransferFromWalletPojo();
 
         //String token = BearerTokenUtil.getBearerTokenHeader();
@@ -139,7 +136,6 @@ public class CommissionOperationService {
         List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
         List<WalletTransactionPojo> walletTransactionPojoList = new ArrayList<>(Objects.requireNonNull(mainWalletResponseList));
 
-        log.info(" about to Save ::: payUserCommission ");
         saveCommissionHistory(userId,transfer, walletTransactionPojoList,userType,token);
 
         inAppNotification(orgCommission.getCorporateUserId(), transfer, walletTransactionPojoList, token, infoResponse);

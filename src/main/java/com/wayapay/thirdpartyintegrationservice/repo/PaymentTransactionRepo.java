@@ -43,8 +43,8 @@ public interface PaymentTransactionRepo extends JpaRepository<PaymentTransaction
     long findByUsername(String username);
 
 
-    @Query("select new com.wayapay.thirdpartyintegrationservice.dto.TransactionDetail(p.transactionId, p.thirdPartyName, p.amount, p.successful, p.category, p.biller, p.referralCode, p.paymentRequest, p.paymentResponse, p.createdAt, p.username, p.email, p.userAccountNumber) from PaymentTransactionDetail p where p.id = ?1")
-     Optional<TransactionDetail> findByTransId(Long id);
+    @Query("select p from PaymentTransactionDetail p where p.id = ?1 and p.isResolved=false")
+     Optional<PaymentTransactionDetail> findByTransId(Long id);
 
     @Query("select new com.wayapay.thirdpartyintegrationservice.dto.TransactionDetail(p.transactionId, p.thirdPartyName, p.amount, p.successful, p.category, p.biller, p.referralCode, p.paymentRequest, p.paymentResponse, p.createdAt, p.username, p.email, p.userAccountNumber) from PaymentTransactionDetail p where p.transactionId = ?1")
     Optional<TransactionDetail> findByTransactionId(@Param("transactionId") String transactionId);

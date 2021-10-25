@@ -95,7 +95,6 @@ public class NotificationService {
 
     public Boolean smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
         try {
-            log.info("about to send SMS :: " +smsEvent);
             ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.smsNotifyUser(smsEvent,token);
             ResponseObj infoResponse = responseEntity.getBody();
             log.info("userProfileResponse sms sent status :: " +infoResponse.status);
@@ -189,8 +188,6 @@ public class NotificationService {
         smsEvent.setInitiator(paymentTransactionDetail.getUsername());
 
         try {
-            log.info("smsEvent ::: " + smsEvent);
-
             smsNotification(smsEvent,token);
 
         }catch (ThirdPartyIntegrationException ex){

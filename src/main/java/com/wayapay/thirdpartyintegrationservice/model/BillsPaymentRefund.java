@@ -28,5 +28,10 @@ public class BillsPaymentRefund extends SuperModel{
 
     private String userId;
 
+    @Column(columnDefinition = "TEXT")
+    private String jsonRequest;
+    @Column(columnDefinition = "TEXT")
+    private String jsonResponse;
+
 
 }

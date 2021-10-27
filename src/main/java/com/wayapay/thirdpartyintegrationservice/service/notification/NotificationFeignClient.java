@@ -17,7 +17,7 @@ public interface NotificationFeignClient {
     @PostMapping("/email-notification")
     ResponseEntity<ResponseObj> emailNotifyUser(@RequestBody EmailEvent emailDto, @RequestHeader("Authorization") String token);
 
-    @PostMapping("/sms-notification")
+    @PostMapping("/api/v1/sms-notification")
     ResponseEntity<ResponseObj> smsNotifyUser(@RequestBody SmsEvent smsEvent, @RequestHeader("Authorization") String token);
 
 

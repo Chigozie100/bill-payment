@@ -45,16 +45,16 @@ public class AdminController {
     private final OperationService operationService;
     private final QuickTellerService iThirdPartyService;
 
-    @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 8)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful")
-    })
-    @GetMapping("/biller/report/transaction/{transaction_id}")
-    public ResponseEntity<ResponseHelper> getTransactionReportByTransactionId(@PathVariable("transactionID") String transactionID) throws ThirdPartyIntegrationException {
-
-        TransactionDetail transactionDetailPage = billsPaymentService.searchTransactionByTransactionID(transactionID);
-        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
-    }
+//    @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 8)
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successful")
+//    })
+//    @GetMapping("/biller/report/transaction/{transaction_id}")
+//    public ResponseEntity<ResponseHelper> getTransactionReportByTransactionId(@PathVariable String transaction_id) throws ThirdPartyIntegrationException {
+//
+//        TransactionDetail transactionDetailPage = billsPaymentService.searchTransactionByTransactionID(transaction_id);
+//        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
+//    }
 
     // faild transactions
     // get all failed transaction
@@ -147,9 +147,6 @@ public class AdminController {
             MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> makeBulkBillsPaymentToUsers(@RequestParam("file") MultipartFile file,
                                                          HttpServletRequest request, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, IOException, URISyntaxException {
-        System.out.println("file ::: " + file.getContentType());
-        System.out.println("file ::: " + file.getOriginalFilename());
-        System.out.println("file ::: " + file.getName());
         return billsPaymentService.processBulkPayment(file, request, token);
     }
 

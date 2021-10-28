@@ -765,14 +765,14 @@ public class BillsPaymentService {
         return paymentTransactionRepo.getAllTransactionByUserAccountNumber(userAccountNumber,PageRequest.of(pageNumber, pageSize));
     }
 
-    public TransactionDetail searchTransactionByTransactionID(String transactionId) throws ThirdPartyIntegrationException {
-        try{
-            return paymentTransactionRepo.getAllTransactionByTransactionId(transactionId);
-        }catch (Exception ex){
-            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
-        }
-
-    }
+//    public TransactionDetail searchTransactionByTransactionID(String transactionId) throws ThirdPartyIntegrationException {
+//        try{
+//            return paymentTransactionRepo.getAllTransactionByTransactionId(transactionId);
+//        }catch (Exception ex){
+//            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
+//        }
+//
+//    }
 
 
 //    // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment

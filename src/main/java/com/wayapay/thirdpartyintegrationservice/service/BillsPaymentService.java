@@ -233,6 +233,8 @@ public class BillsPaymentService {
                 });
                 CompletableFuture.runAsync(() -> {
                     try {
+                        String phoneNumber = extractPhone(paymentRequest);
+                        userProfileResponse.setPhoneNumber(phoneNumber);
                        notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
                     } catch (ThirdPartyIntegrationException e) {
@@ -283,6 +285,21 @@ public class BillsPaymentService {
 
         log.error("Unable to secure fund from user's wallet");
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private String extractPhone(PaymentRequest paymentRequest){
+        List<ParamNameValue> listValue = paymentRequest.getData();
+        String message = null;
+        String phoneNumber = null;
+        for (int i = 0; i < listValue.size(); i++) {
+            ParamNameValue value = new ParamNameValue();
+            value.setName(listValue.get(i).getName());
+            value.setValue(listValue.get(i).getValue());
+           if (listValue.get(i).getName().equalsIgnoreCase("phone")){
+               phoneNumber = listValue.get(i).getValue();
+           }
+        }
+        return phoneNumber;
     }
 
     private String extractData(PaymentResponse paymentResponse, PaymentTransactionDetail paymentTransactionDetail){

@@ -187,7 +187,7 @@ public class BillsPaymentService {
     }
 
         public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
-
+            log.info("UsernameNAme:: " + userName);
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
 
         //secure Payment
@@ -453,7 +453,7 @@ public class BillsPaymentService {
         return paymentResponse;
     }
 
-    public ResponseEntity<?> processBulkPaymentForm(List<MultiplePaymentRequest>  multipleFormPaymentRequest, String username, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+    public ResponseEntity<?> processBulkPaymentForm(List<MultiplePaymentRequest>  multipleFormPaymentRequest, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
         System.out.println("multipleFormPaymentRequest ::: {} " + multipleFormPaymentRequest);
         List<MultiplePaymentRequest> paymentRequestList = multipleFormPaymentRequest;
@@ -466,7 +466,7 @@ public class BillsPaymentService {
             paymentRequest.setBillerId(paymentRequestList.get(i).getBillerId());
             paymentRequest.setData(paymentRequestList.get(i).getData());
             System.out.println(" paymentRequest ::: {} " +paymentRequest );
-            paymentResponse = processPayment(paymentRequest, username, token);
+            paymentResponse = processPayment(paymentRequest, paymentRequestList.get(i).getUsername(), token);
 
 //            MultiplePaymentRequest finalPaymentRequest = paymentRequest;
 //            System.out.println("finalPaymentRequest :: {} " +finalPaymentRequest);
@@ -765,14 +765,14 @@ public class BillsPaymentService {
         return paymentTransactionRepo.getAllTransactionByUserAccountNumber(userAccountNumber,PageRequest.of(pageNumber, pageSize));
     }
 
-    public TransactionDetail searchTransactionByTransactionID(String transactionId) throws ThirdPartyIntegrationException {
-        try{
-            return paymentTransactionRepo.getAllTransactionByTransactionId(transactionId);
-        }catch (Exception ex){
-            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
-        }
-
-    }
+//    public TransactionDetail searchTransactionByTransactionID(String transactionId) throws ThirdPartyIntegrationException {
+//        try{
+//            return paymentTransactionRepo.getAllTransactionByTransactionId(transactionId);
+//        }catch (Exception ex){
+//            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
+//        }
+//
+//    }
 
 
 //    // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment

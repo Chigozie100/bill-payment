@@ -236,10 +236,11 @@ public class OperationService {
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token) throws ThirdPartyIntegrationException {
         //Get user default wallet
-
+        log.info("UsernameNAme:: " + userName);
         ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getDefaultWallet(userName, token);
         InfoResponse infoResponse = responseEntity.getBody();
         NewWalletResponse mainWalletResponse = infoResponse.data;
+        log.info("mainWalletResponse:: " + mainWalletResponse);
 
         if (mainWalletResponse.getClr_bal_amt().doubleValue() < amount.doubleValue())
             throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.INSUFFICIENT_FUND);

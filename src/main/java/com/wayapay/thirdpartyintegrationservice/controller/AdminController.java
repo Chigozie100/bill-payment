@@ -137,8 +137,8 @@ public class AdminController {
     @ApiOperation(value = "Bulk Bills Payment: This API is used to by the admin to pay bills on behalf of users using web form", tags = {"ADMIN"})
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Response Headers")})
     @PostMapping(path = "/admin/bulk-user-bills-payment")
-    public ResponseEntity<?> makeBulkBillsPaymentToUsersWithWebForm(@Valid @RequestBody List<MultiplePaymentRequest> multipleFormPaymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, URISyntaxException {
-        return billsPaymentService.processBulkPaymentForm(multipleFormPaymentRequest, username, token);
+    public ResponseEntity<?> makeBulkBillsPaymentToUsersWithWebForm(@Valid @RequestBody List<MultiplePaymentRequest> multipleFormPaymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, URISyntaxException {
+        return billsPaymentService.processBulkPaymentForm(multipleFormPaymentRequest, token);
     }
 
     @ApiOperation(value = "Bulk Bills Payment", tags = {"ADMIN"})

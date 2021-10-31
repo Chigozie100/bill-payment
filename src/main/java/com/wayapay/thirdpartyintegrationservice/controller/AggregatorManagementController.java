@@ -16,6 +16,7 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 
 @Slf4j
 @RequiredArgsConstructor
+@CrossOrigin
 @RestController
 @Api(tags = "Manage Aggregators", description = "This is the controller containing all the api to manager aggregators/third-parties like ITEX, BAXI, QUICKTELLER", position = 1)
 @RequestMapping(API_V1+"/config/aggregator")

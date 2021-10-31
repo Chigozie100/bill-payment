@@ -23,6 +23,7 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.SYNCED_IN_
 
 @Slf4j
 @RequiredArgsConstructor
+@CrossOrigin
 @RestController
 @Api(tags = "Manage Categories", description = "This is the controller containing all the api to manage category")
 @RequestMapping(API_V1+"/config/category")

@@ -36,6 +36,7 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 
 @Slf4j
 @RequiredArgsConstructor
+@CrossOrigin
 @RestController
 @Api(tags = "Admin Bills Payment API", description = "This is the main controller containing all the api to process admin billspayment")
 @RequestMapping(API_V1)

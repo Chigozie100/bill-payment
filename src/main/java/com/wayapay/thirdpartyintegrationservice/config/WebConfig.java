@@ -37,4 +37,6 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceHandler("swagger-ui.html")
                 .addResourceLocations("classpath:/META-INF/resources/");
     }
+
+
 }

@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.TransactionTracker;
@@ -11,6 +12,7 @@ import com.wayapay.thirdpartyintegrationservice.service.OperationService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
 import com.wayapay.thirdpartyintegrationservice.service.referral.ReferralCodePojo;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
+import com.wayapay.thirdpartyintegrationservice.util.TransferPojo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -212,8 +214,15 @@ public class AdminController {
     }
 
 
-
-
+    @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @PostMapping("/admin/test-push-kafka")
+    public ResponseEntity<ResponseHelper> testPushWayaGramPayment(@Valid @RequestBody TransferPojo transferPojo) throws ThirdPartyIntegrationException, JsonProcessingException {
+        operationService.testPushWayaGramPayment(transferPojo);
+        return ResponseEntity.ok(new SuccessResponse(transferPojo));
+    }
 
 
 

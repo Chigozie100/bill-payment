@@ -25,6 +25,7 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
@@ -47,7 +48,7 @@ public class OperationService {
     private final BillsPaymentRefundRepository billsPaymentRefundRepository;
     private final TransactionTrackerRepository transactionTrackerRepository;
     private final ReferralFeignClient referralFeignClient;
-
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
 
     public UserProfileResponse getUserProfile(String userName, String token) throws ThirdPartyIntegrationException {
@@ -513,10 +514,15 @@ public class OperationService {
     }
 
 
-    public void viewAllFailedTransactions(){
 
+
+    public void testPushWayaGramPayment(TransferPojo transferPojo) throws JsonProcessingException {
+        log.info("data " + transferPojo);
+        kafkaTemplate.send("wayagram-payment", CommonUtils.getObjectMapper().writeValueAsString(transferPojo));
+        log.info("data after" + transferPojo);
     }
 
 
-    }
+
+}
 

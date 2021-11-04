@@ -26,6 +26,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.math.BigDecimal;
@@ -58,10 +59,11 @@ class OperationServiceTest {
     private static final String testUserName = "10";
     private TransactionTrackerRepository transactionTrackerRepository;
     private ReferralFeignClient referralFeignClient;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     @BeforeEach
     void setUp() {
-        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService, profileFeignClient, notificationFeignClient, logFeignClient, billsPaymentRefundRepository,transactionTrackerRepository,referralFeignClient);
+        operationService = new OperationService(paymentTransactionRepo, walletFeignClient, categoryService, profileFeignClient, notificationFeignClient, logFeignClient, billsPaymentRefundRepository,transactionTrackerRepository,referralFeignClient,kafkaTemplate);
     }
 
     @Test

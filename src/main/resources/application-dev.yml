@@ -32,7 +32,7 @@ server:
   error:
     include-message: always
   servlet:
-    context-path: /
+    context-path: /billspay
 
 eureka:
   client:

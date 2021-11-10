@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface TransactionTrackerRepository extends JpaRepository<TransactionTracker, Long> {
 
     @Query("select c from TransactionTracker c where c.referreeId = :referreeId")
-    Optional<TransactionTracker> findByReferreeId(@Param("referreeId") String referreeId);
+    TransactionTracker findByReferreeId(@Param("referreeId") String referreeId);
 
     @Query("select c from TransactionTracker c where c.referralCode =:referralCode and c.isPaid=false")
     List<TransactionTracker> findByReferralCode(@Param("referralCode") String referralCode);

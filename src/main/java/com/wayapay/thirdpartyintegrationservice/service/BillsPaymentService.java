@@ -186,7 +186,7 @@ public class BillsPaymentService {
 
     }
 
-        public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
+    public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
             log.info("UsernameNAme:: " + userName);
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
 
@@ -241,24 +241,24 @@ public class BillsPaymentService {
                         e.printStackTrace();
                     }
                 });
-
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        getCommissionForMakingBillsPayment(userName,token, paymentRequest.getAmount());
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
+//
+//                CompletableFuture.runAsync(() -> {
+//                    try {
+//                        getCommissionForMakingBillsPayment(userName,token, paymentRequest.getAmount());
+//                    } catch (ThirdPartyIntegrationException e) {
+//                        e.printStackTrace();
+//                    }
+//                });
 
                 //ThirdParty thirdParty, String billerId, UserType userType,String userName, String token, BigDecimal amount
 
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        calculateMerchantPercentage(paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
+//                CompletableFuture.runAsync(() -> {
+//                    try {
+//                        calculateMerchantPercentage(paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
+//                    } catch (ThirdPartyIntegrationException e) {
+//                        e.printStackTrace();
+//                    }
+//                });
 
 
                 Map<String,String> map = new HashMap<>();
@@ -299,7 +299,7 @@ public class BillsPaymentService {
                phoneNumber = listValue.get(i).getValue();
            }
         }
-        return phoneNumber;
+        return phoneNumber.substring(1);
     }
 
     private String extractData(PaymentResponse paymentResponse, PaymentTransactionDetail paymentTransactionDetail){

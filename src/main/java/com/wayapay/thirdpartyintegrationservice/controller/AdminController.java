@@ -225,6 +225,17 @@ public class AdminController {
     }
 
 
+    @ApiOperation(value = "Admin push payment to kafka : This API is used to refund failed transactions to users")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @PostMapping("/admin/test-push-product-payment-kafka")
+    public ResponseEntity<ResponseHelper> testPushWayaGramProductPayment(@Valid @RequestBody TransferPojo transferPojo) throws ThirdPartyIntegrationException, JsonProcessingException {
+        operationService.testPushWayaGramProductPayment(transferPojo);
+        return ResponseEntity.ok(new SuccessResponse(transferPojo));
+    }
+
+
 
 
 

@@ -331,8 +331,10 @@ public class OperationService {
         ReferralCodePojo referralCodePojo = getReferralDetails(userProfileResponse.getReferral(), token);
         log.info("referralCodePojo " + referralCodePojo);
         if (referralCodePojo != null) {
+            log.info("going here now" + referralCodePojo);
             // this is for users who have been referred by another user
             saveCounter(referralCodePojo,userProfileResponse);
+            log.info(" back from here");
         }else{
             log.info("referralCodePojo is null ==" + referralCodePojo);
             // this is for users with no referralCode
@@ -342,38 +344,44 @@ public class OperationService {
 
   private void saveCounter(ReferralCodePojo referralCodePojo, UserProfileResponse userProfileResponse){
         String referreeId = userProfileResponse.getUserId();
-        Optional<TransactionTracker> transactionOpt = transactionTrackerRepository.findByReferreeId(referreeId);
-      log.info("transactionOpt is present :: " + transactionOpt.get());
+        TransactionTracker transactionOpt = transactionTrackerRepository.findByReferreeId(referreeId);
+      log.info("transactionOpt is present :: " + transactionOpt);
       log.info("transactionOpt is present :: referralCodePojo" + referralCodePojo);
 
-      if (transactionOpt.isPresent() && referralCodePojo ==null) {
+      if (transactionOpt !=null && referralCodePojo ==null) {
           // DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL
           log.info("DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL");
 
-      } else if (transactionOpt.isPresent() && referralCodePojo !=null){
+      } else if (transactionOpt !=null && referralCodePojo !=null){
           // COUNT TRANSACTIONS
-          int newCount = transactionOpt.get().getCount() + 1;
-          transactionOpt.get().setCount(newCount);
-          transactionOpt.get().setReferralCode(userProfileResponse.getReferral());
-          transactionOpt.get().setReferralCodeOwner(referralCodePojo.getUserId()); // if this is null the obj wont save referralCodePojo.getUserId()
-          transactionOpt.get().setReferreeId(userProfileResponse.getUserId());
-          transactionOpt.get().setTransactionType(TransactionType.BILLS_PAYMENT);
-          transactionTrackerRepository.save(transactionOpt.get());
+          int newCount = transactionOpt.getCount() + 1;
+          transactionOpt.setCount(newCount);
+          transactionOpt.setReferralCode(userProfileResponse.getReferral());
+          transactionOpt.setReferralCodeOwner(referralCodePojo.getUserId()); // if this is null the obj wont save referralCodePojo.getUserId()
+          transactionOpt.setReferreeId(userProfileResponse.getUserId());
+          transactionOpt.setTransactionType(TransactionType.BILLS_PAYMENT);
+          transactionTrackerRepository.save(transactionOpt);
           log.info("Billspayment counter {} for referralCodePojo !=null :: " + userProfileResponse.getUserId() + "==****==" + newCount);
-      } else if (!transactionOpt.isPresent() && referralCodePojo !=null){
+      } else if (transactionOpt ==null && referralCodePojo !=null){
           // COUNT TRANSACTIONS
+          log.info("This  referralCodePojo " + referralCodePojo);
+          log.info("This  transactionOpt " + transactionOpt);
           TransactionTracker transactionTracker = new TransactionTracker();
           transactionTracker.setCount(1);
           transactionTracker.setReferralCode(userProfileResponse.getReferral());
-          transactionOpt.get().setReferralCodeOwner(referralCodePojo.getUserId());
+          transactionTracker.setReferralCodeOwner(referralCodePojo.getUserId());
           transactionTracker.setReferreeId(userProfileResponse.getUserId());
+          transactionTracker.setTransactionType(TransactionType.BILLS_PAYMENT);
           transactionTrackerRepository.save(transactionTracker);
           log.info("This is my first time here Last " + transactionTracker);
-      } else if (!transactionOpt.isPresent() && referralCodePojo ==null){
+
+
+      } else if (transactionOpt ==null && referralCodePojo ==null){
           // DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL
-          log.info("DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL ");
+          log.info("DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL");
       } else {
           // Create NEW
+          log.info("Create NEW");
           TransactionTracker transactionTracker = new TransactionTracker();
           transactionTracker.setCount(1);
           transactionTracker.setReferralCode(userProfileResponse.getReferral());
@@ -386,7 +394,6 @@ public class OperationService {
   }
 
     public ReferralCodePojo getReferralDetails(String referralCode, String token) throws ThirdPartyIntegrationException {
-
         log.info("ReferralCode :: " + referralCode);
         try{
             ResponseEntity<ApiResponseBody<ReferralCodePojo>> responseEntity = referralFeignClient.getUserByReferralCode(referralCode,token);
@@ -522,7 +529,11 @@ public class OperationService {
         log.info("data after" + transferPojo);
     }
 
-
+    public void testPushWayaGramProductPayment(TransferPojo transferPojo) throws JsonProcessingException {
+        log.info("data " + transferPojo);
+        kafkaTemplate.send("wayagram-payment", CommonUtils.getObjectMapper().writeValueAsString(transferPojo));
+        log.info("data after" + transferPojo);
+    }
 
 }
 

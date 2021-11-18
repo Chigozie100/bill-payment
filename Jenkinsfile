@@ -9,13 +9,13 @@ pipeline {
     }
     tools {
         jdk 'jdk-11'
-        gradle 'gradle-6.8.1'
+        maven 'mvn3.6.3'
     }
     stages{
         stage("compile") {
             steps{
                 script {
-                    sh 'gradle clean build'
+                    sh 'mvn clean install'
                 }
             }   
         }

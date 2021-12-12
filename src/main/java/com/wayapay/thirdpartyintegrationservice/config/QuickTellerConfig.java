@@ -45,4 +45,6 @@ public class QuickTellerConfig {
 
     @NotBlank(message = "app.config.quickteller.transaction-ref-code is required")
     private String transactionRefCode;
+
+    private String ussdUrl;
 }

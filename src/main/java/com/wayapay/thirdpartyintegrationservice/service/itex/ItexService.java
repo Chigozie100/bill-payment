@@ -72,8 +72,8 @@ public class ItexService implements IThirdPartyService {
         try {
             AuthApiTokenResponse authApiTokenResponse = feignClient.getAuthApiToken(new AuthApiTokenRequest(appConfig.getItex().getWalletId(), appConfig.getItex().getUsername(), appConfig.getItex().getPassword(), appConfig.getItex().getUniqueApiIdentifier()));
             if(SUCCESS.equals(authApiTokenResponse.getResponseCode())
-                && !Objects.isNull(authApiTokenResponse.getData())
-                && SUCCESS.equals(authApiTokenResponse.getData().getResponseCode())){
+                    && !Objects.isNull(authApiTokenResponse.getData())
+                    && SUCCESS.equals(authApiTokenResponse.getData().getResponseCode())){
                 return Optional.of(authApiTokenResponse.getData().getApiToken());
             }
             return Optional.empty();
@@ -172,7 +172,7 @@ public class ItexService implements IThirdPartyService {
         } else if (categoryLcc.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(billerId))){
             return getLCCPaymentItems(billerId, categoryId);
         } else {
-           throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, UNKNOWN_BILLER_NAME_PROVIDED);
+            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, UNKNOWN_BILLER_NAME_PROVIDED);
         }
     }
 
@@ -234,6 +234,35 @@ public class ItexService implements IThirdPartyService {
         }
 
     }
+
+    @Override
+    @AuditPaymentOperation(stage = Stage.CONTACT_VENDOR_TO_PROVIDE_VALUE, status = Status.IN_PROGRESS)
+    public PaymentResponse processMultiplePayment(MultiplePaymentRequest request, BigDecimal fee, String transactionId, String username) throws ThirdPartyIntegrationException {
+
+        //ensure that the MONEY to be paid is secured alongside the FEE
+        //Initiate Payment
+        //#Async : Confirm Payment Status by making a Transaction status, if not successfull, then reverse the MONEY and the FEE.
+
+        if (categoryElectricity.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return paymentElectricityMultiple(request, transactionId);
+        } else if (categoryAirtime.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return paymentAirtimeMultiple(request, transactionId);
+        } else if (categoryData.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return paymentDataMultiple(request, transactionId);
+        } else if (categoryInternet.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return paymentInternetMultiple(request, transactionId);
+        } else if (categoryCableTv.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return paymentCableTvMultiple(request, transactionId);
+        } else if (categoryRemita.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return paymentRemitaMultiple(request, transactionId);
+        } else if (categoryLcc.parallelStream().anyMatch(billerResponse -> billerResponse.getBillerId().equals(request.getBillerId()))){
+            return paymentLCCMultiple(request, transactionId);
+        } else {
+            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, UNKNOWN_BILLER_NAME_PROVIDED);
+        }
+    }
+
+
 
     private CustomerValidationResponse validateLCC(CustomerValidationRequest request) throws ThirdPartyIntegrationException {
         LCCValidationRequest lccValidationRequest = generateLCCValidationRequest(request);
@@ -487,7 +516,9 @@ public class ItexService implements IThirdPartyService {
         DataValidationRequest dataValidationRequest = new DataValidationRequest();
         dataValidationRequest.setService(request.getBillerId());
         request.getData().forEach(paramNameValue -> {
-            if (CHANNEL.equals(paramNameValue.getName())){ dataValidationRequest.setChannel(paramNameValue.getValue()); }
+            if (CHANNEL.equals(paramNameValue.getName())){
+                dataValidationRequest.setChannel(paramNameValue.getValue());
+            }
         });
         return dataValidationRequest;
     }
@@ -531,9 +562,58 @@ public class ItexService implements IThirdPartyService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
+    private PaymentResponse paymentLCCMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+
+        LCCPaymentRequest lccPaymentRequest = generateLCCPaymentRequestMultiple(paymentRequest, transactionId);
+        Optional<LCCPaymentResponse> lccPaymentResponseOptional = Optional.empty();
+        try {
+            lccPaymentResponseOptional = Optional.of(feignClient.lccPayment(lccPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(lccPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to process customer lcc payment via itex ", e);
+        }
+
+        LCCPaymentResponse lccPaymentResponse = lccPaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(lccPaymentResponse.getResponseCode())
+                && !Objects.isNull(lccPaymentResponse.getData()) && SUCCESS.equals(lccPaymentResponse.getData().getResponseCode())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue(REFERENCE, lccPaymentResponse.getData().getReference()));
+            paymentResponse.getData().add(new ParamNameValue(TRANSACTION_ID, lccPaymentResponse.getData().getTransactionID()));
+            paymentResponse.getData().add(new ParamNameValue("receipt_no", lccPaymentResponse.getData().getReceipt_no()));
+            paymentResponse.getData().add(new ParamNameValue(SEQUENCE, lccPaymentResponse.getData().getSequence()));
+            paymentResponse.getData().add(new ParamNameValue(CLIENT_REFERENCE, lccPaymentResponse.getData().getClientReference()));
+            return paymentResponse;
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
     private PaymentResponse paymentRemita(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
 
         RemitaPaymentRequest remitaPaymentRequest = generateRemitaPaymentRequest(paymentRequest, transactionId);
+        Optional<RemitaPaymentResponse> remitaPaymentResponseOptional = Optional.empty();
+        try {
+            remitaPaymentResponseOptional = Optional.of(feignClient.remitaPayment(remitaPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(remitaPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to process customer cabletv payment via itex ", e);
+        }
+
+        RemitaPaymentResponse remitaPaymentResponse = remitaPaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(remitaPaymentResponse.getResponseCode())
+                && !Objects.isNull(remitaPaymentResponse.getData()) && SUCCESS.equals(remitaPaymentResponse.getData().getResponseCode())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue(REFERENCE, remitaPaymentResponse.getData().getReference()));
+            paymentResponse.getData().add(new ParamNameValue("transactionId", remitaPaymentResponse.getData().getTransactionId()));
+            paymentResponse.getData().add(new ParamNameValue(SEQUENCE, remitaPaymentResponse.getData().getSequence()));
+            paymentResponse.getData().add(new ParamNameValue(CLIENT_REFERENCE, remitaPaymentResponse.getData().getClientReference()));
+            return paymentResponse;
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private PaymentResponse paymentRemitaMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+
+        RemitaPaymentRequest remitaPaymentRequest = generateRemitaPaymentRequestMultiple(paymentRequest, transactionId);
         Optional<RemitaPaymentResponse> remitaPaymentResponseOptional = Optional.empty();
         try {
             remitaPaymentResponseOptional = Optional.of(feignClient.remitaPayment(remitaPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(remitaPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
@@ -585,8 +665,60 @@ public class ItexService implements IThirdPartyService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
+    private PaymentResponse paymentCableTvMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+
+        CableTvPaymentRequest cableTvPaymentRequest;
+        if(paymentRequest.getBillerId().equals(MULTICHOICE)){
+            cableTvPaymentRequest = generateMultiChoicePaymentRequestMultiple(paymentRequest, transactionId);
+        } else if(paymentRequest.getBillerId().equals(STARTIMES)){
+            cableTvPaymentRequest = generateStarTimesPaymentRequestMultiple(paymentRequest, transactionId);
+        } else {
+            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Unknown Biller");
+        }
+
+        Optional<CableTvPaymentResponse> cableTvPaymentResponseOptional = Optional.empty();
+        try {
+            cableTvPaymentResponseOptional = Optional.of(feignClient.cableTvPayment(cableTvPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(cableTvPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to process customer cabletv payment via itex ", e);
+        }
+
+        CableTvPaymentResponse cableTvPaymentResponse = cableTvPaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(cableTvPaymentResponse.getResponseCode())
+                && !Objects.isNull(cableTvPaymentResponse.getData()) && SUCCESS.equals(cableTvPaymentResponse.getData().getResponseCode())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue(TRANSACTION_ID, cableTvPaymentResponse.getData().getClientReference()));
+            paymentResponse.getData().add(new ParamNameValue(REFERENCE, cableTvPaymentResponse.getData().getReference()));
+            return paymentResponse;
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
     private PaymentResponse paymentInternet(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
         InternetPaymentRequest internetPaymentRequest = generateInternetPaymentRequest(paymentRequest, transactionId);
+        Optional<InternetPaymentResponse> internetPaymentResponseOptional = Optional.empty();
+        try {
+            internetPaymentResponseOptional = Optional.of(feignClient.internetPayment(internetPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(internetPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to process customer internet payment via itex ", e);
+        }
+
+        InternetPaymentResponse internetPaymentResponse = internetPaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(internetPaymentResponse.getResponseCode())
+                && !Objects.isNull(internetPaymentResponse.getData()) && SUCCESS.equals(internetPaymentResponse.getData().getResponseCode())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue(TRANSACTION_ID, internetPaymentResponse.getData().getTransactionID()));
+            paymentResponse.getData().add(new ParamNameValue(REFERENCE, internetPaymentResponse.getData().getReference()));
+            paymentResponse.getData().add(new ParamNameValue("bundle", internetPaymentResponse.getData().getBundle()));
+            return paymentResponse;
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private PaymentResponse paymentInternetMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        InternetPaymentRequest internetPaymentRequest = generateInternetPaymentRequestMultiple(paymentRequest, transactionId);
         Optional<InternetPaymentResponse> internetPaymentResponseOptional = Optional.empty();
         try {
             internetPaymentResponseOptional = Optional.of(feignClient.internetPayment(internetPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(internetPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
@@ -628,8 +760,49 @@ public class ItexService implements IThirdPartyService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
+    private PaymentResponse paymentElectricityMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        ElectricityPaymentRequest electricityPaymentRequest = generateElectricityPaymentRequestMultiple(paymentRequest, transactionId);
+        Optional<ElectricityPaymentResponse> electricityPaymentResponseOptional = Optional.empty();
+        try {
+            electricityPaymentResponseOptional = Optional.of(feignClient.electricityPayment(electricityPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(electricityPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to process customer electricity payment via itex ", e);
+        }
+
+        ElectricityPaymentResponse electricityPaymentResponse = electricityPaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(electricityPaymentResponse.getResponseCode())
+                && !Objects.isNull(electricityPaymentResponse.getData()) && SUCCESS.equals(electricityPaymentResponse.getData().getResponseCode())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue(ItexConstants.TOKEN, electricityPaymentResponse.getData().getToken()));
+            paymentResponse.getData().add(new ParamNameValue(REFERENCE, electricityPaymentResponse.getData().getReference()));
+            return paymentResponse;
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
     private PaymentResponse paymentAirtime(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
         AirtimePaymentRequest airtimePaymentRequest = generateAirtimePaymentRequest(paymentRequest, transactionId);
+        Optional<AirtimePaymentResponse> airtimePaymentResponseOptional = Optional.empty();
+        try {
+            airtimePaymentResponseOptional = Optional.of(feignClient.airtimePayment(airtimePaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(airtimePaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to process customer airtime payment via itex ", e);
+        }
+
+        AirtimePaymentResponse airtimePaymentResponse = airtimePaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(airtimePaymentResponse.getResponseCode())
+                && !Objects.isNull(airtimePaymentResponse.getData()) && SUCCESS.equals(airtimePaymentResponse.getData().getResponseCode())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue(REFERENCE, airtimePaymentResponse.getData().getReference()));
+            return paymentResponse;
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private PaymentResponse paymentAirtimeMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        AirtimePaymentRequest airtimePaymentRequest = generateAirtimePaymentRequestMultiple(paymentRequest, transactionId);
         Optional<AirtimePaymentResponse> airtimePaymentResponseOptional = Optional.empty();
         try {
             airtimePaymentResponseOptional = Optional.of(feignClient.airtimePayment(airtimePaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(airtimePaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
@@ -648,8 +821,29 @@ public class ItexService implements IThirdPartyService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
+
     private PaymentResponse paymentData(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
         DataPaymentRequest dataPaymentRequest = generateDataPaymentRequest(paymentRequest, transactionId);
+        Optional<DataPaymentResponse> dataPaymentResponseOptional = Optional.empty();
+        try {
+            dataPaymentResponseOptional = Optional.of(feignClient.dataPayment(dataPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(dataPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
+        } catch (FeignException e) {
+            log.error("Unable to process customer data payment via itex ", e);
+        }
+
+        DataPaymentResponse dataPaymentResponse = dataPaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        if(SUCCESS.equals(dataPaymentResponse.getResponseCode())
+                && !Objects.isNull(dataPaymentResponse.getData()) && SUCCESS.equals(dataPaymentResponse.getData().getResponseCode())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue(REFERENCE, dataPaymentResponse.getData().getReference()));
+            return paymentResponse;
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private PaymentResponse paymentDataMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        DataPaymentRequest dataPaymentRequest = generateDataPaymentRequestMultiple(paymentRequest, transactionId);
         Optional<DataPaymentResponse> dataPaymentResponseOptional = Optional.empty();
         try {
             dataPaymentResponseOptional = Optional.of(feignClient.dataPayment(dataPaymentRequest, getAuthApiToken().orElseGet(() -> Strings.EMPTY), generateSignature(CommonUtils.objectToJson(dataPaymentRequest).orElse(Strings.EMPTY)).orElse(Strings.EMPTY)));
@@ -682,7 +876,36 @@ public class ItexService implements IThirdPartyService {
         return lccPaymentRequest;
     }
 
+    private LCCPaymentRequest generateLCCPaymentRequestMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        LCCPaymentRequest lccPaymentRequest = new LCCPaymentRequest();
+        lccPaymentRequest.setClientReference(transactionId);
+        lccPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        lccPaymentRequest.setAmount(String.valueOf(paymentRequest.getAmount()));
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if ("customerName".equals(paramNameValue.getName())){ lccPaymentRequest.setCustomerName(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ lccPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if (PRODUCT_CODE.equals(paramNameValue.getName())){ lccPaymentRequest.setProductCode(paramNameValue.getValue()); }
+            if (PHONE.equals(paramNameValue.getName())){ lccPaymentRequest.setPhone(paramNameValue.getValue()); }
+        });
+        return lccPaymentRequest;
+    }
+
     private RemitaPaymentRequest generateRemitaPaymentRequest(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        RemitaPaymentRequest remitaPaymentRequest = new RemitaPaymentRequest();
+        remitaPaymentRequest.setClientReference(transactionId);
+        remitaPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if ("incomeAccont".equals(paramNameValue.getName())){ remitaPaymentRequest.setIncomeAccont(paramNameValue.getValue()); }
+            if ("payerName".equals(paramNameValue.getName())){ remitaPaymentRequest.setPayerName(paramNameValue.getValue()); }
+            if ("debittedAccont".equals(paramNameValue.getName())){ remitaPaymentRequest.setDebittedAccont(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ remitaPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if (PRODUCT_CODE.equals(paramNameValue.getName())){ remitaPaymentRequest.setProductCode(paramNameValue.getValue()); }
+            if (PHONE.equals(paramNameValue.getName())){ remitaPaymentRequest.setPhone(paramNameValue.getValue()); }
+        });
+        return remitaPaymentRequest;
+    }
+
+    private RemitaPaymentRequest generateRemitaPaymentRequestMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
         RemitaPaymentRequest remitaPaymentRequest = new RemitaPaymentRequest();
         remitaPaymentRequest.setClientReference(transactionId);
         remitaPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
@@ -711,6 +934,19 @@ public class ItexService implements IThirdPartyService {
         return cableTvPaymentRequest;
     }
 
+    private CableTvPaymentRequest generateMultiChoicePaymentRequestMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        CableTvPaymentRequest cableTvPaymentRequest = new CableTvPaymentRequest();
+        cableTvPaymentRequest.setClientReference(transactionId);
+        cableTvPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        cableTvPaymentRequest.setService(paymentRequest.getBillerId());
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if (CODE.equals(paramNameValue.getName())){ cableTvPaymentRequest.setCode(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ cableTvPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if (PRODUCT_CODE.equals(paramNameValue.getName())){ cableTvPaymentRequest.setProductCode(paramNameValue.getValue()); }
+            if (PHONE.equals(paramNameValue.getName())){ cableTvPaymentRequest.setPhone(paramNameValue.getValue()); }
+        });
+        return cableTvPaymentRequest;
+    }
     private CableTvPaymentRequest generateStarTimesPaymentRequest(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
         CableTvPaymentRequest cableTvPaymentRequest = new CableTvPaymentRequest();
         cableTvPaymentRequest.setClientReference(transactionId);
@@ -725,8 +961,37 @@ public class ItexService implements IThirdPartyService {
         });
         return cableTvPaymentRequest;
     }
-
+    private CableTvPaymentRequest generateStarTimesPaymentRequestMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        CableTvPaymentRequest cableTvPaymentRequest = new CableTvPaymentRequest();
+        cableTvPaymentRequest.setClientReference(transactionId);
+        cableTvPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        cableTvPaymentRequest.setService(paymentRequest.getBillerId());
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if (BOUQUET.equals(paramNameValue.getName())){ cableTvPaymentRequest.setCode(paramNameValue.getValue()); }
+            if (CYCLE.equals(paramNameValue.getName())){ cableTvPaymentRequest.setCode(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ cableTvPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if (PRODUCT_CODE.equals(paramNameValue.getName())){ cableTvPaymentRequest.setProductCode(paramNameValue.getValue()); }
+            if (PHONE.equals(paramNameValue.getName())){ cableTvPaymentRequest.setPhone(paramNameValue.getValue()); }
+        });
+        return cableTvPaymentRequest;
+    }
     private InternetPaymentRequest generateInternetPaymentRequest(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        InternetPaymentRequest internetPaymentRequest = new InternetPaymentRequest();
+        internetPaymentRequest.setClientReference(transactionId);
+        internetPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        internetPaymentRequest.setService(paymentRequest.getBillerId());
+        internetPaymentRequest.setAmount(String.valueOf(paymentRequest.getAmount()));
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if ("type".equals(paramNameValue.getName())){ internetPaymentRequest.setType(paramNameValue.getValue()); }
+            if ("code".equals(paramNameValue.getName())){ internetPaymentRequest.setCode(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ internetPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if (PRODUCT_CODE.equals(paramNameValue.getName())){ internetPaymentRequest.setProductCode(paramNameValue.getValue()); }
+            if (PHONE.equals(paramNameValue.getName())){ internetPaymentRequest.setPhone(paramNameValue.getValue()); }
+        });
+        return internetPaymentRequest;
+    }
+
+    private InternetPaymentRequest generateInternetPaymentRequestMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
         InternetPaymentRequest internetPaymentRequest = new InternetPaymentRequest();
         internetPaymentRequest.setClientReference(transactionId);
         internetPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
@@ -755,7 +1020,33 @@ public class ItexService implements IThirdPartyService {
         return electricityPaymentRequest;
     }
 
+    private ElectricityPaymentRequest generateElectricityPaymentRequestMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        ElectricityPaymentRequest electricityPaymentRequest = new ElectricityPaymentRequest();
+        electricityPaymentRequest.setClientReference(transactionId);
+        electricityPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        electricityPaymentRequest.setService(paymentRequest.getBillerId());
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if (CUSTOMER_PHONE_NUMBER.equals(paramNameValue.getName())){ electricityPaymentRequest.setCustomerPhoneNumber(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ electricityPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if (PRODUCT_CODE.equals(paramNameValue.getName())){ electricityPaymentRequest.setProductCode(paramNameValue.getValue()); }
+        });
+        return electricityPaymentRequest;
+    }
     private AirtimePaymentRequest generateAirtimePaymentRequest(PaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        AirtimePaymentRequest airtimePaymentRequest = new AirtimePaymentRequest();
+        airtimePaymentRequest.setClientReference(transactionId);
+        airtimePaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        airtimePaymentRequest.setService(paymentRequest.getBillerId());
+        airtimePaymentRequest.setAmount(String.valueOf(paymentRequest.getAmount()));
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if (PHONE.equals(paramNameValue.getName())){ airtimePaymentRequest.setPhone(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ airtimePaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if (CHANNEL.equals(paramNameValue.getName())){ airtimePaymentRequest.setChannel(paramNameValue.getValue()); }
+        });
+        return airtimePaymentRequest;
+    }
+
+    private AirtimePaymentRequest generateAirtimePaymentRequestMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
         AirtimePaymentRequest airtimePaymentRequest = new AirtimePaymentRequest();
         airtimePaymentRequest.setClientReference(transactionId);
         airtimePaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
@@ -774,6 +1065,8 @@ public class ItexService implements IThirdPartyService {
         dataPaymentRequest.setClientReference(transactionId);
         dataPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
         dataPaymentRequest.setService(paymentRequest.getBillerId());
+//        dataPaymentRequest.setCode("103");
+//        dataPaymentRequest.setProductCode("code");
         paymentRequest.getData().forEach(paramNameValue -> {
             if (PHONE.equals(paramNameValue.getName())){ dataPaymentRequest.setPhone(paramNameValue.getValue()); }
             if (PAYMENT_METHOD.equals(paramNameValue.getName())){ dataPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
@@ -782,6 +1075,18 @@ public class ItexService implements IThirdPartyService {
         return dataPaymentRequest;
     }
 
+    private DataPaymentRequest generateDataPaymentRequestMultiple(MultiplePaymentRequest paymentRequest, String transactionId) throws ThirdPartyIntegrationException {
+        DataPaymentRequest dataPaymentRequest = new DataPaymentRequest();
+        dataPaymentRequest.setClientReference(transactionId);
+        dataPaymentRequest.setPin(generateEncryptedPin().orElseGet(() -> Strings.EMPTY));
+        dataPaymentRequest.setService(paymentRequest.getBillerId());
+        paymentRequest.getData().forEach(paramNameValue -> {
+            if (PHONE.equals(paramNameValue.getName())){ dataPaymentRequest.setPhone(paramNameValue.getValue()); }
+            if (PAYMENT_METHOD.equals(paramNameValue.getName())){ dataPaymentRequest.setPaymentMethod(paramNameValue.getValue()); }
+            if ("plan".equals(paramNameValue.getName())){ dataPaymentRequest.setCode(paramNameValue.getValue()); }
+        });
+        return dataPaymentRequest;
+    }
     private Item getChannelsAsItem(){
         if (channelsSubList.isEmpty()) {
             channelsSubList.add(new SubItem("ATM"));
@@ -836,8 +1141,11 @@ public class ItexService implements IThirdPartyService {
 
     private PaymentItemsResponse getDataPaymentItems(String billerId, String categoryId){
         PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(categoryId, billerId);
+        paymentItemsResponse.getItems().add(new Item(CODE));
         paymentItemsResponse.setIsValidationRequired(true);
         paymentItemsResponse.getItems().add(getChannelsAsItem());
+
+        log.info("getDataPaymentItems ::: " + paymentItemsResponse);
         return paymentItemsResponse;
     }
 

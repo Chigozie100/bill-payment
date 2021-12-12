@@ -5,7 +5,6 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ErrorResponse;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.sample.response.SampleBillerFeeManagementResponse;
-import com.wayapay.thirdpartyintegrationservice.sample.response.SampleBillerManagementResponse;
 import com.wayapay.thirdpartyintegrationservice.sample.response.SampleErrorResponse;
 import com.wayapay.thirdpartyintegrationservice.sample.response.SampleListBillerFeeManagementResponse;
 import com.wayapay.thirdpartyintegrationservice.service.BillerConsumerFeeService;

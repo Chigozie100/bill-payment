@@ -1,6 +1,4 @@
 package com.wayapay.thirdpartyintegrationservice.util;
-
-
 import java.util.Optional;
 
 public enum TransactionType {

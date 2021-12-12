@@ -242,23 +242,23 @@ public class BillsPaymentService {
                     }
                 });
 //
-//                CompletableFuture.runAsync(() -> {
-//                    try {
-//                        getCommissionForMakingBillsPayment(userName,token, paymentRequest.getAmount());
-//                    } catch (ThirdPartyIntegrationException e) {
-//                        e.printStackTrace();
-//                    }
-//                });
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        getCommissionForMakingBillsPayment(userName,token, paymentRequest.getAmount());
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
 
                 //ThirdParty thirdParty, String billerId, UserType userType,String userName, String token, BigDecimal amount
 
-//                CompletableFuture.runAsync(() -> {
-//                    try {
-//                        calculateMerchantPercentage(paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
-//                    } catch (ThirdPartyIntegrationException e) {
-//                        e.printStackTrace();
-//                    }
-//                });
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        calculateMerchantPercentage(paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
 
 
                 Map<String,String> map = new HashMap<>();

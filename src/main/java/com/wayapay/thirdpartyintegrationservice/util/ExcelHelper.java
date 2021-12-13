@@ -17,13 +17,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 public class ExcelHelper {
@@ -33,7 +30,7 @@ public class ExcelHelper {
     public static List<String> PAYMENT_HEADER = Arrays.asList("BILLER_ID", "CATEGORY_ID", "PHONE", "AMOUNT", "PAYMENT_METHOD", "CHANNEL", "WALLET_ID", "USER_ID");
 
 
-    static String SHEET = "Payments";
+    static String SHEET = "BulkBillspayment";
     static Pattern alphabetsPattern = Pattern.compile("^[a-zA-Z]*$");
     static Pattern numericPattern = Pattern.compile("^[0-9]*$");
     static Pattern emailPattern = Pattern.compile("[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\." + "[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@"
@@ -100,25 +97,25 @@ public class ExcelHelper {
                     String colName = CellReference.convertNumToColString(cell.getColumnIndex()).toUpperCase();
                     switch (colName) {
                         case "A":
-                            pojo.setCategoryId(validateAndPassStringValue(cell, cellIdx, rowNumber));
+                            pojo.setBillerId(defaultStringCell(cell));
                             break;
                         case "B":
-                            pojo.setBillerId(validateAndPassStringValue(cell, cellIdx, rowNumber));
+                            pojo.setCategoryId(defaultStringCell(cell));
                             break;
                         case "C":
-                            pojo.setSourceWalletAccountNumber(validateStringNumericOnly(cell, cellIdx, rowNumber));
+                            pojo.setPhone(defaultStringCell(cell));
                             break;
                         case "D":
                             pojo.setAmount(Double.parseDouble(validateStringDoubleOnly(cell, cellIdx, rowNumber)));
                             break;
                         case "E":
-                            pojo.setPhone(validateAndPassStringValue(cell, cellIdx, rowNumber));
+                            pojo.setPaymentMethod(defaultStringCell(cell));
                             break;
                         case "F":
-                            pojo.setPaymentMethod(validateAndPassStringValue(cell, cellIdx, rowNumber));
+                            pojo.setChannel(defaultStringCell(cell));
                             break;
                         case "G":
-                            pojo.setChannel(defaultStringCell(cell));
+                            pojo.setSourceWalletAccountNumber(defaultStringCell(cell));
                             break;
                         case "H":
                             pojo.setUserId(defaultStringCell(cell));

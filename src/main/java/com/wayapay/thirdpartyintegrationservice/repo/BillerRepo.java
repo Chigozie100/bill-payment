@@ -5,10 +5,11 @@ import com.wayapay.thirdpartyintegrationservice.dto.BillerResponse;
 import com.wayapay.thirdpartyintegrationservice.model.Biller;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-
+@Repository
 public interface BillerRepo extends JpaRepository<Biller, Long> {
 
     @Query("select count(b.id) from Biller b where b.name = ?1 and b.category.id = ?2 and b.id <> ?3 ")

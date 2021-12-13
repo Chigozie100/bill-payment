@@ -98,5 +98,5 @@
 #        logger-level: full
 #
 #
-#jwt:
-#  secret: ${JWT_SECRET}
+#jwt: 
+#  secret: ${JWT_SECRET} 

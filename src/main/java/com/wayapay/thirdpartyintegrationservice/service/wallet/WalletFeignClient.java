@@ -1,5 +1,9 @@
 package com.wayapay.thirdpartyintegrationservice.service.wallet;
 
+import com.wayapay.thirdpartyintegrationservice.dto.MainWalletResponse;
+import com.wayapay.thirdpartyintegrationservice.dto.TransactionRequest;
+import com.wayapay.thirdpartyintegrationservice.dto.TransferFromWalletPojo;
+import com.wayapay.thirdpartyintegrationservice.dto.TransferFromWalletToWallet;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
@@ -10,8 +14,6 @@ import java.util.List;
 
 @FeignClient(name = "wallet-feign-client", url = "${app.config.wallet.base-url}")
 public interface WalletFeignClient {
-
-    //NEW WALLET
     @PostMapping(path="/transaction/new/transfer/to/user?command=DEBIT")
     TransactionRequest transferToUser(@RequestBody TransferFromWalletPojo transfer, @RequestHeader("Authorization") String token);
 
@@ -30,7 +32,7 @@ public interface WalletFeignClient {
     ResponseEntity<String> transferFromUserToWaya(@RequestBody TransferFromWalletPojo transfer, @RequestHeader("Authorization") String token);
 
     @GetMapping("/api/v1/wallet/commission-accounts/{userId}")
-    ResponseEntity<String> getUserCommissionWallet(@PathVariable("userId") String userId, @RequestHeader("Authorization") String token);
+    ResponseEntity<ApiResponseBody<NewWalletResponse>> getUserCommissionWallet(@PathVariable("userId") String userId, @RequestHeader("Authorization") String token);
 
     // Get waya commission wallet
     @GetMapping("/api/v1/wallet/commission-wallets/all")
@@ -52,5 +54,10 @@ public interface WalletFeignClient {
     @PostMapping(path="/api/v1/wallet/fund/transfer/wallet")
     TransactionRequest adminReversFundToUser(@RequestBody TransferFromWalletToWallet transfer, @RequestHeader("Authorization") String token);
 
+    @PostMapping("/api/v1/wallet/official/user/transfer")
+    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> refundFailedTransaction(@RequestBody TransferFromOfficialToMainWallet transfer, @RequestHeader("Authorization") String token);
+
+    @PostMapping("/api/v1/wallet/admin/commission/payment")
+    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialCommissionToUserCommission(@RequestBody TransferFromWalletPojo transfer, @RequestHeader("Authorization") String token);
 
 }

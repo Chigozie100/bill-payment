@@ -4,6 +4,7 @@ import com.wayapay.thirdpartyintegrationservice.model.BillerConsumerFee;
 import com.wayapay.thirdpartyintegrationservice.util.FeeBearer;
 import com.wayapay.thirdpartyintegrationservice.util.FeeType;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,20 +19,28 @@ import java.util.Objects;
 @ToString
 public class BillerConsumerFeeResponse {
 
+    @ApiModelProperty(example = "1")
     private Long id;
 
+    @ApiModelProperty(example = "QUICKTELLER")
     private ThirdPartyNames thirdPartyName;
 
+    @ApiModelProperty(example = "mtn")
     private String biller;
 
+    @ApiModelProperty(example = "FIXED")
     private FeeType feeType;
 
+    @ApiModelProperty(example = "BILLER")
     private FeeBearer feeBearer;
 
+    @ApiModelProperty(example = "10")
     private BigDecimal value;
 
+    @ApiModelProperty(example = "0")
     private BigDecimal maxFixedValueWhenPercentage;
 
+    @ApiModelProperty(example = "true")
     private Boolean active;
 
     public BillerConsumerFeeResponse(BillerConsumerFee billerConsumerFee) {

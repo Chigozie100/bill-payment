@@ -13,6 +13,8 @@ public class SubItem {
     private String minAmount = "0";
     private String amount;
 
+
+
     public SubItem(String name) {
         this.id = name;
         this.name = name;
@@ -22,4 +24,5 @@ public class SubItem {
         this.id = id;
         this.name = name;
     }
+
 }

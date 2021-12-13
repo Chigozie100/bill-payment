@@ -27,6 +27,7 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 
 @Slf4j
 @RequiredArgsConstructor
+@CrossOrigin
 @RestController
 @Api(tags = "Core Bills Payment API", description = "This is the main controller containing all the api to process billspayment")
 @RequestMapping(API_V1)
@@ -77,6 +78,7 @@ public class BillsPaymentController {
     public ResponseEntity<ResponseHelper> getBillerPaymentItem(@ApiParam(example = "Airtime") @PathVariable("categoryId") String categoryId, @ApiParam(example = "mtnvtu") @PathVariable("billerId") String billerId){
         try {
             PaymentItemsResponse customerValidationFormByBiller = billsPaymentService.getBillsPaymentService(categoryId).getCustomerValidationFormByBiller(categoryId, billerId);
+            log.info("customerValidationFormByBiller ::: " + customerValidationFormByBiller);
             return ResponseEntity.ok(new SuccessResponse(customerValidationFormByBiller));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));
@@ -142,5 +144,17 @@ public class BillsPaymentController {
         Map<String, Object> transactionDetailPage = billsPaymentService.searchByReferralCode(referralCode, Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
+
+    @ApiOperation(value = "User Get Transaction Report By user Id: This API is used to get all transaction report by user")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @GetMapping("/biller/report/user/{userId}")
+    public ResponseEntity<ResponseHelper> adminSearchByUserID(@PathVariable("userId") String userId, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) throws ThirdPartyIntegrationException {
+
+        Map<String, Object> transactionDetailPage = billsPaymentService.search(userId,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
+        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
+    }
+
 
 }

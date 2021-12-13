@@ -1,11 +1,18 @@
 package com.wayapay.thirdpartyintegrationservice.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
+import com.wayapay.thirdpartyintegrationservice.model.TransactionTracker;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.BillsPaymentService;
+import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
+import com.wayapay.thirdpartyintegrationservice.service.OperationService;
+import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
+import com.wayapay.thirdpartyintegrationservice.service.referral.ReferralCodePojo;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
+import com.wayapay.thirdpartyintegrationservice.util.TransferPojo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -31,26 +38,26 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 
 @Slf4j
 @RequiredArgsConstructor
+@CrossOrigin
 @RestController
 @Api(tags = "Admin Bills Payment API", description = "This is the main controller containing all the api to process admin billspayment")
 @RequestMapping(API_V1)
 public class AdminController {
 
     private final BillsPaymentService billsPaymentService;
+    private final OperationService operationService;
+    private final QuickTellerService iThirdPartyService;
 
-
-
-
-    @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 8)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful")
-    })
-    @GetMapping("/biller/report/transaction/{transaction_id}")
-    public ResponseEntity<ResponseHelper> getTransactionReportByTransactionId(@PathVariable("transactionID") String transactionID) throws ThirdPartyIntegrationException {
-
-        TransactionDetail transactionDetailPage = billsPaymentService.searchTransactionByTransactionID(transactionID);
-        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
-    }
+//    @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 8)
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successful")
+//    })
+//    @GetMapping("/biller/report/transaction/{transaction_id}")
+//    public ResponseEntity<ResponseHelper> getTransactionReportByTransactionId(@PathVariable String transaction_id) throws ThirdPartyIntegrationException {
+//
+//        TransactionDetail transactionDetailPage = billsPaymentService.searchTransactionByTransactionID(transaction_id);
+//        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
+//    }
 
     // faild transactions
     // get all failed transaction
@@ -61,9 +68,9 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @GetMapping("/biller/report/filter/{transaction_status}")
-    public ResponseEntity<ResponseHelper> searchAndFilterTransactionStatus(@PathVariable("transaction_type") Boolean transaction_type, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseHelper> searchAndFilterTransactionStatus(@PathVariable("transaction_status") boolean transaction_status, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) throws ThirdPartyIntegrationException {
 
-        Page<TransactionDetail> transactionDetailPage = billsPaymentService.searchAndFilterTransactionStatus(transaction_type,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
+        Page<TransactionDetail> transactionDetailPage = billsPaymentService.searchAndFilterTransactionStatus(transaction_status,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
@@ -122,7 +129,7 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @PostMapping("/admin/make-reversal-payment/{userId}")
-    public ResponseEntity<ResponseHelper> adminMakeReversalPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @PathVariable String userId, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, URISyntaxException {
+    public ResponseEntity<ResponseHelper> adminMakeReversalPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @PathVariable String userId, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token){
 
         PaymentResponse transactionDetailPage = null;
         //operationService.adminMakeReversalPayment(paymentRequest, userId, token);
@@ -133,8 +140,8 @@ public class AdminController {
     @ApiOperation(value = "Bulk Bills Payment: This API is used to by the admin to pay bills on behalf of users using web form", tags = {"ADMIN"})
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Response Headers")})
     @PostMapping(path = "/admin/bulk-user-bills-payment")
-    public ResponseEntity<?> makeBulkBillsPaymentToUsersWithWebForm(@Valid @RequestBody List<MultiplePaymentRequest> multipleFormPaymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, URISyntaxException {
-        return billsPaymentService.processBulkPaymentForm(multipleFormPaymentRequest, username, token);
+    public ResponseEntity<?> makeBulkBillsPaymentToUsersWithWebForm(@Valid @RequestBody List<MultiplePaymentRequest> multipleFormPaymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, URISyntaxException {
+        return billsPaymentService.processBulkPaymentForm(multipleFormPaymentRequest, token);
     }
 
     @ApiOperation(value = "Bulk Bills Payment", tags = {"ADMIN"})
@@ -143,9 +150,6 @@ public class AdminController {
             MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> makeBulkBillsPaymentToUsers(@RequestParam("file") MultipartFile file,
                                                          HttpServletRequest request, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, IOException, URISyntaxException {
-        System.out.println("file ::: " + file.getContentType());
-        System.out.println("file ::: " + file.getOriginalFilename());
-        System.out.println("file ::: " + file.getName());
         return billsPaymentService.processBulkPayment(file, request, token);
     }
 
@@ -159,6 +163,82 @@ public class AdminController {
         long transactionDetailPage = billsPaymentService.findByUsername(username);
         return ResponseEntity.ok(transactionDetailPage);
     }
+
+
+    @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @PostMapping("/admin/refund-failed-transaction")
+    public ResponseEntity<ResponseHelper> refundFailedTransaction(@Valid @RequestBody TransferFromOfficialToMainWallet transfer, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
+
+        List<WalletTransactionPojo> transactionDetailPage = operationService.refundFailedTransaction(transfer, token);
+        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
+    }
+
+
+    @GetMapping("/getCategories")
+    public ResponseEntity<ResponseHelper> getInterswitchCategories() throws ThirdPartyIntegrationException {
+         return ResponseEntity.ok(new SuccessResponse(iThirdPartyService.getCategory()));
+    }
+
+    @GetMapping("/getBillersByCategories/{category_id}")
+    public ResponseEntity<ResponseHelper> getAllInterswitchBillersByCategory(@PathVariable String category_id) throws ThirdPartyIntegrationException {
+        return ResponseEntity.ok(new SuccessResponse(iThirdPartyService.getAllBillersByCategory(category_id)));
+    }
+
+    @GetMapping("/getBillersByCategories/{category_id}/biller/{biller_id}")
+    public ResponseEntity<ResponseHelper> getCustomerValidationFormByBiller(@PathVariable String category_id, @PathVariable String biller_id) throws ThirdPartyIntegrationException {
+        return ResponseEntity.ok(new SuccessResponse(iThirdPartyService.getCustomerValidationFormByBiller(category_id, biller_id)));
+    }
+
+
+    @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @PostMapping("/admin/test-tracker")
+    public ResponseEntity<ResponseHelper> testTracker(@Valid @RequestBody TransactionTracker transfer, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
+        TransactionTracker transactionTracker = operationService.testTracker(transfer);
+        return ResponseEntity.ok(new SuccessResponse(transactionTracker));
+    }
+
+    @ApiOperation(value = "Test : Test view referralCode")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @GetMapping("/admin/test-tracker/{referralCode}")
+    public ResponseEntity<ResponseHelper> getReferralDetails(@PathVariable String referralCode,@ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
+        ReferralCodePojo transactionTracker = operationService.getReferralDetails(referralCode,token);
+        return ResponseEntity.ok(new SuccessResponse(transactionTracker));
+    }
+
+
+    @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @PostMapping("/admin/test-push-kafka")
+    public ResponseEntity<ResponseHelper> testPushWayaGramPayment(@Valid @RequestBody TransferPojo transferPojo) throws ThirdPartyIntegrationException, JsonProcessingException {
+        operationService.testPushWayaGramPayment(transferPojo);
+        return ResponseEntity.ok(new SuccessResponse(transferPojo));
+    }
+
+
+    @ApiOperation(value = "Admin push payment to kafka : This API is used to refund failed transactions to users")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @PostMapping("/admin/test-push-product-payment-kafka")
+    public ResponseEntity<ResponseHelper> testPushWayaGramProductPayment(@Valid @RequestBody TransferPojo transferPojo) throws ThirdPartyIntegrationException, JsonProcessingException {
+        operationService.testPushWayaGramProductPayment(transferPojo);
+        return ResponseEntity.ok(new SuccessResponse(transferPojo));
+    }
+
+
+
+
+
 
 
 

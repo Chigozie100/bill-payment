@@ -18,4 +18,5 @@ public class DataPaymentRequest {
     private String clientReference;
     private String pin;
     private String channel;
+    private String productCode;
 }

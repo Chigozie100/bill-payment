@@ -12,14 +12,21 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TransferFromWalletPojo {
-
-// 	private Long customerWalletId;
+<<<<<<< HEAD
+//
+//	  private Long customerWalletId;
 //	  private String paymentReference;
 //	  private BigDecimal amount;
+=======
+>>>>>>> develop
 	private BigDecimal amount;
 	private String customerAccountNumber;
 	private String eventId;
 	private String paymentReference;
 	private String tranCrncy;
 	private String tranNarration;
+<<<<<<< HEAD
+=======
+	private Long userId;
+>>>>>>> develop
 }

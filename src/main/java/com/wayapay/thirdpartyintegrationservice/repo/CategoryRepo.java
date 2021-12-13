@@ -6,10 +6,11 @@ import com.wayapay.thirdpartyintegrationservice.model.Category;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-
+@Repository
 public interface CategoryRepo extends JpaRepository<Category, Long> {
 
     @Query("select count(c.id) from Category c where c.name = ?1 and c.thirdParty.id = ?2 ")

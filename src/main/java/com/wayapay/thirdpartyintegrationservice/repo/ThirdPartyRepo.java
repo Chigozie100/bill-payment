@@ -5,10 +5,11 @@ import com.wayapay.thirdpartyintegrationservice.model.ThirdParty;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-
+@Repository
 public interface ThirdPartyRepo extends JpaRepository<ThirdParty, Long> {
 
     @Query("select new com.wayapay.thirdpartyintegrationservice.dto.ThirdPartyResponse(t.id, t.thirdPartyNames, t.active) from ThirdParty t")

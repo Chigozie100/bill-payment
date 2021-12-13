@@ -2,13 +2,6 @@ package com.wayapay.thirdpartyintegrationservice.dto;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.*;
-
-<<<<<<< HEAD
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
-=======
->>>>>>> develop
 @Getter
 @Setter
 @NoArgsConstructor
@@ -60,7 +53,3 @@ public class NewWalletResponse {
         this.id = id;
     }
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> develop

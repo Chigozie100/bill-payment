@@ -1,10 +1,3 @@
-server:
-  port: ${SERVER_PORT}
-  error:
-    include-message: always
-  servlet:
-    context-path: /billspayment-service
-
 spring:
   application:
     name: bills-payment-service
@@ -33,14 +26,22 @@ spring:
       key-serializer: ${KEY_SERIALIZER}
       value-serializer: ${VALUE_SERIALIZER}
 
+
+server:
+  port: ${SERVER_PORT}
+  error:
+    include-message: always
+  servlet:
+    context-path: /billspay
+
 eureka:
   client:
     serviceUrl:
       defaultZone: ${EUREKA_SERVER_URL}
     service-url:
       default-zone: ${EUREKA_SERVER_URL}
-    register-with-eureka: false
-    fetch-registry: false
+  register-with-eureka: false
+  fetch-registry: false
   instance:
     preferIpAddress: true
 
@@ -58,6 +59,7 @@ app:
       send-payment-advice-url: ${QUICK_TELLER_SEND_PAYMENT_ADVICE_URL}
       transaction-ref-code: ${QUICK_TELLER_TRANSACTION_REF_CODE}
       terminal-id: ${QUICK_TELLER_TERMIAL_ID}
+      ussd-url: ${QUICK_TELLER_USSD}
     baxi:
       base-url: ${BAXI_BASE}
       x-api-key: ${BAXI_X_API_KEY}
@@ -83,6 +85,10 @@ app:
       base-url: ${NOTIFICATION_BASE}
     log-service:
       base-url: ${LOG_SERVICE_BASE}
+    commission:
+      base-url: ${COMMISSION_BASE}
+    referral:
+      base-url: ${REFERRAL_SERVICE}
 
     kafka:
       transaction-topic: ${TRANSACTION_TOPIC}

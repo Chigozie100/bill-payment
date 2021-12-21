@@ -1,4 +1,6 @@
-FROM openjdk:11-jre-slim
-EXPOSE 8181
-ADD target/billspaymentservice.jar billspaymentservice.jar
-ENTRYPOINT ["java","-Dspring.profiles.active=dev", "-jar", "/billspaymentservice.jar"]
+FROM openjdk:13-jdk-alpine as base
+WORKDIR /app
+RUN addgroup -S waya && adduser -S waya -G waya
+USER waya:waya
+COPY target/*.jar app.jar
+ENTRYPOINT ["java","-jar","/app/app.jar"]

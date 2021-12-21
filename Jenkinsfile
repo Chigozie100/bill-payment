@@ -49,8 +49,7 @@ pipeline {
             steps{
                 script {
                     sh '''
-                        aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $CLUSTER_NAME
-                        kubectl apply -f staging.yaml --namespace=staging
+                        kubectl replace --force -f staging.yaml --namespace=staging
                         '''
                 }
 

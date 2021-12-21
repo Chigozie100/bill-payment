@@ -37,6 +37,4 @@ spec:
           value: "events" 
         ports: 
         - name: http
-          containerPort: 80
-      imagePullSecrets:
-      - name: dynamowit
+          containerPort: 80 

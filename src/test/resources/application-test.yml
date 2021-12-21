@@ -1,13 +1,21 @@
+server:
+  port: ${SERVER_PORT}
 spring:
-  application:
-    name: bills-payment-service
-  datasource:
-    url: jdbc:h2:mem:db;DB_CLOSE_DELAY=-1
-    username: sa
-    password: sa
-    initialization-mode: always
-    driver-class-name: org.h2.Driver
-    continue-on-error: true
+  cache:
+    type: redis
+    redis:
+      time-to-live: 2400000
+      cache-null-values: false
+      use-key-prefix: true
+      key-prefix: tokens
+  session:
+    store-type: jdbc
+  kafka:
+    producer:
+      bootstrap-servers: ${BOOTSTRAP_SERVICE}
+      key-serializer: ${KEY_SERIALIZER}
+      value-serializer: ${VALUE_SERIALIZER}
+      auto-offset-reset: earliest
   jpa:
     hibernate:
       ddl-auto: update
@@ -17,34 +25,22 @@ spring:
         show-sql: true
         jdbc:
           time_zone: UTC
-    open-in-view: false #this config disables database queries which  may be performed during view rendering
 
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
 
-  kafka:
-    producer:
-      bootstrap-servers: http://kafka-service:9092
-      key-serializer: ${KEY_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
-      value-serializer: ${VALUE_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
-      groupId: waya
-
-
-server:
-  port: ${SERVER_PORT:8181}
-  error:
-    include-message: always
-  servlet:
-    context-path: /billspayment-service
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: ${EUREKA_SERVER_URL:http://eureka-service/eureka}
-    service-url:
-      default-zone: ${EUREKA_SERVER_URL:http://eureka-service/eureka}
-  register-with-eureka: false
-  fetch-registry: false
-  instance:
-    preferIpAddress: true
+  datasource:
+    url: jdbc:h2:mem:db;DB_CLOSE_DELAY=-1
+    username: sa
+    password: sa
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+security:
+  basic:
+    enabled: false
 
 app:
   config:
@@ -76,31 +72,24 @@ app:
       hmacsha256key: ${ITEX_HMACSHA256KEY:3de02eaf333f7cefde86677d60e5e47f}
 
     dispute:
-      base-url: ${DISPUTE_BASE:http://68.183.60.114:9086/complaint-service/dispute}
+      base-url: ${DISPUTE_BASE:http://46.101.41.187:9400/complaint-service/dispute}
     wallet:
-      base-url: ${WALLET_BASE:http://68.183.60.114:9086}
+      base-url: ${WALLET_BASE:http://157.230.223.54:9009}
     auth:
-      base-url: ${AUTH_BASE:http://68.183.60.114:9086}
+      base-url: ${AUTH_BASE:http://68.183.60.114:8059}
     notification:
-      base-url: ${NOTIFICATION_BASE:http://68.183.60.114:9086/notification-service}
+      base-url: ${NOTIFICATION_BASE:http://68.183.60.114:8085/notification-service}
     log-service:
-      base-url: ${LOG_SERVICE_BASE:http://68.183.60.114:9086}
-    commission:
-      base-url: ${COMMISSION_BASE:http://68.183.60.114:9086/commission-service}
+      base-url: ${LOG_SERVICE_BASE:http://46.101.41.187:8083 }
+
     kafka:
       transaction-topic: ${TRANSACTION_TOPIC:transaction}
-    referral:
-      base-url: ${REFERRAL_SERVICE:http://46.101.41.187:8282/referral-service}
 
-
-feign:
+eureka:
   client:
-    config:
-      default:
-        connect-timeout: 50000
-        read-timeout: 50000
-        logger-level: full
-
-
-jwt:
-  secret: ${JWT_SECRET:test}
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER_URL}
+    service-url:
+      default-zone: ${EUREKA_SERVER_URL}
+  instance:
+    preferIpAddress: true

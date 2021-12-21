@@ -2,34 +2,33 @@ spring:
   application:
     name: bills-payment-service
   datasource:
-    url: jdbc:h2:mem:db;DB_CLOSE_DELAY=-1
-    username: sa
-    password: sa
+    url: jdbc:postgresql://postgresdb:5432/billspayment-service?useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+    username: root
+    password: pONvagaJf3BTbu9l
     initialization-mode: always
-    driver-class-name: org.h2.Driver
+    driver-class-name: org.postgresql.Driver
     continue-on-error: true
   jpa:
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         show-sql: true
         jdbc:
           time_zone: UTC
     open-in-view: false #this config disables database queries which  may be performed during view rendering
 
-
-  kafka:
-    producer:
-      bootstrap-servers: http://kafka-service:9092
-      key-serializer: ${KEY_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
-      value-serializer: ${VALUE_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
-      groupId: waya
+kafka:
+  producer:
+    bootstrap-servers: http://kafka-service:9092
+    key-serializer: ${KEY_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
+    value-serializer: ${VALUE_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
+    groupId: waya
 
 
 server:
-  port: ${SERVER_PORT:8181}
+  port: ${SERVER_PORT:80}
   error:
     include-message: always
   servlet:
@@ -89,9 +88,6 @@ app:
       base-url: ${COMMISSION_BASE:http://68.183.60.114:9086/commission-service}
     kafka:
       transaction-topic: ${TRANSACTION_TOPIC:transaction}
-    referral:
-      base-url: ${REFERRAL_SERVICE:http://46.101.41.187:8282/referral-service}
-
 
 feign:
   client:

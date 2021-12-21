@@ -1,102 +1,106 @@
-#spring:
-#  application:
-#    name: bills-payment-service
-#  datasource:
-#    url: ${POSTGRES_URL}
-#    username: ${POSTGRES_USERNAME}
-#    password: ${POSTGRES_PASSWORD}
-#    initialization-mode: always
-#    driver-class-name: org.postgresql.Driver
-#    continue-on-error: true
-#  jpa:
-#    hibernate:
-#      ddl-auto: update
-#    properties:
-#      hibernate:
-#        dialect: org.hibernate.dialect.PostgreSQLDialect
-#        show-sql: true
-#        jdbc:
-#          time_zone: UTC
-#    open-in-view: false #this config disables database queries which  may be performed during view rendering
-#
-#
-#  kafka:
-#    producer:
-#      bootstrap-servers: ${BOOTSTRAP_SERVICE}
-#      key-serializer: ${KEY_SERIALIZER}
-#      value-serializer: ${VALUE_SERIALIZER}
-#
-#
-#server:
-#  port: ${SERVER_PORT}
-#  error:
-#    include-message: always
-#  servlet:
-#    context-path: /billspayment-service
-#
-#eureka:
-#  client:
-#    serviceUrl:
-#      defaultZone: ${EUREKA_SERVER_URL}
-#    service-url:
-#      default-zone: ${EUREKA_SERVER_URL}
-#  register-with-eureka: false
-#  fetch-registry: false
-#  instance:
-#    preferIpAddress: true
-#
-#app:
-#  config:
-#    quickteller:
-#      base-url: ${QUICK_TELLER_BASE}
-#      client-id: ${QUICK_TELLER_CLIENT_ID}
-#      secret: ${QUICK_TELLER_SECRET}
-#      account-number: ${QUICK_TELLER_ACCOUNT_NUMBER}
-#      biller-category-url: ${QUICK_TELLER_BILLER_CATEGORY_URL}
-#      billers-url: ${QUICK_TELLER_BILLERS_URL}
-#      biller-payment-item-url: ${QUICK_TELLER_BILLER_PAYMENT_ITEM_URL}
-#      customer-validation-url: ${QUICK_TELLER_CUSTOMER_VALIDATION_URL}
-#      send-payment-advice-url: ${QUICK_TELLER_SEND_PAYMENT_ADVICE_URL}
-#      transaction-ref-code: ${QUICK_TELLER_TRANSACTION_REF_CODE}
-#      terminal-id: ${QUICK_TELLER_TERMIAL_ID}
-#    baxi:
-#      base-url: ${BAXI_BASE}
-#      x-api-key: ${BAXI_X_API_KEY}
-#      agent-code: ${BAXI_AGENT_CODE}
-#      account-number: ${BAXI_ACCOUNT_NUMBER}
-#    itex:
-#      base-url: ${ITEX_BASE}
-#      wallet-id: ${ITEX_WALLET_ID}
-#      username: ${ITEX_USERNAME}
-#      password: ${ITEX_PASSWORD}
-#      account-number: ${ITEX_ACCOUNT_NUMBER}
-#      pay-vice-pin: ${ITEX_PAY_VIA_PIN}
-#      unique-api-identifier: ${ITEX_UNIQUE_API_IDENTIFIER}
-#      hmacsha256key: ${ITEX_HMACSHA256KEY}
-#
-#    dispute:
-#      base-url: ${DISPUTE_BASE}
-#    wallet:
-#      base-url: ${WALLET_BASE}
-#    auth:
-#      base-url: ${AUTH_BASE}
-#    notification:
-#      base-url: ${NOTIFICATION_BASE}
-#    log-service:
-#      base-url: ${LOG_SERVICE_BASE}
-#    commission:
-#      base-url: ${COMMISSION_BASE}
-#    kafka:
-#      transaction-topic: ${TRANSACTION_TOPIC}
-#
-#feign:
-#  client:
-#    config:
-#      default:
-#        connect-timeout: 50000
-#        read-timeout: 50000
-#        logger-level: full
-#
-#
-#jwt: 
-#  secret: ${JWT_SECRET} 
+spring:
+  application:
+    name: bills-payment-service
+  datasource:
+    url: jdbc:h2:mem:db;DB_CLOSE_DELAY=-1
+    username: sa
+    password: sa
+    initialization-mode: always
+    driver-class-name: org.h2.Driver
+    continue-on-error: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        show-sql: true
+        jdbc:
+          time_zone: UTC
+    open-in-view: false #this config disables database queries which  may be performed during view rendering
+
+
+  kafka:
+    producer:
+      bootstrap-servers: http://kafka-service:9092
+      key-serializer: ${KEY_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
+      value-serializer: ${VALUE_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
+      groupId: waya
+
+
+server:
+  port: ${SERVER_PORT:8181}
+  error:
+    include-message: always
+  servlet:
+    context-path: /billspayment-service
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER_URL:http://eureka-service/eureka}
+    service-url:
+      default-zone: ${EUREKA_SERVER_URL:http://eureka-service/eureka}
+  register-with-eureka: false
+  fetch-registry: false
+  instance:
+    preferIpAddress: true
+
+app:
+  config:
+    quickteller:
+      base-url: ${QUICK_TELLER_BASE:https://sandbox.interswitchng.com}
+      client-id: ${QUICK_TELLER_CLIENT_ID:IKIA9614B82064D632E9B6418DF358A6A4AEA84D7218}
+      secret: ${QUICK_TELLER_SECRET:XCTiBtLy1G9chAnyg0z3BcaFK4cVpwDg/GTw2EmjTZ8=}
+      account-number: ${QUICK_TELLER_ACCOUNT_NUMBER:0000000001}
+      biller-category-url: ${QUICK_TELLER_BILLER_CATEGORY_URL:/api/v2/quickteller/categorys}
+      billers-url: ${QUICK_TELLER_BILLERS_URL:/api/v2/quickteller/billers}
+      biller-payment-item-url: ${QUICK_TELLER_BILLER_PAYMENT_ITEM_URL:/api/v2/quickteller/billers/{billerId}/paymentitems}
+      customer-validation-url: ${QUICK_TELLER_CUSTOMER_VALIDATION_URL:/api/v2/quickteller/customers/validations}
+      send-payment-advice-url: ${QUICK_TELLER_SEND_PAYMENT_ADVICE_URL:/api/v2/quickteller/payments/advices}
+      transaction-ref-code: ${QUICK_TELLER_TRANSACTION_REF_CODE:1453}
+      terminal-id: ${QUICK_TELLER_TERMIAL_ID:3DMO0001}
+    baxi:
+      base-url: ${BAXI_BASE:https://payments.baxipay.com.ng/api/baxipay}
+      x-api-key: ${BAXI_X_API_KEY:5adea9-044a85-708016-7ae662-646d59}
+      agent-code: ${BAXI_AGENT_CODE:69}
+      account-number: ${BAXI_ACCOUNT_NUMBER:0000000001}
+    itex:
+      base-url: ${ITEX_BASE:http://197.253.19.78:1880/api}
+      wallet-id: ${ITEX_WALLET_ID:35738987}
+      username: ${ITEX_USERNAME:payvice.waya@wayapaychat.com}
+      password: ${ITEX_PASSWORD:Waya203040!!}
+      account-number: ${ITEX_ACCOUNT_NUMBER:0000000001}
+      pay-vice-pin: ${ITEX_PAY_VIA_PIN:4444}
+      unique-api-identifier: ${ITEX_UNIQUE_API_IDENTIFIER:wayapaychat}
+      hmacsha256key: ${ITEX_HMACSHA256KEY:3de02eaf333f7cefde86677d60e5e47f}
+
+    dispute:
+      base-url: ${DISPUTE_BASE:http://68.183.60.114:9086/complaint-service/dispute}
+    wallet:
+      base-url: ${WALLET_BASE:http://68.183.60.114:9086}
+    auth:
+      base-url: ${AUTH_BASE:http://68.183.60.114:9086}
+    notification:
+      base-url: ${NOTIFICATION_BASE:http://68.183.60.114:9086/notification-service}
+    log-service:
+      base-url: ${LOG_SERVICE_BASE:http://68.183.60.114:9086}
+    commission:
+      base-url: ${COMMISSION_BASE:http://68.183.60.114:9086/commission-service}
+    kafka:
+      transaction-topic: ${TRANSACTION_TOPIC:transaction}
+    referral:
+      base-url: ${REFERRAL_SERVICE:http://46.101.41.187:8282/referral-service}
+
+
+feign:
+  client:
+    config:
+      default:
+        connect-timeout: 50000
+        read-timeout: 50000
+        logger-level: full
+
+
+jwt:
+  secret: ${JWT_SECRET:test}

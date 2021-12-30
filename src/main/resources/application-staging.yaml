@@ -88,7 +88,8 @@ app:
       base-url: ${COMMISSION_BASE:https://services.staging.mywayapay.com/commission-service}
     kafka:
       transaction-topic: ${TRANSACTION_TOPIC:transaction}
-
+    referral:
+      base-url: ${REFERRAL_SERVICE:https://services.staging.mywayapay.com/referral-service}
 
 feign:
   client:

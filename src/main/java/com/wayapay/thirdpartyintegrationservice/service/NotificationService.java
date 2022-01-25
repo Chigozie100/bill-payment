@@ -95,7 +95,7 @@ public class NotificationService {
 
     public Boolean smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
         try {
-            ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.smsNotifyUser(smsEvent,token);
+            ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.smsNotifyUserAtalking(smsEvent,token);
             ResponseObj infoResponse = responseEntity.getBody();
             log.info("userProfileResponse sms sent status :: " +infoResponse.status);
             return infoResponse.status;

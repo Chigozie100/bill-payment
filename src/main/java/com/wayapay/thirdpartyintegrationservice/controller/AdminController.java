@@ -10,6 +10,7 @@ import com.wayapay.thirdpartyintegrationservice.service.BillsPaymentService;
 import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.service.OperationService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
+import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileService;
 import com.wayapay.thirdpartyintegrationservice.service.referral.ReferralCodePojo;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import com.wayapay.thirdpartyintegrationservice.util.TransferPojo;
@@ -47,6 +48,7 @@ public class AdminController {
     private final BillsPaymentService billsPaymentService;
     private final OperationService operationService;
     private final QuickTellerService iThirdPartyService;
+    private final ProfileService profileService;
 
 //    @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 8)
 //    @ApiResponses(value = {
@@ -193,47 +195,61 @@ public class AdminController {
     }
 
 
-    @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful")
-    })
-    @PostMapping("/admin/test-tracker")
-    public ResponseEntity<ResponseHelper> testTracker(@Valid @RequestBody TransactionTracker transfer, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
-        TransactionTracker transactionTracker = operationService.testTracker(transfer);
-        return ResponseEntity.ok(new SuccessResponse(transactionTracker));
-    }
+//    @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successful")
+//    })
+//    @PostMapping("/admin/test-tracker")
+//    public ResponseEntity<ResponseHelper> testTracker(@Valid @RequestBody TransactionTracker transfer, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
+//        TransactionTracker transactionTracker = operationService.testTracker(transfer);
+//        return ResponseEntity.ok(new SuccessResponse(transactionTracker));
+//    }
 
-    @ApiOperation(value = "Test : Test view referralCode")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful")
-    })
-    @GetMapping("/admin/test-tracker/{referralCode}")
-    public ResponseEntity<ResponseHelper> getReferralDetails(@PathVariable String referralCode,@ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
-        ReferralCodePojo transactionTracker = operationService.getReferralDetails(referralCode,token);
-        return ResponseEntity.ok(new SuccessResponse(transactionTracker));
-    }
-
-
-    @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful")
-    })
-    @PostMapping("/admin/test-push-kafka")
-    public ResponseEntity<ResponseHelper> testPushWayaGramPayment(@Valid @RequestBody TransferPojo transferPojo) throws ThirdPartyIntegrationException, JsonProcessingException {
-        operationService.testPushWayaGramPayment(transferPojo);
-        return ResponseEntity.ok(new SuccessResponse(transferPojo));
-    }
+//    @ApiOperation(value = "Test : Test view referralCode")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successful")
+//    })
+//    @GetMapping("/admin/test-tracker/{referralCode}")
+//    public ResponseEntity<ResponseHelper> getReferralDetails(@PathVariable String referralCode,@ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
+//        ReferralCodePojo transactionTracker = operationService.getReferralDetails(referralCode,token);
+//        return ResponseEntity.ok(new SuccessResponse(transactionTracker));
+//    }
+//
+//
+//    @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successful")
+//    })
+//    @PostMapping("/admin/test-push-kafka")
+//    public ResponseEntity<ResponseHelper> testPushWayaGramPayment(@Valid @RequestBody TransferPojo transferPojo) throws ThirdPartyIntegrationException, JsonProcessingException {
+//        operationService.testPushWayaGramPayment(transferPojo);
+//        return ResponseEntity.ok(new SuccessResponse(transferPojo));
+//    }
+//
+//
+//    @ApiOperation(value = "Admin push payment to kafka : This API is used to refund failed transactions to users")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successful")
+//    })
+//    @PostMapping("/admin/test-push-product-payment-kafka")
+//    public ResponseEntity<ResponseHelper> testPushWayaGramProductPayment(@Valid @RequestBody TransferPojo transferPojo) throws ThirdPartyIntegrationException, JsonProcessingException {
+//        operationService.testPushWayaGramProductPayment(transferPojo);
+//        return ResponseEntity.ok(new SuccessResponse(transferPojo));
+//    }
 
 
     @ApiOperation(value = "Admin push payment to kafka : This API is used to refund failed transactions to users")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful")
     })
-    @PostMapping("/admin/test-push-product-payment-kafka")
-    public ResponseEntity<ResponseHelper> testPushWayaGramProductPayment(@Valid @RequestBody TransferPojo transferPojo) throws ThirdPartyIntegrationException, JsonProcessingException {
-        operationService.testPushWayaGramProductPayment(transferPojo);
-        return ResponseEntity.ok(new SuccessResponse(transferPojo));
+    @GetMapping("/admin/get-profile/{userId}")
+    public ResponseEntity<ResponseHelper> getProfile(@PathVariable String userId,@ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, JsonProcessingException {
+        profileService.getProfile(userId,token);
+        return ResponseEntity.ok(new SuccessResponse(userId));
     }
+
+
+
 
 
 

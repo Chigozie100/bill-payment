@@ -2,6 +2,7 @@ package com.wayapay.thirdpartyintegrationservice.service.auth;
 
 import com.wayapay.thirdpartyintegrationservice.dto.ApiResponseBody;
 import com.wayapay.thirdpartyintegrationservice.dto.UserProfileResponsePojo;
+import com.wayapay.thirdpartyintegrationservice.service.profile.Profile;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,5 +18,8 @@ public interface AuthFeignClient {
 
     @GetMapping("/api/v1/user/{userId}")  //http://68.183.60.114:8059/api/v1/user/554
     ResponseEntity<ApiResponseBody<UserProfileResponsePojo>> getUserByUserId(@PathVariable String userId, @RequestHeader String authorization);
+
+    @GetMapping("/api/v1/profile/{userId}")
+    ResponseEntity<ApiResponseBody<Profile>> getProfile(@PathVariable String userId, @RequestHeader String authorization);
 
 }

@@ -19,12 +19,12 @@ spring:
           time_zone: UTC
     open-in-view: false #this config disables database queries which  may be performed during view rendering
 
-kafka:
-  producer:
-    bootstrap-servers: http://kafka-service:9092
-    key-serializer: ${KEY_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
-    value-serializer: ${VALUE_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
-    groupId: waya
+  kafka:
+    producer:
+      bootstrap-servers: http://localhost:9092
+      key-serializer: ${KEY_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
+      value-serializer: ${VALUE_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
+      groupId: waya
 
 
 server:

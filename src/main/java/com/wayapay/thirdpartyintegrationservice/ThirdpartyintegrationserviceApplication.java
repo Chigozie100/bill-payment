@@ -1,6 +1,7 @@
 package com.wayapay.thirdpartyintegrationservice;
 
 import com.wayapay.thirdpartyintegrationservice.interceptors.SwaggerFilter;
+import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -38,5 +39,11 @@ public class ThirdpartyintegrationserviceApplication {
         filterRegistrationBean.setFilter(new SwaggerFilter());
         return filterRegistrationBean;
     }
+
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
+    }
+
 
 }

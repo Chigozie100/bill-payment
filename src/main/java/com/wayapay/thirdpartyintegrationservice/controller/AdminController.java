@@ -238,16 +238,25 @@ public class AdminController {
 //    }
 
 
-    @ApiOperation(value = "Admin push payment to kafka : This API is used to refund failed transactions to users")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful")
-    })
-    @GetMapping("/admin/get-profile/{userId}")
-    public ResponseEntity<ResponseHelper> getProfile(@PathVariable String userId,@ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, JsonProcessingException {
-        profileService.getProfile(userId,token);
-        return ResponseEntity.ok(new SuccessResponse(userId));
-    }
-
+//    @ApiOperation(value = "Admin push payment to kafka : This API is used to refund failed transactions to users")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successful")
+//    })
+//    @GetMapping("/admin/get-profile/{userId}")
+//    public ResponseEntity<ResponseHelper> getProfile(@PathVariable String userId,@ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, JsonProcessingException {
+//        profileService.getProfile(userId,token);
+//        return ResponseEntity.ok(new SuccessResponse(userId));
+//    }
+//
+//    @ApiOperation(value = "Admin push payment to kafka : This API is used to refund failed transactions to users")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successful")
+//    })
+//    @PostMapping("/admin/test-push-tans-count")
+//    public ResponseEntity<ResponseHelper> testCountTrans(@RequestBody TransactionCount request, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, JsonProcessingException {
+//        String msg = profileService.transactionCount(request);
+//        return ResponseEntity.ok(new SuccessResponse(msg));
+//    }
 
 
 

@@ -203,15 +203,15 @@ public class BillsPaymentService {
                 //store the transaction information
                 PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
 
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        if (paymentTransactionDetail !=null){
-                            operationService.trackTransactionCount(userProfileResponse,token);
-                        }
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
+//                CompletableFuture.runAsync(() -> {
+//                    try {
+//                        if (paymentTransactionDetail !=null){
+//                            operationService.trackTransactionCount(userProfileResponse,token);
+//                        }
+//                    } catch (ThirdPartyIntegrationException e) {
+//                        e.printStackTrace();
+//                    }
+//                });
 
                 // call the receipt service
                 CompletableFuture.runAsync(() -> {

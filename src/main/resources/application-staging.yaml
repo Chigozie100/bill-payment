@@ -75,21 +75,21 @@ app:
       hmacsha256key: ${ITEX_HMACSHA256KEY:3de02eaf333f7cefde86677d60e5e47f}
 
     dispute:
-      base-url: ${DISPUTE_BASE:https://services.staging.mywayapay.com/complaint-service/dispute}
+      base-url: ${DISPUTE_BASE:https://services.staging.wayabank.ng/complaint-service/dispute}
     wallet:
-      base-url: ${CONFIG_BASEURL_TWALLET:https://services.staging.mywayapay.com/temporal-service}
+      base-url: ${CONFIG_BASEURL_TWALLET:https://services.staging.wayabank.ng/temporal-service}
     auth:
-      base-url: ${CONFIG_BASEURL_AUTH:https://services.staging.mywayapay.com/auth-service}
+      base-url: ${CONFIG_BASEURL_AUTH:https://services.staging.wayabank.ng/auth-service}
     notification:
-      base-url: ${NOTIFICATION_BASE:https://services.staging.mywayapay.com/notification-service}
+      base-url: ${NOTIFICATION_BASE:https://services.staging.wayabank.ng/notification-service}
     log-service:
-      base-url: ${CONFIG_BASEURL_LOGAUDIT:https://services.staging.mywayapay.com/logs-service}
+      base-url: ${CONFIG_BASEURL_LOGAUDIT:https://services.staging.wayabank.ng/logs-service}
     commission:
-      base-url: ${COMMISSION_BASE:https://services.staging.mywayapay.com/commission-service}
+      base-url: ${COMMISSION_BASE:https://services.staging.wayabank.ng/commission-service}
     kafka:
       transaction-topic: ${TRANSACTION_TOPIC:transaction}
     referral:
-      base-url: ${REFERRAL_SERVICE:https://services.staging.mywayapay.com/referral-service}
+      base-url: ${REFERRAL_SERVICE:https://services.staging.wayabank.ng/referral-service}
 
 feign:
   client:

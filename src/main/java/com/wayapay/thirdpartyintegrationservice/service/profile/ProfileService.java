@@ -39,52 +39,70 @@ public class ProfileService {
     }
 
 
-//    public Profile getProfile(String userName, String token) throws ThirdPartyIntegrationException {
-//        Profile profile = null;
-//        try {
+    public Profile getProfile(String userName, String token) throws ThirdPartyIntegrationException {
+        Profile profile = null;
+        try {
+            ResponseEntity<ApiResponseBody<Profile>> responseEntity = authFeignClient.getProfile(userName, token);
+            ApiResponseBody<Profile> infoResponse = responseEntity.getBody();
+            profile = infoResponse.getData();
+            log.info("userProfileResponse :: " +profile);
+
+            ProfileDto request = modelMapper.map(profile, ProfileDto.class);
+            System.out.println("binded Profile object the resoult :: "  +request);
+            ReferralDto referralDto = new ReferralDto();
+            referralDto.setId("01");
+            referralDto.setProfile(request);
+            referralDto.setUserId(profile.getUserId());
+            referralDto.setReferralCode("43w4s4w45dr45");
+
+            log.info("ReferralCode :: " + referralDto);
+
+            kafkaTemplate.send("create-user-referral", CommonUtils.getObjectMapper().writeValueAsString(referralDto));
+
+            log.info(" Sent to topic");
+        } catch (Exception e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
+        return profile;
+    }
+
+    public String transactionCount(TransactionCount request) throws ThirdPartyIntegrationException {
+
+        String profile = null;
+        try {
 //            ResponseEntity<ApiResponseBody<Profile>> responseEntity = authFeignClient.getProfile(userName, token);
 //            ApiResponseBody<Profile> infoResponse = responseEntity.getBody();
 //            profile = infoResponse.getData();
-//            log.info("userProfileResponse :: " +profile);
-//
-//            ProfileDto request = modelMapper.map(profile, ProfileDto.class);
-//            System.out.println("binded Profile object the resoult :: "  +request);
-//            ReferralDto referralDto = new ReferralDto();
-//            referralDto.setId("01");
-//            referralDto.setProfile(request);
-//            referralDto.setUserId(profile.getUserId());
-//            referralDto.setReferralCode("43w4s4w45dr45");
-//
-//            log.info("ReferralCode :: " + referralDto);
-//
-//            kafkaTemplate.send("create-user-referral", CommonUtils.getObjectMapper().writeValueAsString(referralDto));
-//
-//            log.info(" Sent to topic");
-//        } catch (Exception e) {
-//            log.error("Unable to generate transaction Id", e);
-//            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-//        }
-//        return profile;
-//    }
+            log.info("userProfileResponse :: " +profile);
 
-//    public String transactionCount(TransactionCount request) throws ThirdPartyIntegrationException {
-//
-//        String profile = null;
-//        try {
-////            ResponseEntity<ApiResponseBody<Profile>> responseEntity = authFeignClient.getProfile(userName, token);
-////            ApiResponseBody<Profile> infoResponse = responseEntity.getBody();
-////            profile = infoResponse.getData();
-//            log.info("userProfileResponse :: " +profile);
-//
-//            kafkaTemplate.send("referral-transaction-count", CommonUtils.getObjectMapper().writeValueAsString(request));
-//
-//            log.info(" Sent to topic");
-//        } catch (Exception e) {
-//            log.error("Unable to generate transaction Id", e);
-//            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-//        }
-//        return "Done";
-//    }
+            kafkaTemplate.send("referral-transaction-count", CommonUtils.getObjectMapper().writeValueAsString(request));
+
+            log.info(" Sent to topic");
+        } catch (Exception e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
+        return "Done";
+    }
+    public String pushRequest(ReceiptRequest request) throws ThirdPartyIntegrationException {
+
+        String profile = null;
+        try {
+//            ResponseEntity<ApiResponseBody<Profile>> responseEntity = authFeignClient.getProfile(userName, token);
+//            ApiResponseBody<Profile> infoResponse = responseEntity.getBody();
+//            profile = infoResponse.getData();
+            log.info("userProfileResponse :: " +profile);
+
+            kafkaTemplate.send("create-receipt", CommonUtils.getObjectMapper().writeValueAsString(request));
+
+            log.info(" Sent to topic");
+        } catch (Exception e) {
+            log.error("Unable to generate transaction Id", e);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+        }
+        return "Done";
+    }
 
 
 }

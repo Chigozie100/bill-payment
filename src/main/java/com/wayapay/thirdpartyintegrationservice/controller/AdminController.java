@@ -257,6 +257,16 @@ public class AdminController {
 //        String msg = profileService.transactionCount(request);
 //        return ResponseEntity.ok(new SuccessResponse(msg));
 //    }
+//
+//    @ApiOperation(value = "Admin push payment to kafka : This API is used to refund failed transactions to users")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successful")
+//    })
+//    @PostMapping("/admin/push-receipt")
+//    public ResponseEntity<ResponseHelper> getProfileUTP(@RequestBody ReceiptRequest userId,@ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, JsonProcessingException {
+//        profileService.pushRequest(userId);
+//        return ResponseEntity.ok(new SuccessResponse(userId));
+//    }
 
 
 

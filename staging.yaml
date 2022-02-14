@@ -16,7 +16,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: bill-payment-service
-  namespace: staging
   labels:
     app: bill-payment-service
 spec:
@@ -30,8 +29,8 @@ spec:
         app: bill-payment-service
     spec:
       containers:
-      - name: servicename
-        image: 863852973330.dkr.ecr.eu-west-2.amazonaws.com/bill-payment-service:latest
+      - name: bill-payment-service
+        image: 863852973330.dkr.ecr.eu-west-2.amazonaws.com/bill-payment-service:imgtag
         env:
         - name: MESSAGING_GROUP_ID
           value: "events" 

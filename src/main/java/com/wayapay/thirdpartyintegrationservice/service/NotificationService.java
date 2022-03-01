@@ -7,9 +7,7 @@ import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseObj;
 import com.wayapay.thirdpartyintegrationservice.service.notification.*;
 import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileService;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
-import com.wayapay.thirdpartyintegrationservice.util.Constants;
-import com.wayapay.thirdpartyintegrationservice.util.EventType;
-import com.wayapay.thirdpartyintegrationservice.util.SMSEventStatus;
+import com.wayapay.thirdpartyintegrationservice.util.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +18,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -83,7 +82,8 @@ public class NotificationService {
     public void sendEmailNotification(EmailEvent emailEvent, String token) throws ThirdPartyIntegrationException {
 
         try {
-            ResponseEntity<ResponseObj> responseEntity = notificationFeignClient.emailNotifyUser(emailEvent,token);
+          //  ResponseEntity<ResponseObj> responseEntity = notificationFeignClient.emailNotifyUser(emailEvent,token);
+            ResponseEntity<ResponseObj> responseEntity = notificationFeignClient.emailNotifyUserTransaction(emailEvent,token);
             ResponseObj infoResponse = responseEntity.getBody();
             log.info("userProfileResponse email sent status :: " +infoResponse.status);
         } catch (Exception e) {
@@ -122,7 +122,13 @@ public class NotificationService {
 
         EmailEvent emailEvent = new EmailEvent();
 
+        emailEvent.setEventCategory(EventCategory.BILLS_PAYMENT);
+        emailEvent.setProductType(ProductType.WAYABANK);
         emailEvent.setEventType(EventType.EMAIL.name());
+        emailEvent.setNarration("Billspayment");
+        emailEvent.setTransactionDate(new Date().toString());
+        emailEvent.setTransactionId(map.get("transactionId"));
+        emailEvent.setAmount(map.get("amount"));
         EmailPayload data = new EmailPayload();
 
         data.setMessage(map.get("message"));
@@ -137,7 +143,7 @@ public class NotificationService {
 
         emailEvent.setData(data);
         emailEvent.setInitiator(map.get("userId"));
-
+        System.out.println("EMAIL ::: " + emailEvent);
         try {
             sendEmailNotification(emailEvent, token);
         }catch (ThirdPartyIntegrationException ex){

@@ -194,9 +194,10 @@ public class QuickTellerService implements IThirdPartyService {
                 throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
             }
 
-            log.info("Payment Advice request :: " + request);
+            log.info("Payment Advice request RAW :: " + request);
             Map<String, String> headers = generateHeader(HttpMethod.POST, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getSendPaymentAdviceUrl());
             SendPaymentAdviceRequest sendPaymentAdviceRequest = generateRequest(request, billerDetail, getTimeStamp(headers));
+            log.info("SendPaymentAdviceRequest sendPaymentAdviceRequest :: " + sendPaymentAdviceRequest);
             sendPaymentAdviceResponseOptional = Optional.of(feignClient.sendPaymentAdvice(sendPaymentAdviceRequest, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
         } catch (FeignException e) {
             log.error("Unable to process payment against interswitch ", e);
@@ -260,7 +261,7 @@ public class QuickTellerService implements IThirdPartyService {
         String customerId = Strings.EMPTY;
         String customerEmail = Strings.EMPTY;
         String customerMobile = Strings.EMPTY;
-        String paydirectItemCode = Strings.EMPTY;
+      //  String paydirectItemCode = Strings.EMPTY;
         String code = Strings.EMPTY;
         for (ParamNameValue paramNameValue : paymentRequest.getData()) {
             if (paramNameValue.getName().equalsIgnoreCase(PAYMENT_CODE)){
@@ -276,13 +277,14 @@ public class QuickTellerService implements IThirdPartyService {
                 customerEmail = paramNameValue.getValue();
             }
             if (paramNameValue.getName().equalsIgnoreCase(CUSTOMER_PHONE)){
-                log.info("CUSTOMER_PHONE ::: " + paramNameValue.getValue());
+                StringBuilder phone = new StringBuilder(paramNameValue.getValue());
+                log.info("CUSTOMER_PHONE ::: " + phone.deleteCharAt(0).toString());
                 customerMobile = paramNameValue.getValue();
             }
-            if (paramNameValue.getName().equalsIgnoreCase(PAY_DIRECT_ITEM_CODE)){
-                log.info("PAY_DIRECT_ITEM_CODE ::: " + paramNameValue.getValue());
-                paydirectItemCode = paramNameValue.getValue();
-            }
+//            if (paramNameValue.getName().equalsIgnoreCase(PAY_DIRECT_ITEM_CODE)){
+//                log.info("PAY_DIRECT_ITEM_CODE ::: " + paramNameValue.getValue());
+//                paydirectItemCode = paramNameValue.getValue();
+//            }
             if (paramNameValue.getName().equalsIgnoreCase(CODE)){
                 log.info("CODE ::: " + paramNameValue.getValue());
                 code = paramNameValue.getValue();

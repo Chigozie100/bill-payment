@@ -1,0 +1,183 @@
+
+[
+{
+  "categoryId": "Electricity",
+  "categoryName": "Electricity",
+  "categoryWayapayCode": null
+},
+{
+"categoryId": "Airtime",
+"categoryName": "Airtime",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "Data",
+"categoryName": "Data",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "CableTv",
+"categoryName": "CableTv",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "Internet",
+"categoryName": "Internet",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "Remita",
+"categoryName": "Remita",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "LCC",
+"categoryName": "LCC",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "airtime",
+"categoryName": "Airtime Recharge",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "databundle",
+"categoryName": "Data Bundle",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "cabletv",
+"categoryName": "Cable TV Subscription",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "electricity",
+"categoryName": "Power / Electricity Payments",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "epin",
+"categoryName": "ePin Services",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "vehiclepaper",
+"categoryName": "Vehicle Papers",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "insurance",
+"categoryName": "General Insurance",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "1",
+"categoryName": "Utility Bills",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "2",
+"categoryName": "Cable TV Bills",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "3",
+"categoryName": "State Payments",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "4",
+"categoryName": "Mobile Recharge",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "7",
+"categoryName": "Donations",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "8",
+"categoryName": "Phone Bills",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "9",
+"categoryName": "Subscriptions",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "11",
+"categoryName": "Embassy Payments",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "12",
+"categoryName": "Tax Payments",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "13",
+"categoryName": "Insurance",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "14",
+"categoryName": "Others",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "15",
+"categoryName": "Airlines",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "16",
+"categoryName": "Transport",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "17",
+"categoryName": "Products and Services",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "18",
+"categoryName": "Funds Transfer",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "19",
+"categoryName": "Microfinance",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "20",
+"categoryName": "Mobile Money",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "22",
+"categoryName": "PayChoice",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "23",
+"categoryName": "Event Tickets",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "24",
+"categoryName": "Quickteller Business",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "25",
+"categoryName": "Transfer Money",
+"categoryWayapayCode": null
+},
+{
+"categoryId": "26",
+"categoryName": "Receive Money",
+"categoryWayapayCode": null
+}
+]

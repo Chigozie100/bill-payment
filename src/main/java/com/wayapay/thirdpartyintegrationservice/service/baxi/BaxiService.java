@@ -607,6 +607,7 @@ public class BaxiService implements IThirdPartyService {
         itemBundles.setIsAmountFixed(Boolean.TRUE);
         dataBundleResponse.getData().forEach(dataBundle -> itemBundles.getSubItems().add(new SubItem(dataBundle.getDatacode(), dataBundle.getName(), dataBundle.getPrice(), dataBundle.getPrice())));
         paymentItemsResponse.getItems().add(itemBundles);
+
         return paymentItemsResponse;
     }
 

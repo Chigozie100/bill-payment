@@ -235,7 +235,7 @@ public class OperationService {
     }
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token) throws ThirdPartyIntegrationException {
+    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
         //Get user default wallet
         log.info("UsernameNAme:: " + userName);
         ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getDefaultWallet(userName, token);
@@ -254,7 +254,9 @@ public class OperationService {
         trans.setEventId(EventCharges.AITCOL.name());
         trans.setPaymentReference(transactionId);
         trans.setTranCrncy("NGN");
+        trans.setTransactionCategory(billType);
         trans.setTranNarration(TransactionType.BILLS_PAYMENT.name());
+        trans.setUserId(Long.parseLong(userName));
         try {
             walletFeignClient.transferFromUserToWaya(trans,token);
             return true;

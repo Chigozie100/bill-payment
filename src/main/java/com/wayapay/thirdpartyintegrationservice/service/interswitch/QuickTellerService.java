@@ -276,10 +276,14 @@ public class QuickTellerService implements IThirdPartyService {
                 log.info("CUSTOMER_EMAIL ::: " + paramNameValue.getValue());
                 customerEmail = paramNameValue.getValue();
             }
-            if (paramNameValue.getName().equalsIgnoreCase(CUSTOMER_PHONE)){
-                StringBuilder phone = new StringBuilder(paramNameValue.getValue());
-                log.info("CUSTOMER_PHONE ::: " + phone.deleteCharAt(0).toString());
-                customerMobile = paramNameValue.getValue();
+            if (paramNameValue.getName().equalsIgnoreCase(CUSTOMER_PHONE)){ 
+                if (paramNameValue.getValue().startsWith("+")) {
+                    customerMobile = paramNameValue.getValue().substring(1);
+                    log.info("substring ::: " + customerMobile);
+                }else{
+                    customerMobile = paramNameValue.getValue(); 
+                }
+ 
             }
 //            if (paramNameValue.getName().equalsIgnoreCase(PAY_DIRECT_ITEM_CODE)){
 //                log.info("PAY_DIRECT_ITEM_CODE ::: " + paramNameValue.getValue());

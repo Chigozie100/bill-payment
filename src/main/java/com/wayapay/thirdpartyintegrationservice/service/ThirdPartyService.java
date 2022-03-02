@@ -52,6 +52,8 @@ public class ThirdPartyService {
         ThirdParty thirdParty = thirdPartyRepo.findById(id).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ID_IS_UNKNOWN));
         thirdParty.setActive(!thirdParty.isActive());
         thirdParty = thirdPartyRepo.save(thirdParty);
+        // auto enable all the biller under this aggregator
+
         return new SuccessResponse(thirdParty.isActive() ? "successfully activated" : "successfully deactivated", new ThirdPartyResponse(thirdParty.getId(), thirdParty.getThirdPartyNames(), thirdParty.isActive()));
     }
 

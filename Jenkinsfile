@@ -8,51 +8,81 @@ pipeline {
         CLUSTER_NAME = credentials('CLUSTER_NAME')
         REGISTRY = credentials('REGISTRY')
         SERVICE_NAME = 'bill-payment-service'
-        VERSION = 'latest'
+        VERSION = sh (script: 'git rev-parse HEAD', returnStdout: true).trim().take(10)
+        NAMESPACE = "${env.GIT_BRANCH == 'origin/production' ? 'production' : 'staging' }"
     }
 
+    stages {
+        stage('Security Scan') {
+            steps {
+                withSonarQubeEnv('Waya Sonar') {
+                    sh 'mvn clean verify sonar:sonar -DskipTests -Dsonar.projectKey=WAYA-PAY-CHAT-2.0-BILL-PAYMENT-SERVICE'
+                }
+            }
+        }
 
-    stages{
-
-        stage("build") {
-            steps{
+        stage('build') {
+            steps {
                 script {
-                    sh "mvn clean install"
+                    sh '''
+                    java -version
+                    mvn clean
+                    mvn clean package -DskipTests
+                    '''
                     echo 'Build with Maven'
                 }
             }
         }
 
-        stage("Image Build") {
-            steps{
+        stage('Image Build') {
+            steps {
                 script {
                     dockerImage = docker.build "${REGISTRY}/${SERVICE_NAME}:${VERSION}"
                 }
             }
         }
-        stage("ECR") {
-            steps{
+
+        stage('ECR') {
+            steps {
                 script {
                     sh "aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${REGISTRY}"
                 }
             }
         }
 
-        stage("pushing to ECR") {
-            steps{
+        stage('pushing to ECR') {
+            steps {
                 script {
                     sh "docker push ${REGISTRY}/${SERVICE_NAME}:${VERSION}"
                 }
             }
         }
-        stage("Deploy to EKS cluster") {
-            steps{
+
+        stage('Deploy to Staging') {
+            when {
+                branch 'staging'
+            }
+            steps {
                 script {
                     sh '''
-                        kubectl replace --force -f staging.yaml --namespace=staging
+                        chmod +x ./deploy.sh
+                        ./deploy.sh
                         '''
                 }
+            }
+        }
 
+        stage('Deploy to Production') {
+            when {
+                branch 'production'
+            }
+            steps {
+                script {
+                    sh '''
+                        chmod +x ./deploy.sh
+                        ./deploy.sh
+                        '''
+                }
             }
         }
     }

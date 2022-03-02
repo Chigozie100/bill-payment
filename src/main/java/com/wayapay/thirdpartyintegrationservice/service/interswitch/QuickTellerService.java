@@ -277,10 +277,13 @@ public class QuickTellerService implements IThirdPartyService {
                 customerEmail = paramNameValue.getValue();
             }
             if (paramNameValue.getName().equalsIgnoreCase(CUSTOMER_PHONE)){
-                if (paramNameValue.getValue().startsWith("+"))
+                if (paramNameValue.getValue().startsWith("+")) {
                     customerMobile = paramNameValue.getValue().substring(1);
-                else
+                    log.info("substring ::: " + customerMobile);
+                }else{
                     customerMobile = paramNameValue.getValue();
+                }
+
             }
 //            if (paramNameValue.getName().equalsIgnoreCase(PAY_DIRECT_ITEM_CODE)){
 //                log.info("PAY_DIRECT_ITEM_CODE ::: " + paramNameValue.getValue());

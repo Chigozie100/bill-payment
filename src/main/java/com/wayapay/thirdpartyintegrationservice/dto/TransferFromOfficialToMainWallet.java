@@ -15,5 +15,6 @@ public class TransferFromOfficialToMainWallet {
     private String tranNarration;
     private String billsPaymentTransactionId;
     private String userId;
+    private String transactionCategory;
 
 }

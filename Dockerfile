@@ -1,4 +1,6 @@
-FROM openjdk:11-jre-slim
-EXPOSE 80
-ADD target/billspaymentservice.jar billspaymentservice.jar
-ENTRYPOINT ["java", "-Dspring.profiles.active=staging", "-jar", "/billspaymentservice.jar"]
+FROM openjdk:11.0.11-jdk-slim as base 
+
+WORKDIR /app
+COPY target/*.jar app.jar
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -481,6 +481,7 @@ public class OperationService {
         try {
             Optional<PaymentTransactionDetail> transactionDetail = paymentTransactionRepo.findByTransId(Long.parseLong(transfer.getBillsPaymentTransactionId()));
 
+            transfer.setTransactionCategory("TRANSFER");
             if (transactionDetail.isPresent()){
                 ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> responseEntity =  walletFeignClient.refundFailedTransaction(transfer,token);
 

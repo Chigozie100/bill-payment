@@ -37,9 +37,9 @@ server:
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_SERVER_URL:https://services.staging.mywayapay.com/eureka}
+      defaultZone: ${EUREKA_SERVER_URL:https://services.staging.wayabank.ng/eureka}
     service-url:
-      default-zone: ${EUREKA_SERVER_URL:https://services.staging.mywayapay.com/eureka}
+      default-zone: ${EUREKA_SERVER_URL:https://services.staging.wayabank.ng/eureka}
   register-with-eureka: false
   fetch-registry: false
   instance:

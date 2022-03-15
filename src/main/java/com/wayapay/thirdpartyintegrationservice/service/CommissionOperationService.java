@@ -129,7 +129,7 @@ public class CommissionOperationService {
         transfer.setCustomerAccountNumber(userCommissionWallet != null ? userCommissionWallet.getAccountNo() : null);
         transfer.setTranCrncy("NGN");
         transfer.setTranNarration("MERCHANT-COMMISSION-PAYMENT");
-
+        transfer.setTransactionCategory("COMMISSION");
         ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialCommissionToUserCommission(transfer,token);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
 
@@ -140,7 +140,13 @@ public class CommissionOperationService {
 
         inAppNotification(orgCommission.getCorporateUserId(), transfer, walletTransactionPojoList, token, infoResponse);
 
-        emailNotification(orgCommission, userId, transfer, walletTransactionPojoList, token,infoResponse);
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailNotification(orgCommission, userId, transfer, walletTransactionPojoList, token,infoResponse);
+            } catch (ThirdPartyIntegrationException e) {
+                e.printStackTrace();
+            }
+        });
 
     }
 
@@ -228,7 +234,7 @@ public class CommissionOperationService {
         });
     }
 
-    private void emailNotification(OrganisationCommissionResponse response, String userId, TransferFromWalletPojo transfer, List<WalletTransactionPojo> walletTransactionPojoList, String token, ApiResponseBody<List<WalletTransactionPojo>> infoResponse){
+    private void emailNotification(OrganisationCommissionResponse response, String userId, TransferFromWalletPojo transfer, List<WalletTransactionPojo> walletTransactionPojoList, String token, ApiResponseBody<List<WalletTransactionPojo>> infoResponse) throws ThirdPartyIntegrationException {
         List<String> inAppRecipient = new ArrayList<>();
         inAppRecipient.add(userId);
 
@@ -241,20 +247,15 @@ public class CommissionOperationService {
         map.put("surname", response.getCorporateUserId());
         map.put("firstName", response.getMerchantName());
         map.put("middleName", response.getMerchantName());
-
+        map.put("transactionId", transfer.getPaymentReference());
+        map.put("amount", transfer.getAmount().toString());
         if (infoResponse.getStatus()){
             map.put("message", "Fund Merchant Commission Wallet Successful:: " + transfer.getUserId());
         }else{
             map.put("message", "Error Funding Merchant Commission Wallet :: " + transfer.getUserId());
         }
 
-        CompletableFuture.runAsync(() -> {
-            try {
-                notificationService.pushEMAIL(map, token);
-            } catch (ThirdPartyIntegrationException e) {
-                e.printStackTrace();
-            }
-        });
+        notificationService.pushEMAIL(map, token);
     }
 
 //

@@ -187,6 +187,102 @@ public class BillsPaymentService {
 
     }
 
+    private String getCategoryName(String category){
+         if (category.equalsIgnoreCase("Airtime")){
+             return TransactionCategory.AIRTIME_TOPUP.name();
+         }else if (category.equalsIgnoreCase("insurance")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("Electricity")){
+             return TransactionCategory.UTILITY.name();
+         }
+         else if (category.equalsIgnoreCase("Data")){
+             return TransactionCategory.DATA_TOPUP.name();
+         }else if (category.equalsIgnoreCase("CableTv")){
+             return TransactionCategory.CABLE.name();
+         }else if (category.equalsIgnoreCase("Internet")){
+             return TransactionCategory.DATA_TOPUP.name();
+         }else if (category.equalsIgnoreCase("Remita")){
+             return TransactionCategory.TRANSFER.name();
+         }else if (category.equalsIgnoreCase("LCC")){
+             return TransactionCategory.AIRTIME_TOPUP.name();
+         }else if (category.equalsIgnoreCase("databundle")){
+             return TransactionCategory.DATA_TOPUP.name();
+         }else if (category.equalsIgnoreCase("cabletv")){
+             return TransactionCategory.CABLE.name();
+         }else if (category.equalsIgnoreCase("vehiclepaper")){
+             return TransactionCategory.TRANSFER.name();
+         }else if (category.equalsIgnoreCase("epin")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("1")){
+             return TransactionCategory.UTILITY.name();
+         }
+         else if (category.equalsIgnoreCase("2")){
+             return TransactionCategory.CABLE.name();
+         }
+         else if (category.equalsIgnoreCase("3")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("4")){
+             return TransactionCategory.AIRTIME_TOPUP.name();
+         }
+         else if (category.equalsIgnoreCase("7")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("8")){
+             return TransactionCategory.AIRTIME_TOPUP.name();
+         }
+         else if (category.equalsIgnoreCase("9")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("10")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("11")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("12")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("13")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("14")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("15")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("16")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("17")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("18")){
+             return TransactionCategory.TRANSFER.name();
+         }else if (category.equalsIgnoreCase("19")){
+             return TransactionCategory.TRANSFER.name();
+         }else if (category.equalsIgnoreCase("20")){
+             return TransactionCategory.TRANSFER.name();
+         }else if (category.equalsIgnoreCase("21")){
+             return TransactionCategory.TRANSFER.name();
+         }
+         else if (category.equalsIgnoreCase("22")){
+             return TransactionCategory.TRANSFER.name();
+         }else if (category.equalsIgnoreCase("23")){
+             return TransactionCategory.TRANSFER.name();
+         }else if (category.equalsIgnoreCase("24")){
+             return TransactionCategory.TRANSFER.name();
+         }else if (category.equalsIgnoreCase("25")){
+             return TransactionCategory.TRANSFER.name();
+         }else if (category.equalsIgnoreCase("26")){
+             return TransactionCategory.TRANSFER.name();
+         }else{ return TransactionCategory.TRANSFER.name();}
+
+    }
+
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
         log.info("UsernameNAme:: " + userName);
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
@@ -194,10 +290,12 @@ public class BillsPaymentService {
         //secure Payment
         String transactionId = CommonUtils.generatePaymentTransactionId();
 
+        String billType = getCategoryName(paymentRequest.getCategoryId());
+
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token)){
+        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType)){
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
@@ -336,6 +434,8 @@ public class BillsPaymentService {
         map.put("surname", userProfileResponse.getSurname());
         map.put("firstName", userProfileResponse.getFirstName());
         map.put("middleName", userProfileResponse.getMiddleName());
+        map.put("transactionId", paymentTransactionDetail.getTransactionId());
+        map.put("amount", paymentTransactionDetail.getAmount().toString());
         return map;
     }
 
@@ -367,10 +467,12 @@ public class BillsPaymentService {
         //secure Payment
         String transactionId = CommonUtils.generatePaymentTransactionId();
 
+        String billType = getCategoryName(paymentRequest.getCategoryId());
+
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token)) {
+        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType)) {
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processMultiplePayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
@@ -589,9 +691,9 @@ public class BillsPaymentService {
         // get the SMS charge
 
         String transactionId = CommonUtils.generatePaymentTransactionId();
+        String billType = getCategoryName(paymentRequest.getCategoryId());
 
-
-        if(operationService.secureFund(smsChargeResponse.getFee(), BigDecimal.valueOf(0.0), userName, paymentRequest2.getSourceWalletAccountNumber(), transactionId, null, token)){
+        if(operationService.secureFund(smsChargeResponse.getFee(), BigDecimal.valueOf(0.0), userName, paymentRequest2.getSourceWalletAccountNumber(), transactionId, null, token, billType)){
             // Send SMS and save the transaction
             log.info(" After deducting money for sms  send notificaiton::::: {} Line 246" + smsChargeResponse);
 
@@ -610,8 +712,8 @@ public class BillsPaymentService {
         // get the SMS charge
 
         String transactionId = CommonUtils.generatePaymentTransactionId();
-
-        if(operationService.secureFund(smsChargeResponse.getFee(), BigDecimal.valueOf(0.0), userName, paymentRequest2.getSourceWalletAccountNumber(), transactionId, null, token)){
+        String billType = getCategoryName(paymentRequest.getCategoryId());
+        if(operationService.secureFund(smsChargeResponse.getFee(), BigDecimal.valueOf(0.0), userName, paymentRequest2.getSourceWalletAccountNumber(), transactionId, null, token, billType)){
             // Send SMS and save the transaction
             log.info(" After deducting money for sms  send notificaiton::::: {} Line 246" + smsChargeResponse);
 

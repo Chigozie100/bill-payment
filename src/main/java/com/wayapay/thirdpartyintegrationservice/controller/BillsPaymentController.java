@@ -110,8 +110,7 @@ public class BillsPaymentController {
     @PostMapping("/biller/pay")
     public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, Authentication authentication) throws URISyntaxException{
         try {
-            System.out.println("##### Username ##### " + username);
-            System.out.println("##### authorization ##### " + authentication);
+
             PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, token);
             return ResponseEntity.ok(new SuccessResponse(paymentResponse));
         } catch (ThirdPartyIntegrationException e) {

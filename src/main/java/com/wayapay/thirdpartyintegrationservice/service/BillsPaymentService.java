@@ -284,7 +284,6 @@ public class BillsPaymentService {
     }
 
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
-        log.info("UsernameNAme:: " + userName);
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
 
         //secure Payment
@@ -458,15 +457,9 @@ public class BillsPaymentService {
 
     public PaymentResponse processMultiplePayment(MultiplePaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException, URISyntaxException {
         // get user profile
-        System.out.println("paymentRequest.getUsername()" + paymentRequest);
-        System.out.println("paymentRequest.getUsername()" + paymentRequest.getUsername());
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
-
-        log.info("HERE is the response from User Profile  ::: " + userProfileResponse.getReferenceCode());
-        log.info("HERE is the response from User Profile isSmsAle ::: " + userProfileResponse.isSmsAlertConfig());
-        //secure Payment
+                //secure Payment
         String transactionId = CommonUtils.generatePaymentTransactionId();
-
         String billType = getCategoryName(paymentRequest.getCategoryId());
 
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
@@ -481,16 +474,6 @@ public class BillsPaymentService {
                 pushINAPP(paymentTransactionDetail, token, paymentResponse);
                 pushEMAIL(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
-                // check if SMS is enabled
-//                if (userProfileResponse.isSmsAlertConfig()){
-//                    log.info("USER ENABLED SMS ALERT :::::: " + userProfileResponse.isSmsAlertConfig());
-//                    SMSChargeResponse smsChargeResponse = operationService.getSMSCharges(token); // debit the customer for SMS
-//                    log.info("smsChargeResponse ::::: {} :: " + smsChargeResponse);
-//                    if (smsChargeResponse != null){
-//                        log.info(" lets continue ::::: {} :: 2" + smsChargeResponse);
-//                        sendSMSOperationMultiple(userProfileResponse,paymentTransactionDetail, paymentRequest, fee, userName, paymentRequest, paymentResponse, token, smsChargeResponse);
-//                    }
-//                }
                 log.info("This is the status of userAlert config {} :::" + userProfileResponse.isSmsAlertConfig());
 
                 /**
@@ -516,7 +499,6 @@ public class BillsPaymentService {
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
                 log.error("This is the error from payment :::: " + e.getMessage());
-//                   operationService.saveFailedTransactionDetail(paymentRequest, fee, null, userName, null);
                 disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
 
                 throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
@@ -529,12 +511,10 @@ public class BillsPaymentService {
 
 
     public ResponseEntity<?> processBulkPayment(MultipartFile file, HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException, IOException {
-        log.info("file inside::: " + file.getInputStream());
         PaymentResponse paymentResponse = null;
         if (ExcelHelper.hasExcelFormat(file)) {
             paymentResponse = buildBulkPayment(ExcelHelper.excelToPaymentRequest(file.getInputStream(),
                     file.getOriginalFilename()), request, token);
-            log.info("file back from extraction ::: " + paymentResponse);
         }
 
         // build payment request
@@ -563,9 +543,6 @@ public class BillsPaymentService {
             data.add(new ParamNameValue("channel",mPayUser.getChannel()));
 
             paymentRequest.setData(data);
-
-            log.info("Here is the payment request " + paymentRequest);
-            log.info("Here is the mPayUser.getUserId() " + mPayUser.getUserId());
             processPayment(paymentRequest, mPayUser.getUserId(), token);
 
         }
@@ -575,7 +552,6 @@ public class BillsPaymentService {
 
     public ResponseEntity<?> processBulkPaymentForm(List<MultiplePaymentRequest>  multipleFormPaymentRequest, String token) throws ThirdPartyIntegrationException, URISyntaxException {
 
-        System.out.println("multipleFormPaymentRequest ::: {} " + multipleFormPaymentRequest);
         List<MultiplePaymentRequest> paymentRequestList = multipleFormPaymentRequest;
         PaymentResponse paymentResponse = null;
 
@@ -588,21 +564,7 @@ public class BillsPaymentService {
             System.out.println(" paymentRequest ::: {} " +paymentRequest );
             paymentResponse = processPayment(paymentRequest, paymentRequestList.get(i).getUsername(), token);
 
-//            MultiplePaymentRequest finalPaymentRequest = paymentRequest;
-//            System.out.println("finalPaymentRequest :: {} " +finalPaymentRequest);
-//            CompletableFuture.runAsync(() -> {
-//                try {
-//                    processPayment(finalPaymentRequest, Constants.USERNAME, Constants.TOKEN);
-//                } catch (ThirdPartyIntegrationException e) {
-//                    e.printStackTrace();
-//                } catch (URISyntaxException e) {
-//                    e.printStackTrace();
-//                }
-//            });
-            System.out.println("outter ::: " + paymentResponse);
         }
-
-
         // build payment request
         return new ResponseEntity<>(new SuccessResponse(paymentResponse), HttpStatus.OK);
     }

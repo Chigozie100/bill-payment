@@ -285,7 +285,6 @@ public class BillsPaymentService {
 
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
-
         //secure Payment
         String transactionId = CommonUtils.generatePaymentTransactionId();
 
@@ -299,16 +298,6 @@ public class BillsPaymentService {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
                 PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
-
-//                CompletableFuture.runAsync(() -> {
-//                    try {
-//                        if (paymentTransactionDetail !=null){
-//                            operationService.trackTransactionCount(userProfileResponse,token);
-//                        }
-//                    } catch (ThirdPartyIntegrationException e) {
-//                        e.printStackTrace();
-//                    }
-//                });
 
                 // call the receipt service
 //                CompletableFuture.runAsync(() -> {
@@ -522,9 +511,6 @@ public class BillsPaymentService {
     }
 
     PaymentResponse buildBulkPayment(BulkBillsPaymentDTO bulkBillsPaymentDTO,HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException {
-
-        log.info("Just entered Here we are " + bulkBillsPaymentDTO.getPaymentRequestExcels());
-
         PaymentResponse paymentResponse = new PaymentResponse();
         PaymentRequest paymentRequest = new PaymentRequest();
         Map<String,String> map = new LinkedHashMap<>();

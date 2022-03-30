@@ -27,8 +27,10 @@ public class ThirdpartyintegrationserviceApplication {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(20);
         executor.setMaxPoolSize(1000);
-//        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setQueueCapacity(100);
+//      executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setThreadNamePrefix("Async-");
+        executor.initialize();
         return executor;
     }
 

@@ -22,4 +22,9 @@ public interface QuickTellerFeignClient {
 
     @PostMapping("${app.config.quickteller.send-payment-advice-url}")
     SendPaymentAdviceResponse sendPaymentAdvice(@RequestBody SendPaymentAdviceRequest request, @RequestHeader(AUTHORIZATION) String authorisation, @RequestHeader(SIGNATURE) String signature, @RequestHeader(NONCE) String nonce, @RequestHeader(TIMESTAMP) String timestamp, @RequestHeader(SIGNATURE_METHOD) String signatureMethod, @RequestHeader(TERMINAL_ID) String terminalId);
+
+    @GetMapping("${app.config.quickteller.query-transaction-url}?requestreference={requestReferenceValue}")
+    QueryTransactionResponse getQueryTransaction(@PathVariable String requestReferenceValue, @RequestHeader(AUTHORIZATION) String authorisation, @RequestHeader(SIGNATURE) String signature, @RequestHeader(NONCE) String nonce, @RequestHeader(TIMESTAMP) String timestamp, @RequestHeader(SIGNATURE_METHOD) String signatureMethod, @RequestHeader(TERMINAL_ID) String terminalId);
+
+
 }

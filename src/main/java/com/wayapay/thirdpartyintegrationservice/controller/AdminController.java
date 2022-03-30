@@ -194,6 +194,11 @@ public class AdminController {
         return ResponseEntity.ok(new SuccessResponse(iThirdPartyService.getCustomerValidationFormByBiller(category_id, biller_id)));
     }
 
+    @GetMapping("/queryTransaction/{transactionID}")
+    public ResponseEntity<ResponseHelper> queryTransaction(@PathVariable String transactionID) throws ThirdPartyIntegrationException {
+        return ResponseEntity.ok(new SuccessResponse(iThirdPartyService.queryTransaction(transactionID)));
+    }
+
 
 //    @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
 //    @ApiResponses(value = {

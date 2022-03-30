@@ -58,6 +58,7 @@ app:
       biller-payment-item-url: ${QUICK_TELLER_BILLER_PAYMENT_ITEM_URL:/api/v2/quickteller/billers/{billerId}/paymentitems}
       customer-validation-url: ${QUICK_TELLER_CUSTOMER_VALIDATION_URL:/api/v2/quickteller/customers/validations}
       send-payment-advice-url: ${QUICK_TELLER_SEND_PAYMENT_ADVICE_URL:/api/v2/quickteller/payments/advices}
+      query-transaction-url: ${QUICK_TELLER_QUERY_TRANSACTION_URL:/quickteller/transactions}
       transaction-ref-code: ${QUICK_TELLER_TRANSACTION_REF_CODE:1453}
       terminal-id: ${QUICK_TELLER_TERMIAL_ID:3DMO0001}
     baxi:
@@ -76,21 +77,21 @@ app:
       hmacsha256key: ${ITEX_HMACSHA256KEY:3de02eaf333f7cefde86677d60e5e47f}
 
     dispute:
-      base-url: ${DISPUTE_BASE:http://68.183.60.114:9086/complaint-service/dispute}
+      base-url: ${DISPUTE_BASE:https://services.staging.wayabank.ng/complaint-service/dispute}
     wallet:
-      base-url: ${WALLET_BASE:http://68.183.60.114:9086}
+      base-url: ${CONFIG_BASEURL_TWALLET:https://services.staging.wayabank.ng/temporal-service}
     auth:
-      base-url: ${AUTH_BASE:http://68.183.60.114:9086}
+      base-url: ${CONFIG_BASEURL_AUTH:https://services.staging.wayabank.ng/auth-service}
     notification:
-      base-url: ${NOTIFICATION_BASE:http://68.183.60.114:9086/notification-service}
+      base-url: ${NOTIFICATION_BASE:https://services.staging.wayabank.ng/notification-service}
     log-service:
-      base-url: ${LOG_SERVICE_BASE:http://68.183.60.114:9086}
+      base-url: ${CONFIG_BASEURL_LOGAUDIT:https://services.staging.wayabank.ng/logs-service}
     commission:
-      base-url: ${COMMISSION_BASE:http://68.183.60.114:9086/commission-service}
+      base-url: ${COMMISSION_BASE:https://services.staging.wayabank.ng/commission-service}
     kafka:
       transaction-topic: ${TRANSACTION_TOPIC:transaction}
     referral:
-      base-url: ${REFERRAL_SERVICE:http://46.101.41.187:8282/referral-service}
+      base-url: ${REFERRAL_SERVICE:https://services.staging.wayabank.ng/referral-service}
 
 
 feign:

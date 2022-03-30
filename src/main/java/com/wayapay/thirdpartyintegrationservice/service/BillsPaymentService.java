@@ -312,24 +312,24 @@ public class BillsPaymentService {
 //                });
 
                 // call the receipt service
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        Map<String, String> map = inAppMessageBuilder(paymentResponse,paymentTransactionDetail,transactionId);
+//                CompletableFuture.runAsync(() -> {
+//                    try {
+//                        Map<String, String> map = inAppMessageBuilder(paymentResponse,paymentTransactionDetail,transactionId);
+//
+//                        notificationService.pushINAPP(map,token);
+//                    } catch (ThirdPartyIntegrationException e) {
+//                        e.printStackTrace();
+//                    }
+//                });
 
-                        notificationService.pushINAPP(map,token);
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
-
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        Map<String, String> map = emailMessageBuilder(paymentResponse,paymentTransactionDetail,userProfileResponse);
-                        notificationService.pushEMAIL(map,token);
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
+//                CompletableFuture.runAsync(() -> {
+//                    try {
+//                        Map<String, String> map = emailMessageBuilder(paymentResponse,paymentTransactionDetail,userProfileResponse);
+//                        notificationService.pushEMAIL(map,token);
+//                    } catch (ThirdPartyIntegrationException e) {
+//                        e.printStackTrace();
+//                    }
+//                });
                 CompletableFuture.runAsync(() -> {
                     try {
                         String phoneNumber = extractPhone(paymentRequest);
@@ -816,35 +816,13 @@ public class BillsPaymentService {
                 {
                     log.info( j + "  ===inside :: {}===  " + i);
 
-//                    objectMap = new HashMap<>();
-//                    objectMap.put(transactionDetailPage2.get(i).getUsername(), "count");
-//                    map.put("ID", objectMap);
-//                    map1.putAll(map);
-//                    TransactionDetail transactionDetail = transactionDetailPage2.get(i);
-//                    transactionDetailList1.add(transactionDetail);
-//                    log.info("Third ::: {} ");
+
                     System.out.println("Duplicate Element transactionDetailPage2.get(i) : "+transactionDetailPage2.get(j));
                 }
             }
         }
 
-//        log.info("Final :::" + transactionDetailList1.size());
-//        log.info("MAP" + map1);
-//
-//        int[] my_array = {1, 2, 5, 5, 6, 6, 7, 2};
-//
-//        for (int i = 0; i < my_array.length-1; i++)
-//        {
-//            for (int j = i+1; j < my_array.length; j++)
-//            {
-//                System.out.println("j " + j);
-//
-//                if ((my_array[i] == my_array[j]) && (i != j))
-//                {
-//                    System.out.println( my_array[i] +"Duplicate Element : "+my_array[j]);
-//                }
-//            }
-//        }
+
 
         return getTransactionMap(transactionDetailList,transactionDetailPage);
     }
@@ -884,15 +862,6 @@ public class BillsPaymentService {
 
         return paymentTransactionRepo.getAllTransactionByUserAccountNumber(userAccountNumber,PageRequest.of(pageNumber, pageSize));
     }
-
-//    public TransactionDetail searchTransactionByTransactionID(String transactionId) throws ThirdPartyIntegrationException {
-//        try{
-//            return paymentTransactionRepo.getAllTransactionByTransactionId(transactionId);
-//        }catch (Exception ex){
-//            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
-//        }
-//
-//    }
 
 
     //    // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment

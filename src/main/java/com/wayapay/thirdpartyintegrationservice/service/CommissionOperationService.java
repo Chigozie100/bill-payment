@@ -97,7 +97,7 @@ public class CommissionOperationService {
 
         transfer.setAmount(computePercentage(amount,userCommissionDto.getCommissionValue()));
         transfer.setEventId(EventCharges.COMPAYM.name());
-        transfer.setPaymentReference(CommonUtils.generatePaymentTransactionId());
+        transfer.setPaymentReference(String.valueOf(CommonUtils.generatePaymentTransactionId()));
         transfer.setCustomerAccountNumber(userCommissionWallet != null ? userCommissionWallet.getAccountNo() : null);
         transfer.setTranCrncy("NGN");
         transfer.setTranNarration("COMMISSION-PAYMENT-TRANSACTION");
@@ -125,7 +125,7 @@ public class CommissionOperationService {
 
         transfer.setAmount(computePercentage(amount,BigDecimal.valueOf(orgCommission.getCommissionValue())));
         transfer.setEventId(EventCharges.COMPAYM.name());
-        transfer.setPaymentReference(CommonUtils.generatePaymentTransactionId());
+        transfer.setPaymentReference(String.valueOf(CommonUtils.generatePaymentTransactionId()));
         transfer.setCustomerAccountNumber(userCommissionWallet != null ? userCommissionWallet.getAccountNo() : null);
         transfer.setTranCrncy("NGN");
         transfer.setTranNarration("MERCHANT-COMMISSION-PAYMENT");

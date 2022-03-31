@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.service;
 
+import com.wayapay.thirdpartyintegrationservice.config.ProfileDetailsService;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.Biller;
@@ -9,6 +10,7 @@ import com.wayapay.thirdpartyintegrationservice.model.ThirdParty;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.auth.AuthFeignClient;
+import com.wayapay.thirdpartyintegrationservice.service.auth.UserDetail;
 import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
 import com.wayapay.thirdpartyintegrationservice.service.commission.MerchantCommissionTrackerDto;
 import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeService;
@@ -25,8 +27,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -61,6 +61,7 @@ public class BillsPaymentService {
     private final BillerService billerService;
     private final ThirdPartyService thirdPartyService;
     private final AuthFeignClient authFeignClient;
+    private final ProfileDetailsService profileDetailsService;
 
     //getAllCategories
     public List<CategoryResponse> getAllCategories() throws ThirdPartyIntegrationException {
@@ -286,7 +287,7 @@ public class BillsPaymentService {
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
         //secure Payment
-        String transactionId = CommonUtils.generatePaymentTransactionId();
+        String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
 
         String billType = getCategoryName(paymentRequest.getCategoryId());
 
@@ -329,24 +330,26 @@ public class BillsPaymentService {
                     }
                 });
 //
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        getCommissionForMakingBillsPayment(userName,token, paymentRequest.getAmount());
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
+                UserDetail userDetail = profileDetailsService.getUser(token);
+                if (userDetail.getCorporate()){
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            getCommissionForMakingBillsPayment(userName,token, paymentRequest.getAmount());
+                        } catch (ThirdPartyIntegrationException e) {
+                            e.printStackTrace();
+                        }
+                    });
 
-                //ThirdParty thirdParty, String billerId, UserType userType,String userName, String token, BigDecimal amount
+                    //ThirdParty thirdParty, String billerId, UserType userType,String userName, String token, BigDecimal amount
 
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        calculateMerchantPercentage(paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
-
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            calculateMerchantPercentage(paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
+                        } catch (ThirdPartyIntegrationException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                }
 
                 Map<String,String> map = new HashMap<>();
                 map.put("message", "Making Bills Payment");
@@ -448,7 +451,7 @@ public class BillsPaymentService {
         // get user profile
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
                 //secure Payment
-        String transactionId = CommonUtils.generatePaymentTransactionId();
+        String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
         String billType = getCategoryName(paymentRequest.getCategoryId());
 
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
@@ -638,7 +641,7 @@ public class BillsPaymentService {
     public void sendSMSOperation(UserProfileResponse userProfileResponse, PaymentTransactionDetail paymentTransactionDetail, PaymentRequest paymentRequest, BigDecimal fee, String userName, PaymentRequest paymentRequest2, PaymentResponse paymentResponse, String token, SMSChargeResponse smsChargeResponse) throws ThirdPartyIntegrationException, ExecutionException, InterruptedException {
         // get the SMS charge
 
-        String transactionId = CommonUtils.generatePaymentTransactionId();
+        String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
         String billType = getCategoryName(paymentRequest.getCategoryId());
 
         if(operationService.secureFund(smsChargeResponse.getFee(), BigDecimal.valueOf(0.0), userName, paymentRequest2.getSourceWalletAccountNumber(), transactionId, null, token, billType)){
@@ -659,7 +662,7 @@ public class BillsPaymentService {
     public void sendSMSOperationMultiple(UserProfileResponse userProfileResponse, PaymentTransactionDetail paymentTransactionDetail, MultiplePaymentRequest paymentRequest, BigDecimal fee, String userName, MultiplePaymentRequest paymentRequest2, PaymentResponse paymentResponse, String token, SMSChargeResponse smsChargeResponse) throws ThirdPartyIntegrationException, ExecutionException, InterruptedException {
         // get the SMS charge
 
-        String transactionId = CommonUtils.generatePaymentTransactionId();
+        String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
         String billType = getCategoryName(paymentRequest.getCategoryId());
         if(operationService.secureFund(smsChargeResponse.getFee(), BigDecimal.valueOf(0.0), userName, paymentRequest2.getSourceWalletAccountNumber(), transactionId, null, token, billType)){
             // Send SMS and save the transaction

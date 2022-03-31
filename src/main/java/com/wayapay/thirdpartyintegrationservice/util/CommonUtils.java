@@ -12,9 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 public class CommonUtils {
@@ -49,9 +47,11 @@ public class CommonUtils {
         return localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
     }
 
-    public static String generatePaymentTransactionId() {
-        return new SimpleDateFormat("yyyyMMddHHmmssSS").format(new Date());
+    public static long generatePaymentTransactionId() {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Africa/Lagos"));
+        return calendar.getTimeInMillis() / 1000L;
     }
+
 
     public static ObjectMapper getObjectMapper(){
         ObjectMapper objectMapper = new ObjectMapper();

@@ -34,14 +34,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authToken = getAuthToken(req.getHeader(Constants.HEADER_STRING)).orElse(null);
         String username = getUsername(authToken).orElse(null);
-        System.out.println("username :: " + username);
+
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             log.info("Wha are you doing here name {} context {} ",username,SecurityContextHolder.getContext().getAuthentication());
             UserDetails userDetails = userDetailsService.loadUserByUsername(authToken);
 
             if (Boolean.TRUE.equals(jwtTokenUtil.isValidToken(authToken, userDetails))) {
                 UsernamePasswordAuthenticationToken authentication = jwtTokenUtil.getAuthentication(userDetails);
-                logger.info("authenticated user " + username + ", setting security context");
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 req.setAttribute(Constants.USERNAME, username);
                 req.setAttribute(Constants.TOKEN, authToken);
@@ -62,7 +61,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private Optional<String> getUsername(String authToken){
-        System.out.println("getUsername :: " + authToken);
         if (!Objects.isNull(authToken)){
             try {
                 Optional<UserDetail> userDetailOptional = jwtTokenUtil.getUserDetail(authToken);

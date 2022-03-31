@@ -4,6 +4,8 @@ import com.wayapay.thirdpartyintegrationservice.annotations.AuditPaymentOperatio
 import com.wayapay.thirdpartyintegrationservice.config.AppConfig;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
+import com.wayapay.thirdpartyintegrationservice.model.TransactionLog;
+import com.wayapay.thirdpartyintegrationservice.repo.TransactionLogRepository;
 import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Stage;
@@ -11,6 +13,7 @@ import com.wayapay.thirdpartyintegrationservice.util.Status;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -21,7 +24,7 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerConstants.SUCCESSFUL;
+import static com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerConstants.*;
 
 @Slf4j
 @Service
@@ -42,8 +45,13 @@ public class QuickTellerService implements IThirdPartyService {
     private static final String PICTURE_ID = "pictureId";
     private static final String ITEM_FEE = "itemFee";
     private static final String PAY_DIRECT_ITEM_CODE = "paydirectItemCode";
+
+    @Autowired
+    TransactionLogRepository transactionLogRepository;
+
     @Value("${app.config.quickteller.query-transaction-url}")
     private String queryTransaction;
+
 
     private static List<BillerResponse> categoryAirtime = Arrays.asList(new BillerResponse("109", "Airtel Mobile Top-Up", "4"), new BillerResponse("108", "Airtel Recharge Pins", "4"), new BillerResponse("120", "Etisalat Recharge Top-Up", "4"),
             new BillerResponse("402", "Glo QuickCharge", "4"),
@@ -157,7 +165,7 @@ public class QuickTellerService implements IThirdPartyService {
     public QueryTransactionResponse queryTransaction(String transactionReference){
         Optional<QueryTransactionResponse> billerPaymentItemsResponseOptional = Optional.empty();
         try {
-            System.out.println("url " + appConfig.getQuickteller().getBaseUrl() + queryTransaction.replace("{transactionID}", transactionReference)+"?requestreference="+transactionReference);
+
             Map<String, String> headers = generateHeader(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + queryTransaction.replace("{transactionID}", transactionReference)+"?requestreference="+transactionReference);
             billerPaymentItemsResponseOptional = Optional.of(feignClient.getQueryTransaction(transactionReference, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
             log.info("billerPaymentItemsResponseOptional :: " + billerPaymentItemsResponseOptional);
@@ -165,6 +173,19 @@ public class QuickTellerService implements IThirdPartyService {
             log.error("Unable to fetch transaction status is => {} from interswitch ", transactionReference, e);
         }
         System.out.println(billerPaymentItemsResponseOptional.get());
+
+        if (billerPaymentItemsResponseOptional.get().getResponseCode() == "90000"){
+
+        }
+        if (billerPaymentItemsResponseOptional.get().getResponseCode() == "900A0"){
+
+        }
+        if (billerPaymentItemsResponseOptional.get().getResponseCode() == "90009"){
+
+        }
+        if (billerPaymentItemsResponseOptional.get().getResponseCode() == "10001"){
+
+        }
 
         return billerPaymentItemsResponseOptional.get();
     }
@@ -195,8 +216,9 @@ public class QuickTellerService implements IThirdPartyService {
     @Override
     @AuditPaymentOperation(stage = Stage.CONTACT_VENDOR_TO_PROVIDE_VALUE, status = Status.IN_PROGRESS)
     public PaymentResponse processPayment(PaymentRequest request, BigDecimal fee, String transactionId, String username) throws ThirdPartyIntegrationException {
-        log.info("The Request  ::: " + request);
+//        log.info("The Request  ::: " + request);
         Optional<SendPaymentAdviceResponse> sendPaymentAdviceResponseOptional = Optional.empty();
+        String transactionReferrence = "";
         try {
 
           //  BillerDetail billerDetail1 = billerDetailMap.get(request.getBillerId());
@@ -208,19 +230,50 @@ public class QuickTellerService implements IThirdPartyService {
 
             Map<String, String> headers = generateHeader(HttpMethod.POST, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getSendPaymentAdviceUrl());
             SendPaymentAdviceRequest sendPaymentAdviceRequest = generateRequest(request, billerDetail, getTimeStamp(headers));
+            transactionReferrence = sendPaymentAdviceRequest.getRequestReference();
+
+            logTransaction(sendPaymentAdviceRequest); // Log Transaction Request
 
             sendPaymentAdviceResponseOptional = Optional.of(feignClient.sendPaymentAdvice(sendPaymentAdviceRequest, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
         } catch (FeignException e) {
+            logErrorResponse(e, transactionReferrence);
             log.error("Unable to process payment against interswitch ", e);
         }
 
         SendPaymentAdviceResponse paymentAdviceResponse = sendPaymentAdviceResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to process payment"));
+        updateLogTransaction(transactionReferrence, paymentAdviceResponse); // Log Transaction response
+        log.info("paymentAdviceResponse :: " + paymentAdviceResponse);
 
         if (SUCCESSFUL.equals(paymentAdviceResponse.getResponseCode())){
+            return getPaymentResponse(paymentAdviceResponse);
+        }else if (INI_SUCCESSFUL.equals(paymentAdviceResponse.getResponseCode())){
+            return getPaymentResponse(paymentAdviceResponse);
+        }else if (INIT_RESPONSE.equals(paymentAdviceResponse.getResponseCode())){
             return getPaymentResponse(paymentAdviceResponse);
         }
 
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, paymentAdviceResponse.getResponseMessage());
+    }
+    private void logErrorResponse(FeignException e, String referenceID){
+        TransactionLog transactionLog = transactionLogRepository.findByReference(referenceID);
+        transactionLog.setErrorResponse(CommonUtils.objectToJson(e.getMessage()).orElse(""));
+        transactionLogRepository.save(transactionLog);
+    }
+
+    private void logTransaction(SendPaymentAdviceRequest sendPaymentAdviceRequest){
+        TransactionLog transactionLog = new TransactionLog();
+        transactionLog.setThirdParty(QUICKTELLER);
+        transactionLog.setPaymentRequest(CommonUtils.objectToJson(sendPaymentAdviceRequest).orElse(""));
+        transactionLog.setRequestReference(sendPaymentAdviceRequest.getRequestReference());
+        transactionLogRepository.save(transactionLog);
+    }
+
+    private void updateLogTransaction(String requestReference, SendPaymentAdviceResponse paymentAdviceResponse){
+        TransactionLog transactionLog = transactionLogRepository.findByReference(requestReference);
+        transactionLog.setPaymentResponse(CommonUtils.objectToJson(paymentAdviceResponse).orElse(""));
+        transactionLog.setStatusMessage(paymentAdviceResponse.getResponseCodeGrouping());
+        transactionLog.setStatusCode(paymentAdviceResponse.getResponseCode());
+        transactionLogRepository.save(transactionLog);
     }
 
     @Override
@@ -342,13 +395,10 @@ public class QuickTellerService implements IThirdPartyService {
 
 
         QuickTellerUserParam userParam = getUserParam(request.getData(), billerDetail);
-        System.out.println(" userParam ::: " + userParam);
+
         userParam.setCustomerId(request.getData().get(0).getValue());
         userParam.setPaymentCode(userParam.getPaymentCode());
-
-        //paymentCode request.getData().get(1).getValue()
         validationRequest.getCustomers().add(new ValidationRequest(userParam.getCustomerId(), userParam.getPaymentCode()));
-//        validationRequest.getCustomers().add(new ValidationRequest(customerId2, paymentCode));
         return validationRequest;
     }
 
@@ -400,7 +450,6 @@ public class QuickTellerService implements IThirdPartyService {
 //            }
 
         }
-//(paymentCode,customerId,customerEmail,customerMobile)
         return new QuickTellerUserParam(paymentCode,customerId,customerEmail,customerMobile);
     }
 
@@ -498,4 +547,7 @@ class QuickTellerConstants {
     static final String SIGNATURE_METHOD = "SignatureMethod";
     static final String TERMINAL_ID = "TerminalId";
     static final String SUCCESSFUL = "90000";
+    static final String INI_SUCCESSFUL = "900A0";
+    static final String INIT_RESPONSE = "10001";
+    static final String QUICKTELLER = "QUICKTELLER";
 }

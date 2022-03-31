@@ -28,4 +28,13 @@ public class ProfileDetailsService implements UserDetailsService {
         return new ProfileDetails(Collections.singletonList(jwtTokenHelper.getRoleFromToken(userDetail)), jwtTokenHelper.getUsernameFromToken(userDetail));
     }
 
+    public UserDetail getUser(String token){
+        if (Objects.isNull(token)){
+            throw new UsernameNotFoundException(MESSAGE);
+        }
+        UserDetail userDetail = jwtTokenHelper.getUserDetail(token).orElseThrow(() -> new UsernameNotFoundException(MESSAGE));
+
+        return userDetail;
+    }
+
 }

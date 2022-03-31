@@ -237,7 +237,7 @@ public class OperationService {
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
         //Get user default wallet
-        log.info("UsernameNAme:: " + userName);
+
         ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getDefaultWallet(userName, token);
         InfoResponse infoResponse = responseEntity.getBody();
         NewWalletResponse mainWalletResponse = infoResponse.data;

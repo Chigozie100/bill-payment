@@ -1,6 +1,8 @@
 package com.wayapay.thirdpartyintegrationservice.repo;
 
 import com.wayapay.thirdpartyintegrationservice.dto.ThirdPartyResponse;
+import com.wayapay.thirdpartyintegrationservice.model.Biller;
+import com.wayapay.thirdpartyintegrationservice.model.Category;
 import com.wayapay.thirdpartyintegrationservice.model.ThirdParty;
 import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,7 +26,11 @@ public interface ThirdPartyRepo extends JpaRepository<ThirdParty, Long> {
     @Query("select t.thirdPartyNames from ThirdParty t")
     List<ThirdPartyNames> findAllThirdPartyNames();
 
-    @Query("select t from ThirdParty t where t.active = true ")
+    @Query("select t from ThirdParty t where t.active =:status ")
+    List<ThirdParty> findAllActiveAggregators(boolean status);
+
+
+    @Query("select t from ThirdParty t ")
     List<ThirdParty> findAllActiveAggregators();
 
 }

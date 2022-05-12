@@ -237,6 +237,8 @@ public class QuickTellerService implements IThirdPartyService {
             sendPaymentAdviceResponseOptional = Optional.of(feignClient.sendPaymentAdvice(sendPaymentAdviceRequest, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
         } catch (FeignException e) {
             logErrorResponse(e, transactionReferrence);
+            log.error("contentUTF8 ", e.contentUTF8());
+            log.error("Status ", e.status());
             log.error("Unable to process payment against interswitch ", e);
         }
 

@@ -35,4 +35,6 @@ public interface BillerRepo extends JpaRepository<Biller, Long> {
 
     @Query("select new com.wayapay.thirdpartyintegrationservice.dto.BillerResponse(b.billerAggregatorCode, b.name, b.billerWayaPayCode, b.category.categoryAggregatorCode) from Biller b where b.category.categoryAggregatorCode =?1 and b.active = true ")
     List<BillerResponse> findAllActiveBiller(String categoryId);
+
+
 }

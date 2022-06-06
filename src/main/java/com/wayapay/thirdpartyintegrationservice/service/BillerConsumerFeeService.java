@@ -14,6 +14,7 @@ import com.wayapay.thirdpartyintegrationservice.util.ThirdPartyNames;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,6 +25,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@PreAuthorize("APP_ADMIN")
 public class BillerConsumerFeeService {
 
     private final BillerConsumerFeeRepo billerConsumerFeeRepo;

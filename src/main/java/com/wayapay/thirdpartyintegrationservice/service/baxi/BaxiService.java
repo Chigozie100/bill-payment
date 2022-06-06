@@ -674,11 +674,12 @@ public class BaxiService implements IThirdPartyService {
         Optional<ElectricityVerificationResponse> electricityVerificationResponseOptional = Optional.empty();
         try {
             electricityVerificationResponseOptional = Optional.of(feignClient.verifyCustomerElectricityDetail(appConfig.getBaxi().getXApiKey(), electricityRequest));
+
         } catch (FeignException e) {
             log.error("Unable to verify customer electricity payment via Baxi ", e);
         }
 
-        ElectricityVerificationResponse electricityVerificationResponse = electricityVerificationResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        ElectricityVerificationResponse electricityVerificationResponse = electricityVerificationResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.BAXI_VALIDATATION));
         if(SUCCESS_RESPONSE_CODE.equals(electricityVerificationResponse.getCode()) && !Objects.isNull(electricityVerificationResponse.getData())) {
             CustomerValidationResponse customerValidationResponse = new CustomerValidationResponse(request.getCategoryId(), request.getBillerId());
             customerValidationResponse.getData().add(new ParamNameValue("name", electricityVerificationResponse.getData().getName()));

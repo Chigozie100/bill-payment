@@ -503,7 +503,7 @@ public class BillsPaymentService {
 
 
     public ResponseEntity<?> processBulkPayment(MultipartFile file, HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException, IOException {
-        PaymentResponse paymentResponse = null;
+        List<PaymentResponse> paymentResponse = null;
         if (ExcelHelper.hasExcelFormat(file)) {
             paymentResponse = buildBulkPayment(ExcelHelper.excelToPaymentRequest(file.getInputStream(),
                     file.getOriginalFilename()), request, token);
@@ -513,12 +513,14 @@ public class BillsPaymentService {
         return new ResponseEntity<>(new SuccessResponse(paymentResponse), HttpStatus.OK);
     }
 
-    PaymentResponse buildBulkPayment(BulkBillsPaymentDTO bulkBillsPaymentDTO,HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException {
-        PaymentResponse paymentResponse = new PaymentResponse();
+    List<PaymentResponse> buildBulkPayment(BulkBillsPaymentDTO bulkBillsPaymentDTO,HttpServletRequest request, String token) throws ThirdPartyIntegrationException, URISyntaxException {
+        List<PaymentResponse> paymentResponseList = new ArrayList<>();
+
         PaymentRequest paymentRequest = new PaymentRequest();
         Map<String,String> map = new LinkedHashMap<>();
 
         for (PaymentRequestExcel mPayUser : bulkBillsPaymentDTO.getPaymentRequestExcels()) {
+            PaymentResponse paymentResponse = new PaymentResponse();
             paymentRequest.setSourceWalletAccountNumber(mPayUser.getSourceWalletAccountNumber());
             paymentRequest.setAmount(BigDecimal.valueOf(mPayUser.getAmount()));
             paymentRequest.setCategoryId(mPayUser.getCategoryId());
@@ -536,11 +538,11 @@ public class BillsPaymentService {
             paymentRequest.setData(data);
 
             System.out.println("Payment ::: " +paymentRequest);
-            processPayment(paymentRequest, mPayUser.getUserId(), token);
-
+            paymentResponse = processPayment(paymentRequest, mPayUser.getUserId(), token);
+            paymentResponseList.add(paymentResponse);
         }
 
-        return paymentResponse;
+        return paymentResponseList;
     }
 
     public ResponseEntity<?> processBulkPaymentForm(List<MultiplePaymentRequest>  multipleFormPaymentRequest, String token) throws ThirdPartyIntegrationException, URISyntaxException {

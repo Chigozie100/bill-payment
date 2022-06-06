@@ -530,8 +530,12 @@ public class BillsPaymentService {
             data.add(new ParamNameValue("amount",mPayUser.getAmount().toString()));
             data.add(new ParamNameValue("paymentMethod",mPayUser.getPaymentMethod()));
             data.add(new ParamNameValue("channel",mPayUser.getChannel()));
+            data.add(new ParamNameValue("plan",mPayUser.getPlan()));
+
 
             paymentRequest.setData(data);
+
+            System.out.println("Payment ::: " +paymentRequest);
             processPayment(paymentRequest, mPayUser.getUserId(), token);
 
         }

@@ -25,13 +25,15 @@ public class PaymentRequestExcel {
     @ApiModelProperty(example = "50")
     @NotNull(message = "amount is required")
     @DecimalMin(value = "0.01", message = "minimum amount required is 0.01")
-    private Double amount;
+    private Integer amount;
 
     private String phone;
 
     private String paymentMethod;
 
     private String channel;
+
+    private String plan;
 
     private String userId;
 
@@ -59,11 +61,11 @@ public class PaymentRequestExcel {
         this.sourceWalletAccountNumber = sourceWalletAccountNumber;
     }
 
-    public Double getAmount() {
+    public Integer getAmount() {
         return amount;
     }
 
-    public void setAmount(Double amount) {
+    public void setAmount(Integer amount) {
         this.amount = amount;
     }
 
@@ -97,5 +99,13 @@ public class PaymentRequestExcel {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getPlan() {
+        return plan;
+    }
+
+    public void setPlan(String plan) {
+        this.plan = plan;
     }
 }

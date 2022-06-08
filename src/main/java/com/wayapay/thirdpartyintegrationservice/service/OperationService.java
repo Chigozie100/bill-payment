@@ -306,7 +306,7 @@ public class OperationService {
 
     public List<WalletTransactionPojo> refundFailedTransaction(TransferFromOfficialToMainWallet transfer, String token) throws ThirdPartyIntegrationException {
         try {
-            Optional<PaymentTransactionDetail> transactionDetail = paymentTransactionRepo.findByTransId(Long.parseLong(transfer.getBillsPaymentTransactionId()));
+            Optional<PaymentTransactionDetail> transactionDetail = paymentTransactionRepo.findByTransactionId2(transfer.getBillsPaymentTransactionId());
             if (transactionDetail.isEmpty()){
                 throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
             }

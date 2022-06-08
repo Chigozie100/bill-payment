@@ -11,15 +11,12 @@ import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
 
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
@@ -108,7 +105,7 @@ public class BillsPaymentController {
             @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
     })
     @PostMapping("/biller/pay")
-    public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, Authentication authentication) throws URISyntaxException{
+    public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token){
         try {
 
             PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, token);
@@ -149,7 +146,7 @@ public class BillsPaymentController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @GetMapping("/biller/report/user/{userId}")
-    public ResponseEntity<ResponseHelper> adminSearchByUserID(@PathVariable("userId") String userId, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseHelper> adminSearchByUserID(@PathVariable("userId") String userId, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) {
 
         Map<String, Object> transactionDetailPage = billsPaymentService.search(userId,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));

@@ -22,6 +22,8 @@ public class Constants {
     public static final String DATE_FORMAT = "yyyy-MM-dd";
     public static final String INAPP_TYPE = "IN-APP";
     public static final String INSUFFICIENT_FUND = "Insufficient fund";
+    public static final String NOT_FOUND = "Id not found";
+    public static final String ALREADY_RESOLVED = "Dispute already reversed";
 
     private Constants() {
     }

@@ -12,21 +12,21 @@ import org.springframework.web.bind.annotation.RequestHeader;
 public interface NotificationFeignClient {
 
     @PostMapping("/in-app-notification")
-    ResponseEntity<ResponseObj> inAppNotifyUser(@RequestBody InAppEvent inAppEvent, @RequestHeader("Authorization") String token);
+    ResponseEntity<ResponseObj<Object>> inAppNotifyUser(@RequestBody InAppEvent inAppEvent, @RequestHeader("Authorization") String token);
 
     @PostMapping("/email-notification")
-    ResponseEntity<ResponseObj> emailNotifyUser(@RequestBody EmailEvent emailDto, @RequestHeader("Authorization") String token);
+    ResponseEntity<ResponseObj<Object>> emailNotifyUser(@RequestBody EmailEvent emailDto, @RequestHeader("Authorization") String token);
 
     @PostMapping("/api/v1/email-notification-transaction")
-    ResponseEntity<ResponseObj> emailNotifyUserTransaction(@RequestBody EmailEvent emailDto, @RequestHeader("Authorization") String token);
+    ResponseEntity<ResponseObj<Object>> emailNotifyUserTransaction(@RequestBody EmailEvent emailDto, @RequestHeader("Authorization") String token);
 
 
     @PostMapping("/api/v1/sms-notification")
-    ResponseEntity<ResponseObj> smsNotifyUser(@RequestBody SmsEvent smsEvent, @RequestHeader("Authorization") String token);
+    ResponseEntity<ResponseObj<Object>> smsNotifyUser(@RequestBody SmsEvent smsEvent, @RequestHeader("Authorization") String token);
 
 
     @PostMapping("/sms-notification-atalking")
-    ResponseEntity<ResponseObj> smsNotifyUserAtalking(@RequestBody SmsEvent smsEvent, @RequestHeader("Authorization") String token);
+    ResponseEntity<ResponseObj<Object>> smsNotifyUserAtalking(@RequestBody SmsEvent smsEvent, @RequestHeader("Authorization") String token);
 
     @PostMapping("/sms-notification-infobip")
     ResponseEntity<ResponseObj> smsNotifyUserInfobip(@RequestBody SmsEvent smsEvent, @RequestHeader("Authorization") String token);

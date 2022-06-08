@@ -1,19 +1,13 @@
 package com.wayapay.thirdpartyintegrationservice.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
-import com.wayapay.thirdpartyintegrationservice.model.TransactionTracker;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.BillsPaymentService;
-import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.service.OperationService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
-import com.wayapay.thirdpartyintegrationservice.service.profile.ProfileService;
-import com.wayapay.thirdpartyintegrationservice.service.referral.ReferralCodePojo;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
-import com.wayapay.thirdpartyintegrationservice.util.TransferPojo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -23,15 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +39,6 @@ public class AdminController {
     private final BillsPaymentService billsPaymentService;
     private final OperationService operationService;
     private final QuickTellerService iThirdPartyService;
-    private final ProfileService profileService;
 
 //    @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 8)
 //    @ApiResponses(value = {
@@ -65,25 +55,24 @@ public class AdminController {
     // get all failed transaction
     // get all successful transaction
 
-    @ApiOperation(value = "Get Transaction Status Report : This API is used to get all transaction report faild or successfull", position = 9)
+    @ApiOperation(value = "Get Transaction Status Report : This API is used to get all transaction report failed or successful")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful")
     })
     @GetMapping("/biller/report/filter/{transaction_status}")
-    public ResponseEntity<ResponseHelper> searchAndFilterTransactionStatus(@PathVariable("transaction_status") boolean transaction_status, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseHelper> searchAndFilterTransactionStatus(@PathVariable("transaction_status") boolean transaction_status, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) {
 
         Page<TransactionDetail> transactionDetailPage = billsPaymentService.searchAndFilterTransactionStatus(transaction_status,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
-
     // searchBy Account
-    @ApiOperation(value = "Get Transaction Report By Account : This API is used to get all transaction report by Account", position = 10)
+    @ApiOperation(value = "Get Transaction Report By Account : This API is used to get all transaction report by Account")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful")
     })
     @GetMapping("/biller/report/transaction/{account}")
-    public ResponseEntity<ResponseHelper> searchByAccount(@PathVariable("account") String account,  @RequestParam(required = false, defaultValue = "0") String pageNumber,  @RequestParam(required = false, defaultValue = "10") String pageSize ) throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseHelper> searchByAccount(@PathVariable("account") String account,  @RequestParam(required = false, defaultValue = "0") String pageNumber,  @RequestParam(required = false, defaultValue = "10") String pageSize ) {
 
         Page<TransactionDetail> transactionDetailPage = billsPaymentService.searchByAccountType(account,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
@@ -107,7 +96,7 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @GetMapping("/admin/report/user/{userId}")
-    public ResponseEntity<ResponseHelper> adminSearchByUserID(@PathVariable("userId") String userId, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseHelper> adminSearchByUserID(@PathVariable("userId") String userId, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) {
 
         Map<String, Object> transactionDetailPage = billsPaymentService.search(userId,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
@@ -119,22 +108,9 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @PostMapping("/admin/make-payment/{userId}")
-    public ResponseEntity<ResponseHelper> adminMakeBillsPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, @PathVariable String userId) throws ThirdPartyIntegrationException, URISyntaxException {
+    public ResponseEntity<ResponseHelper> adminMakeBillsPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, @PathVariable String userId) throws ThirdPartyIntegrationException {
 
         PaymentResponse transactionDetailPage = billsPaymentService.processPayment(paymentRequest, userId, token);
-        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
-    }
-
-    //ability for waya admin to manage and reverse all billspayment of the users
-    @ApiOperation(value = "Admin Get Users Transaction Report : This API is used to get all transaction report by user")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful")
-    })
-    @PostMapping("/admin/make-reversal-payment/{userId}")
-    public ResponseEntity<ResponseHelper> adminMakeReversalPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @PathVariable String userId, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token){
-
-        PaymentResponse transactionDetailPage = null;
-        //operationService.adminMakeReversalPayment(paymentRequest, userId, token);
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
@@ -142,7 +118,7 @@ public class AdminController {
     @ApiOperation(value = "Bulk Bills Payment: This API is used to by the admin to pay bills on behalf of users using web form", tags = {"ADMIN"})
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Response Headers")})
     @PostMapping(path = "/admin/bulk-user-bills-payment")
-    public ResponseEntity<?> makeBulkBillsPaymentToUsersWithWebForm(@Valid @RequestBody List<MultiplePaymentRequest> multipleFormPaymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, URISyntaxException {
+    public ResponseEntity<?> makeBulkBillsPaymentToUsersWithWebForm(@Valid @RequestBody List<MultiplePaymentRequest> multipleFormPaymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
         return billsPaymentService.processBulkPaymentForm(multipleFormPaymentRequest, token);
     }
 
@@ -150,9 +126,8 @@ public class AdminController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Response Headers")})
     @PostMapping(path = "/admin/bulk-user-excel", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}, produces = {
             MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<?> makeBulkBillsPaymentToUsers(@RequestParam("file") MultipartFile file,
-                                                         HttpServletRequest request, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, IOException, URISyntaxException {
-        return billsPaymentService.processBulkPayment(file, request, token);
+    public ResponseEntity<?> makeBulkBillsPaymentToUsers(@RequestParam("file") MultipartFile file, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, IOException {
+        return billsPaymentService.processBulkPayment(file, token);
     }
 
     @ApiOperation(value = "Admin Get Users Transaction Count : This API is used to get all transaction report by user")
@@ -166,7 +141,7 @@ public class AdminController {
         return ResponseEntity.ok(transactionDetailPage);
     }
 
-
+    //ability for waya admin to manage and reverse all billspayment of the users
     @ApiOperation(value = "Admin Refund Failed Transaction to users : This API is used to refund failed transactions to users")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful")
@@ -195,7 +170,7 @@ public class AdminController {
     }
 
     @GetMapping("/queryTransaction/{transactionID}")
-    public ResponseEntity<ResponseHelper> queryTransaction(@PathVariable String transactionID) throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseHelper> queryTransaction(@PathVariable String transactionID) {
         return ResponseEntity.ok(new SuccessResponse(iThirdPartyService.queryTransaction(transactionID)));
     }
 

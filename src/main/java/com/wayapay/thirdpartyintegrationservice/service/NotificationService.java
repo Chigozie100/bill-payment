@@ -11,17 +11,14 @@ import com.wayapay.thirdpartyintegrationservice.util.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 
 @Slf4j
@@ -70,9 +67,9 @@ public class NotificationService {
 
     public void sendInAppNotification(InAppEvent inAppEvent, String token) throws ThirdPartyIntegrationException {
         try {
-            ResponseEntity<ResponseObj> responseEntity = notificationFeignClient.inAppNotifyUser(inAppEvent,token);
-            ResponseObj infoResponse = responseEntity.getBody();
-            log.info("Bills-payment InApp response :: " +infoResponse.data);
+            ResponseEntity<ResponseObj<Object>> responseEntity = notificationFeignClient.inAppNotifyUser(inAppEvent,token);
+            ResponseObj<Object> infoResponse = responseEntity.getBody();
+
         } catch (Exception e) {
             log.error("Unable to generate transaction Id", e);
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
@@ -83,7 +80,7 @@ public class NotificationService {
 
         try {
           //  ResponseEntity<ResponseObj> responseEntity = notificationFeignClient.emailNotifyUser(emailEvent,token);
-            ResponseEntity<ResponseObj> responseEntity = notificationFeignClient.emailNotifyUserTransaction(emailEvent,token);
+            var responseEntity = notificationFeignClient.emailNotifyUserTransaction(emailEvent,token);
             ResponseObj infoResponse = responseEntity.getBody();
             log.info("userProfileResponse email sent status :: " +infoResponse.status);
         } catch (Exception e) {
@@ -95,12 +92,11 @@ public class NotificationService {
 
     public Boolean smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
         try {
-            ResponseEntity<ResponseObj>  responseEntity = notificationFeignClient.smsNotifyUserAtalking(smsEvent,token);
+            ResponseEntity<ResponseObj<Object>>  responseEntity = notificationFeignClient.smsNotifyUserAtalking(smsEvent,token);
             ResponseObj infoResponse = responseEntity.getBody();
             log.info("userProfileResponse sms sent status :: " +infoResponse.status);
             return infoResponse.status;
         } catch (Exception e) {
-            log.error("Unable to send SMS", e.getMessage());
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
         }
 
@@ -152,20 +148,6 @@ public class NotificationService {
 
     }
 
-//    public boolean pushSMS(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse) throws ThirdPartyIntegrationException {
-//        SMSDto smsDto = buildSMSObject(paymentTransactionDetail, token, EventType.SMS, paymentResponse);
-//        try {
-//            log.info("Still on the mission " + smsDto);
-//            log.info("Still on the mission " + token);
-//            // check if User enables SMS charge
-//            smsNotification(smsDto,token);
-//
-//        }catch (ThirdPartyIntegrationException ex){
-//            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
-//        }
-//        return false;
-//    }
-
     public void pushSMS(PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse, UserProfileResponse userProfileResponse) throws ThirdPartyIntegrationException {
 
         SmsEvent smsEvent = new SmsEvent();
@@ -202,27 +184,14 @@ public class NotificationService {
 
     }
 
-        public String formatMessage(Map<String, String> dto){
-        String message= ""+"\n";
-        message=message+"Amount :"+ "dto " +"\n";
-        message=message+"\n"+"Reference Code :"+"dto "+"\n";
-        message=message+"\n"+"Sender Name :"+"dto "+"\n";
-        message=message+"\n"+"Receiver Name :"+"dto "+"\n";
-        message=message+"\n"+"Phone Number :"+"dto "+"\n";
-        message=message+"\n"+"Narration :"+"dto "+"  "+"\n";
-        return message;
-    }
 
     public PaymentResponse buildRequest(PaymentResponse paymentResponse){
-       // ParamNameValue paramNameValue = new ParamNameValue();
         List<ParamNameValue> valueList = paymentResponse.getData();
         for (int i = 0; i < valueList.size(); i++) {
             ParamNameValue value = new ParamNameValue();
             value.setName(valueList.get(i).getName());
             value.setValue(valueList.get(i).getValue());
 
-//            paramNameValue.setValue(valueList.get(i).getValue());
-//            paramNameValue.setName(valueList.get(i).getName());
             valueList.add(value);
         }
         paymentResponse.setData(valueList);
@@ -253,40 +222,4 @@ public class NotificationService {
         return message;
     }
 
-
-    public String getMessageDetails(Map<String, Object> map){
-        PaymentResponse data = new PaymentResponse();
-//        map.put("paymentTransactionAmount", paymentTransactionDetail.getAmount());
-//        map.put("paramNameValueList",paymentResponse.getData());
-        List<ParamNameValue> valueList = (List<ParamNameValue>) map.get("paramNameValueList");
-        //paymentResponse.getData();
-        String message = null;
-        for (int i = 0; i < valueList.size(); i++) {
-            ParamNameValue value = new ParamNameValue();
-            value.setName(valueList.get(i).getName());
-            value.setValue(valueList.get(i).getValue());
-            message = "Your account has "+ "\n" +
-                    ""+"been credited with:" + map.get("paymentTransactionAmount") +" \n" +
-                    "" + value.getValue();
-//            message = "name :" + value.getName() +"  \"<br>\"" +
-//            " \n" +  "Value : " + value.getValue();
-        }
-        return message;
-
-    }
-    public String getMessageServiceCharge(PaymentResponse paymentResponse, PaymentTransactionDetail paymentTransactionDetail){
-        PaymentResponse data = new PaymentResponse();
-        List<ParamNameValue> valueList = paymentResponse.getData();
-        String message = null;
-        for (int i = 0; i < valueList.size(); i++) {
-            ParamNameValue value = new ParamNameValue();
-            value.setName(valueList.get(i).getName());
-            value.setValue(valueList.get(i).getValue());
-            message = paymentTransactionDetail.getAmount() + "has been deducted from "+ "\n" +
-                    ""+"your account for SMS Charges:";
-
-        }
-        return message;
-
-    }
 }

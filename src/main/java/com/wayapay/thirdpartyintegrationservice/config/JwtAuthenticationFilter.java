@@ -41,7 +41,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (Boolean.TRUE.equals(jwtTokenUtil.isValidToken(authToken, userDetails))) {
                 UsernamePasswordAuthenticationToken authentication = jwtTokenUtil.getAuthentication(userDetails);
-                logger.info("authenticated user " + username + ", setting security context");
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 req.setAttribute(Constants.USERNAME, username);
                 req.setAttribute(Constants.TOKEN, authToken);
@@ -62,7 +61,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private Optional<String> getUsername(String authToken){
-
         if (!Objects.isNull(authToken)){
             try {
                 Optional<UserDetail> userDetailOptional = jwtTokenUtil.getUserDetail(authToken);

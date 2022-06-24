@@ -21,7 +21,7 @@ public class RequestHeaders {
         interswitchAuth.put("AUTHORIZATION", authorization);
         interswitchAuth.put("TIMESTAMP", String.valueOf(timestamp));
         interswitchAuth.put("NONCE", nonce);
-        interswitchAuth.put("SIGNATURE_METHOD", "SHA-512");
+        interswitchAuth.put("SIGNATURE_METHOD", "SHA1");
         interswitchAuth.put("SIGNATURE", signature);
         return interswitchAuth;
     }
@@ -29,7 +29,7 @@ public class RequestHeaders {
     private String getSignature(String clientId, String clientSecretKey, String resourceUrl, String httpMethod, long timestamp, String nonce) throws Exception {
         resourceUrl = URLEncoder.encode(resourceUrl, "ISO-8859-1");
         String signatureCipher = httpMethod + "&" + resourceUrl + "&" + timestamp + "&" + nonce + "&" + clientId + "&" + clientSecretKey;
-        MessageDigest messagedigest = MessageDigest.getInstance("SHA-512");
+        MessageDigest messagedigest = MessageDigest.getInstance("SHA1");  //SHA-512
         byte[] signaturebytes = messagedigest.digest(signatureCipher.getBytes());
         String signature = (new String(org.bouncycastle.util.encoders.Base64.encode(signaturebytes))).trim();
         return signature.replaceAll("\\s", "");

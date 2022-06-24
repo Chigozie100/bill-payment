@@ -27,7 +27,7 @@ public class ExcelHelper {
 
     private static DataFormatter dataFormatter = new DataFormatter();
     public static String[] TYPE = {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"};
-    public static List<String> PAYMENT_HEADER = Arrays.asList("BILLER_ID", "CATEGORY_ID", "PHONE", "AMOUNT", "PAYMENT_METHOD", "CHANNEL", "WALLET_ID", "USER_ID");
+    public static List<String> PAYMENT_HEADER = Arrays.asList("BILLER_ID", "CATEGORY_ID", "PHONE", "AMOUNT", "PAYMENT_METHOD", "CHANNEL", "WALLET_ID", "PLAN", "USER_ID");
 
 
     static String SHEET = "BulkBillspayment";
@@ -106,7 +106,7 @@ public class ExcelHelper {
                             pojo.setPhone(defaultStringCell(cell));
                             break;
                         case "D":
-                            pojo.setAmount(Double.parseDouble(validateStringDoubleOnly(cell, cellIdx, rowNumber)));
+                            pojo.setAmount(Integer.parseInt(validateStringNumericOnly(cell, cellIdx, rowNumber)));
                             break;
                         case "E":
                             pojo.setPaymentMethod(defaultStringCell(cell));
@@ -118,6 +118,8 @@ public class ExcelHelper {
                             pojo.setSourceWalletAccountNumber(defaultStringCell(cell));
                             break;
                         case "H":
+                            pojo.setPlan(defaultStringCell(cell));
+                        case "I":
                             pojo.setUserId(defaultStringCell(cell));
                             break;
                         default:

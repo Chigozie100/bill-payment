@@ -4,6 +4,8 @@ import com.wayapay.thirdpartyintegrationservice.annotations.AuditPaymentOperatio
 import com.wayapay.thirdpartyintegrationservice.config.AppConfig;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
+import com.wayapay.thirdpartyintegrationservice.model.TransactionLog;
+import com.wayapay.thirdpartyintegrationservice.repo.TransactionLogRepository;
 import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Stage;
@@ -11,6 +13,8 @@ import com.wayapay.thirdpartyintegrationservice.util.Status;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,7 +24,7 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerConstants.SUCCESSFUL;
+import static com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerConstants.*;
 
 @Slf4j
 @Service
@@ -41,6 +45,13 @@ public class QuickTellerService implements IThirdPartyService {
     private static final String PICTURE_ID = "pictureId";
     private static final String ITEM_FEE = "itemFee";
     private static final String PAY_DIRECT_ITEM_CODE = "paydirectItemCode";
+
+    @Autowired
+    TransactionLogRepository transactionLogRepository;
+
+    @Value("${app.config.quickteller.query-transaction-url}")
+    private String queryTransaction;
+
 
     private static List<BillerResponse> categoryAirtime = Arrays.asList(new BillerResponse("109", "Airtel Mobile Top-Up", "4"), new BillerResponse("108", "Airtel Recharge Pins", "4"), new BillerResponse("120", "Etisalat Recharge Top-Up", "4"),
             new BillerResponse("402", "Glo QuickCharge", "4"),
@@ -143,16 +154,40 @@ public class QuickTellerService implements IThirdPartyService {
         try {
             Map<String, String> headers = generateHeader(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getBillerPaymentItemUrl().replace("{billerId}", billerId));
             billerPaymentItemsResponseOptional = Optional.of(feignClient.getBillerPaymentItems(billerId, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers)));
-            log.info("billerPaymentItemsResponseOptional :: " + billerPaymentItemsResponseOptional);
         } catch (FeignException e) {
             log.error("Unable to fetch billers paymentitems, billerId is => {} from interswitch ", billerId, e);
         }
 
         GetBillerPaymentItemResponse getBillerPaymentItemResponse = billerPaymentItemsResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch biller's payment items"));
-        log.info("getBillerPaymentItemResponse ::: : " + getBillerPaymentItemResponse);
-        log.info("categoryId ::: : " + categoryId);
-        log.info("billerId ::: : " + billerId);
         return getPaymentItemResponse(categoryId, billerId, getBillerPaymentItemResponse);
+    }
+
+    public QueryTransactionResponse queryTransaction(String transactionReference){
+        Optional<QueryTransactionResponse> billerPaymentItemsResponseOptional = Optional.empty();
+        try {
+
+            Map<String, String> headers = generateHeader(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + queryTransaction.replace("{transactionID}", transactionReference)+"?requestreference="+transactionReference);
+            billerPaymentItemsResponseOptional = Optional.of(feignClient.getQueryTransaction(transactionReference, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
+            log.info("billerPaymentItemsResponseOptional :: " + billerPaymentItemsResponseOptional);
+        } catch (FeignException e) {
+            log.error("Unable to fetch transaction status is => {} from interswitch ", transactionReference, e);
+        }
+        System.out.println(billerPaymentItemsResponseOptional.get());
+
+        if (billerPaymentItemsResponseOptional.get().getResponseCode() == "90000"){
+
+        }
+        if (billerPaymentItemsResponseOptional.get().getResponseCode() == "900A0"){
+
+        }
+        if (billerPaymentItemsResponseOptional.get().getResponseCode() == "90009"){
+
+        }
+        if (billerPaymentItemsResponseOptional.get().getResponseCode() == "10001"){
+
+        }
+
+        return billerPaymentItemsResponseOptional.get();
     }
 
     @Override
@@ -165,10 +200,9 @@ public class QuickTellerService implements IThirdPartyService {
 //                throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
 //            }
 
-            log.info("Request is {}", request);
 
             QuickTellerCustomerValidationRequest validationRequest = generateValidationRequest(request, new QuickTellerCustomerValidationRequest(), billerDetail);
-          log.info("validateRequest:::: " + validationRequest);
+
             Map<String, String> headers = generateHeader(HttpMethod.POST, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getCustomerValidationUrl());
             quickTellerCustomerValidationResponseOptional = Optional.of(feignClient.validateCustomerInfo(validationRequest, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
         } catch (FeignException e) {
@@ -182,34 +216,66 @@ public class QuickTellerService implements IThirdPartyService {
     @Override
     @AuditPaymentOperation(stage = Stage.CONTACT_VENDOR_TO_PROVIDE_VALUE, status = Status.IN_PROGRESS)
     public PaymentResponse processPayment(PaymentRequest request, BigDecimal fee, String transactionId, String username) throws ThirdPartyIntegrationException {
-        log.info("The Request  ::: " + request);
+//        log.info("The Request  ::: " + request);
         Optional<SendPaymentAdviceResponse> sendPaymentAdviceResponseOptional = Optional.empty();
+        String transactionReferrence = "";
         try {
-            log.info("Here is the Biller ::: " + request.getBillerId());
+
           //  BillerDetail billerDetail1 = billerDetailMap.get(request.getBillerId());
             BillerDetail billerDetail = new BillerDetail();
-            log.info("Here is the billerDetailbillerDetail ::: " + billerDetail);
-            log.info("Here is the Biller ::: " + billerDetail);
+
             if (Objects.isNull(billerDetail.getCustomerId())){
                 throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, INVALID_BILLER_MESSAGE);
             }
 
-            log.info("Payment Advice request RAW :: " + request);
             Map<String, String> headers = generateHeader(HttpMethod.POST, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getSendPaymentAdviceUrl());
             SendPaymentAdviceRequest sendPaymentAdviceRequest = generateRequest(request, billerDetail, getTimeStamp(headers));
-            log.info("SendPaymentAdviceRequest sendPaymentAdviceRequest :: " + sendPaymentAdviceRequest);
+            transactionReferrence = sendPaymentAdviceRequest.getRequestReference();
+
+            logTransaction(sendPaymentAdviceRequest); // Log Transaction Request
+
             sendPaymentAdviceResponseOptional = Optional.of(feignClient.sendPaymentAdvice(sendPaymentAdviceRequest, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
         } catch (FeignException e) {
+            logErrorResponse(e, transactionReferrence);
+            log.error("contentUTF8 ", e.contentUTF8());
+            log.error("Status ", e.status());
             log.error("Unable to process payment against interswitch ", e);
         }
 
         SendPaymentAdviceResponse paymentAdviceResponse = sendPaymentAdviceResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to process payment"));
+        updateLogTransaction(transactionReferrence, paymentAdviceResponse); // Log Transaction response
+        log.info("paymentAdviceResponse :: " + paymentAdviceResponse);
 
         if (SUCCESSFUL.equals(paymentAdviceResponse.getResponseCode())){
+            return getPaymentResponse(paymentAdviceResponse);
+        }else if (INI_SUCCESSFUL.equals(paymentAdviceResponse.getResponseCode())){
+            return getPaymentResponse(paymentAdviceResponse);
+        }else if (INIT_RESPONSE.equals(paymentAdviceResponse.getResponseCode())){
             return getPaymentResponse(paymentAdviceResponse);
         }
 
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, paymentAdviceResponse.getResponseMessage());
+    }
+    private void logErrorResponse(FeignException e, String referenceID){
+        TransactionLog transactionLog = transactionLogRepository.findByReference(referenceID);
+        transactionLog.setErrorResponse(CommonUtils.objectToJson(e.getMessage()).orElse(""));
+        transactionLogRepository.save(transactionLog);
+    }
+
+    private void logTransaction(SendPaymentAdviceRequest sendPaymentAdviceRequest){
+        TransactionLog transactionLog = new TransactionLog();
+        transactionLog.setThirdParty(QUICKTELLER);
+        transactionLog.setPaymentRequest(CommonUtils.objectToJson(sendPaymentAdviceRequest).orElse(""));
+        transactionLog.setRequestReference(sendPaymentAdviceRequest.getRequestReference());
+        transactionLogRepository.save(transactionLog);
+    }
+
+    private void updateLogTransaction(String requestReference, SendPaymentAdviceResponse paymentAdviceResponse){
+        TransactionLog transactionLog = transactionLogRepository.findByReference(requestReference);
+        transactionLog.setPaymentResponse(CommonUtils.objectToJson(paymentAdviceResponse).orElse(""));
+        transactionLog.setStatusMessage(paymentAdviceResponse.getResponseCodeGrouping());
+        transactionLog.setStatusCode(paymentAdviceResponse.getResponseCode());
+        transactionLogRepository.save(transactionLog);
     }
 
     @Override
@@ -331,10 +397,10 @@ public class QuickTellerService implements IThirdPartyService {
 
 
         QuickTellerUserParam userParam = getUserParam(request.getData(), billerDetail);
+
         userParam.setCustomerId(request.getData().get(0).getValue());
-        userParam.setPaymentCode(request.getData().get(1).getValue());
+        userParam.setPaymentCode(userParam.getPaymentCode());
         validationRequest.getCustomers().add(new ValidationRequest(userParam.getCustomerId(), userParam.getPaymentCode()));
-//        validationRequest.getCustomers().add(new ValidationRequest(customerId2, paymentCode));
         return validationRequest;
     }
 
@@ -386,8 +452,7 @@ public class QuickTellerService implements IThirdPartyService {
 //            }
 
         }
-
-        return new QuickTellerUserParam(customerId, customerEmail, customerMobile, paymentCode);
+        return new QuickTellerUserParam(paymentCode,customerId,customerEmail,customerMobile);
     }
 
     private CustomerValidationResponse getCustomerValidationResponse(String categoryId, String billerId, QuickTellerCustomerValidationResponse validationResponse) throws ThirdPartyIntegrationException {
@@ -471,7 +536,10 @@ public class QuickTellerService implements IThirdPartyService {
         BigDecimal bigDecimalItemFee = CommonUtils.isEmpty(itemFee) ? BigDecimal.ZERO : getAmountInNaira(itemFee);
         return bigDecimalAmount.add(bigDecimalItemFee).setScale(2, RoundingMode.UNNECESSARY).toString();
     }
+
 }
+
+
 
 class QuickTellerConstants {
     static final String AUTHORIZATION = "Authorization";
@@ -481,4 +549,7 @@ class QuickTellerConstants {
     static final String SIGNATURE_METHOD = "SignatureMethod";
     static final String TERMINAL_ID = "TerminalId";
     static final String SUCCESSFUL = "90000";
+    static final String INI_SUCCESSFUL = "900A0";
+    static final String INIT_RESPONSE = "10001";
+    static final String QUICKTELLER = "QUICKTELLER";
 }

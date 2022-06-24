@@ -3,6 +3,7 @@ package com.wayapay.thirdpartyintegrationservice.util;
 public class Constants {
 
     public static final String ERROR_MESSAGE = "Unable to process request";
+    public static final String BAXI_VALIDATATION = "Account Validation Error:Account does not exist in vending system";
     public static final String SUCCESS_MESSAGE = "Successful";
     public static final String API_V1 = "/api/v1";
 
@@ -21,6 +22,8 @@ public class Constants {
     public static final String DATE_FORMAT = "yyyy-MM-dd";
     public static final String INAPP_TYPE = "IN-APP";
     public static final String INSUFFICIENT_FUND = "Insufficient fund";
+    public static final String NOT_FOUND = "Id not found";
+    public static final String ALREADY_RESOLVED = "Dispute already reversed";
 
     private Constants() {
     }

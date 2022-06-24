@@ -16,6 +16,7 @@ import java.util.Date;
 @ToString
 public class TransactionDetail {
 
+    private Long id;
     private String transactionId;
     private ThirdPartyNames thirdPartyName;
     private BigDecimal amount;
@@ -31,8 +32,9 @@ public class TransactionDetail {
     private String email;
     private String userAccountNumber;
 
-    public TransactionDetail(String transactionId, ThirdPartyNames thirdPartyName, BigDecimal amount, Boolean successful,
+    public TransactionDetail(Long id,String transactionId, ThirdPartyNames thirdPartyName, BigDecimal amount, Boolean successful,
                              String category, String biller, String paymentRequest, String paymentResponse, Date transactionDateTime) {
+        this.id = id;
         this.transactionId = transactionId;
         this.thirdPartyName = thirdPartyName;
         this.amount = amount;
@@ -44,8 +46,9 @@ public class TransactionDetail {
         this.transactionDateTime = transactionDateTime;
     }
 
-    public TransactionDetail(String transactionId, ThirdPartyNames thirdPartyName, BigDecimal amount, Boolean successful,
+    public TransactionDetail(Long id, String transactionId, ThirdPartyNames thirdPartyName, BigDecimal amount, Boolean successful,
                              String category, String biller, String referralCode,String paymentRequest, String paymentResponse, Date transactionDateTime, String username, String email, String userAccountNumber) {
+        this.id = id;
         this.transactionId = transactionId;
         this.thirdPartyName = thirdPartyName;
         this.amount = amount;

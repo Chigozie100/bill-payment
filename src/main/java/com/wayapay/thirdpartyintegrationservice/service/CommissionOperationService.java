@@ -96,12 +96,12 @@ public class CommissionOperationService {
         NewWalletResponse userCommissionWallet = getUserCommissionWallet(userId,token); // get user commission wallet
 
         transfer.setAmount(computePercentage(amount,userCommissionDto.getCommissionValue()));
-        transfer.setEventId(EventCharges.COMPAYM.name());
+        transfer.setEventId(EventCharges.COMMPMT.name());
         transfer.setPaymentReference(String.valueOf(CommonUtils.generatePaymentTransactionId()));
         transfer.setCustomerAccountNumber(userCommissionWallet != null ? userCommissionWallet.getAccountNo() : null);
         transfer.setTranCrncy("NGN");
         transfer.setTranNarration("COMMISSION-PAYMENT-TRANSACTION");
-
+        transfer.setTransactionCategory("TRANSFER");
         ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialCommissionToUserCommission(transfer,token);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
 
@@ -124,7 +124,7 @@ public class CommissionOperationService {
         NewWalletResponse userCommissionWallet = getUserCommissionWallet(orgCommission.getCorporateUserId(),token); // get user commission wallet
 
         transfer.setAmount(computePercentage(amount,BigDecimal.valueOf(orgCommission.getCommissionValue())));
-        transfer.setEventId(EventCharges.COMPAYM.name());
+        transfer.setEventId(EventCharges.COMMPMT.name());
         transfer.setPaymentReference(String.valueOf(CommonUtils.generatePaymentTransactionId()));
         transfer.setCustomerAccountNumber(userCommissionWallet != null ? userCommissionWallet.getAccountNo() : null);
         transfer.setTranCrncy("NGN");
@@ -250,9 +250,9 @@ public class CommissionOperationService {
         map.put("transactionId", transfer.getPaymentReference());
         map.put("amount", transfer.getAmount().toString());
         if (infoResponse.getStatus()){
-            map.put("message", "Fund Merchant Commission Wallet Successful:: " + transfer.getUserId());
+            map.put("message", "Fund Merchant Commission Wallet Successful");
         }else{
-            map.put("message", "Error Funding Merchant Commission Wallet :: " + transfer.getUserId());
+            map.put("message", "Error Funding Merchant Commission Wallet");
         }
 
         notificationService.pushEMAIL(map, token);

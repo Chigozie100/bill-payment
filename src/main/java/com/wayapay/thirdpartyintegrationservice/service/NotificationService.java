@@ -176,6 +176,7 @@ public class NotificationService {
         smsEvent.setInitiator(paymentTransactionDetail.getUsername());
 
         try {
+            System.out.println(" smsEvent :: " + smsEvent);
             smsNotification(smsEvent,token);
 
         }catch (ThirdPartyIntegrationException ex){

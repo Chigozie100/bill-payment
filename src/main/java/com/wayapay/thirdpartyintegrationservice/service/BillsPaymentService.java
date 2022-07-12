@@ -29,7 +29,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
@@ -328,7 +328,7 @@ public class BillsPaymentService {
                 if (userDetail.getCorporate()){
                     CompletableFuture.runAsync(() -> {
                         try {
-                            getCommissionForMakingBillsPayment(userName,token, paymentRequest.getAmount());
+                            getCommissionForMakingBillsPayment(userDetail, userName,token, paymentRequest.getAmount());
                         } catch (ThirdPartyIntegrationException e) {
                             e.printStackTrace();
                         }
@@ -336,7 +336,7 @@ public class BillsPaymentService {
 
                     CompletableFuture.runAsync(() -> {
                         try {
-                            calculateMerchantPercentage(paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
+                            calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
                         } catch (ThirdPartyIntegrationException e) {
                             e.printStackTrace();
                         }
@@ -609,18 +609,20 @@ public class BillsPaymentService {
 
 
     //    // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment
-    public void getCommissionForMakingBillsPayment(String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
-        UserType userType = getUserType(userId,token);
+    public void getCommissionForMakingBillsPayment(UserDetail userDetail, String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
+
+        String userType = getUserType(userDetail, userId,token);
+
         if (userType !=null){
             MerchantCommissionTrackerDto trackerDto= new MerchantCommissionTrackerDto();
             trackerDto.setUserId(userId);
-            trackerDto.setUserType(userType);
+            trackerDto.setUserType(UserType.valueOf(userType));
             trackerDto.setCommissionType(CommissionType.PERCENTAGE);
             trackerDto.setCommissionValue(BigDecimal.ONE.doubleValue());
             trackerDto.setTransactionType(TransactionType.BILLS_PAYMENT);
             commissionOperationService.saveMerchantCommission(trackerDto,token);
 
-            payCommissionToMerchant(userType,userId,token, amount);  // pay user commission
+            payCommissionToMerchant(UserType.valueOf(userType),userId,token, amount);  // pay user commission
 
         }
 
@@ -636,11 +638,15 @@ public class BillsPaymentService {
         }
 
     }
-    private UserType getUserType(String userId, String token) throws ThirdPartyIntegrationException {
-        UserProfileResponsePojo userProfile =  getUserProfile(userId, token);
-        for(String role : userProfile.getRoles()) {
-            if(UserType.ROLE_CORP.name().equalsIgnoreCase(role) || UserType.ROLE_CORP_ADMIN.name().equalsIgnoreCase(role)){
-                return UserType.ROLE_CORP;
+    private String getUserType(UserDetail userDetail, String userId, String token) throws ThirdPartyIntegrationException {
+      //  UserProfileResponsePojo userProfile =  getUserProfile(userId, token);
+        for(String role : userDetail.getRoles()) {
+            if(UserType.ROLE_CORP.name().equalsIgnoreCase(role)
+                    || UserType.ROLE_CORP_ADMIN.name().equalsIgnoreCase(role)
+                    || UserType.ROLE_AGENT.name().equalsIgnoreCase(role)
+                    || UserType.ROLE_AGGREGATOR.name().equalsIgnoreCase(role)
+                    || UserType.ROLE_MERCHANT.name().equalsIgnoreCase(role)){
+                return role;
             }
         }
         return null;
@@ -653,13 +659,10 @@ public class BillsPaymentService {
     }
 
     //as a merchant user anytime i sell billspayment a certain % amount of the item sold amount is transferred on real time to my commission wallet from WAYA
-    private void calculateMerchantPercentage(String billerId, String userName, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
-        UserType userType = getUserType(userName,token);
-        commissionOperationService.payOrganisationCommission(userType,billerId,userName,token, amount); // log commission
-
-
+    private void calculateMerchantPercentage(UserDetail userDetail, String billerId, String userName, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
+        String userType = getUserType(userDetail,userName,token);
+        commissionOperationService.payOrganisationCommission(UserType.valueOf(userType),billerId,userName,token, amount); // log commission
        // 1. get the biller  2. find the biller commission 3. find the corporate user Id 4. compute the Percetage 5. credit the commission wallet
-
     }
 
 

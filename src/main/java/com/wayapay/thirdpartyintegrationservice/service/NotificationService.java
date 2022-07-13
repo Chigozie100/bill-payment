@@ -97,6 +97,7 @@ public class NotificationService {
             log.info("userProfileResponse sms sent status :: " +infoResponse.status);
             return infoResponse.status;
         } catch (Exception e) {
+            log.info(" error sending sms :: " +e.getMessage());
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
         }
 

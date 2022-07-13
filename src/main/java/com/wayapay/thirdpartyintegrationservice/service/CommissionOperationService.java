@@ -102,8 +102,13 @@ public class CommissionOperationService {
         transfer.setTranCrncy("NGN");
         transfer.setTranNarration("COMMISSION-PAYMENT-TRANSACTION");
         transfer.setTransactionCategory("TRANSFER");
+
+        log.info("Billspyament:: {} Merchant Commission Amount for buying billspayment " + transfer);
+
         ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialCommissionToUserCommission(transfer,token);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
+
+        log.info("Billspyament:: {} Merchant Commission Amount for buying billspayment RESPONSE::" + infoResponse);
 
         List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
         List<WalletTransactionPojo> walletTransactionPojoList = new ArrayList<>(Objects.requireNonNull(mainWalletResponseList));
@@ -116,6 +121,7 @@ public class CommissionOperationService {
     }
 
     public void payOrganisationCommission(UserType userType,String billerId,String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
+        log.info("Billspyament:: {} in here start payOrganisationCommission after payment ::: ");
 
         TransferFromWalletPojo transfer = new TransferFromWalletPojo();
 
@@ -129,12 +135,14 @@ public class CommissionOperationService {
         transfer.setCustomerAccountNumber(userCommissionWallet != null ? userCommissionWallet.getAccountNo() : null);
         transfer.setTranCrncy("NGN");
         transfer.setTranNarration("MERCHANT-COMMISSION-PAYMENT");
-        transfer.setTransactionCategory("COMMISSION");
+        transfer.setTransactionCategory("TRANSFER");
+        log.info("Billspyament:: {} Merchant Commission Amount for selling billspayment " + transfer);
         ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialCommissionToUserCommission(transfer,token);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
 
         List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
         List<WalletTransactionPojo> walletTransactionPojoList = new ArrayList<>(Objects.requireNonNull(mainWalletResponseList));
+        log.info("Billspayment:: {} in here payOrganisationCommission after payment ::: RESPONSE" + walletTransactionPojoList);
 
         saveCommissionHistory(userId,transfer, walletTransactionPojoList,userType,token);
 
@@ -148,13 +156,15 @@ public class CommissionOperationService {
             }
         });
 
+        log.info("Billspyament:: {} in here payOrganisationCommission ::: ");
+
     }
 
     private NewWalletResponse getUserCommissionWallet(String userId, String token) throws ThirdPartyIntegrationException {
         try {
             ResponseEntity<ApiResponseBody<NewWalletResponse>> commissionWallet = walletFeignClient.getUserCommissionWallet(userId,token);
             ApiResponseBody<NewWalletResponse> commissionWalletBody = commissionWallet.getBody();
-
+            log.info("Billspyament:: {} in here getUserCommissionWallet ::: "+ commissionWalletBody);
             return commissionWalletBody != null ? commissionWalletBody.getData() : null;
         }catch (Exception exception){
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, exception.getMessage());
@@ -196,7 +206,7 @@ public class CommissionOperationService {
             commissionDto.setCommissionValue(transfer.getAmount());
             commissionDto.setJsonRequest(CommonUtils.objectToJson(transfer).orElse(""));
             commissionDto.setJsonResponse(CommonUtils.objectToJson(walletTransactionPojoList).orElse(""));
-            commissionDto.setTransactionType(TransactionType.TRANSFER);
+            commissionDto.setTransactionType(TransactionType.BILLS_PAYMENT);
             commissionDto.setUserType(userType);
 
             ResponseEntity<ApiResponseBody<CommissionDto>> resp = commissionFeignClient.addCommissionHistory(commissionDto, token);

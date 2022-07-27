@@ -295,15 +295,13 @@ public class BillsPaymentService {
                 PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
 
                 // call the receipt service
-//                CompletableFuture.runAsync(() -> {
-//                    try {
-//                        Map<String, String> map = inAppMessageBuilder(paymentResponse,paymentTransactionDetail,transactionId);
-//
-//                        notificationService.pushINAPP(map,token);
-//                    } catch (ThirdPartyIntegrationException e) {
-//                        e.printStackTrace();
-//                    }
-//                });
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        notificationService.pushINAPP2(userName,paymentTransactionDetail,paymentResponse,token);
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
 
 //                CompletableFuture.runAsync(() -> {
 //                    try {
@@ -382,6 +380,18 @@ public class BillsPaymentService {
         }
         return Objects.requireNonNull(phoneNumber).substring(1);
     }
+
+    Map<String, String> inAppMessageBuilder(PaymentResponse paymentResponse, PaymentTransactionDetail paymentTransactionDetail, String transactionId){
+
+        Map<String, String> map = new HashMap<>();
+        map.put("message", "Making Bulk Bills Payment");
+        map.put("userId", "userName");
+        map.put("module", "Bills Payment");
+
+        return map;
+
+    }
+
 
 //    private String extractData(PaymentResponse paymentResponse, PaymentTransactionDetail paymentTransactionDetail){
 //        List<ParamNameValue> listValue = paymentResponse.getData();

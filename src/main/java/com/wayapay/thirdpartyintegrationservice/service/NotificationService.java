@@ -15,10 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Slf4j
@@ -50,25 +47,15 @@ public class NotificationService {
 
         inAppEvent.setData(data);
         inAppEvent.setInitiator(map.get("userId"));
+        inAppEvent.setToken(token);
 
         return inAppEvent;
-    }
-
-
-    public NotificationDto buildInAppNotificationObject(Map<String, Object> map, String token, EventType eventType, PaymentResponse paymentResponse, String data){
-        NotificationDto notificationDto = new NotificationDto();
-        notificationDto.setMessage(map.get("message").toString());
-        notificationDto.setType(eventType.name());
-        notificationDto.setUserId(map.get("userId").toString());
-        notificationDto.setEventType(eventType.name());
-        notificationDto.setInitiator(map.get("userId").toString());
-        return notificationDto;
     }
 
     public void sendInAppNotification(InAppEvent inAppEvent, String token) throws ThirdPartyIntegrationException {
         try {
             ResponseEntity<ResponseObj<Object>> responseEntity = notificationFeignClient.inAppNotifyUser(inAppEvent,token);
-            ResponseObj<Object> infoResponse = responseEntity.getBody();
+            log.info(" status :: " +Objects.requireNonNull(responseEntity.getBody()).status);
 
         } catch (Exception e) {
             log.error("Unable to generate transaction Id", e);
@@ -81,8 +68,8 @@ public class NotificationService {
         try {
           //  ResponseEntity<ResponseObj> responseEntity = notificationFeignClient.emailNotifyUser(emailEvent,token);
             var responseEntity = notificationFeignClient.emailNotifyUserTransaction(emailEvent,token);
-            ResponseObj infoResponse = responseEntity.getBody();
-            log.info("userProfileResponse email sent status :: " +infoResponse.status);
+
+            log.info(String.format("userProfileResponse email sent status :: %s", Objects.requireNonNull(responseEntity.getBody()).status));
         } catch (Exception e) {
             log.error("Unable to generate transaction Id", e);
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
@@ -90,12 +77,10 @@ public class NotificationService {
 
     }
 
-    public Boolean smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
+    public void smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
         try {
             ResponseEntity<ResponseObj<Object>>  responseEntity = notificationFeignClient.smsNotifyUserAtalking(smsEvent,token);
-            ResponseObj infoResponse = responseEntity.getBody();
-            log.info("userProfileResponse sms sent status :: " +infoResponse.status);
-            return infoResponse.status;
+            log.info(" status :: " +Objects.requireNonNull(responseEntity.getBody()).status);
         } catch (Exception e) {
             log.info(" error sending sms :: " +e.getMessage());
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
@@ -103,6 +88,35 @@ public class NotificationService {
 
     }
 
+    public void pushINAPP2(String userId, PaymentTransactionDetail paymentTransactionDetail, PaymentResponse paymentResponse,  String token) throws ThirdPartyIntegrationException {
+        // InAppEvent inAppEvent = buildInAppNotificationObject(map, token, EventType.IN_APP);
+
+        InAppEvent appEvent = new InAppEvent();
+        InAppPayload data = new InAppPayload();
+        data.setMessage(formatMessageSMS(paymentResponse, paymentTransactionDetail));
+        InAppRecipient appRecipient = new InAppRecipient();
+        appRecipient.setUserId(Objects.requireNonNullElse(userId, "0"));
+
+        List<InAppRecipient> addUserId = new ArrayList<>();
+        addUserId.add(appRecipient);
+
+        data.setUsers(addUserId);
+        appEvent.setData(data);
+
+        appEvent.setEventType("IN_APP");
+        appEvent.setCategory("BILLS-PAYMENT");
+        appEvent.setToken("token");
+        appEvent.setInitiator(Objects.requireNonNullElse(userId, "0"));
+
+        log.info(appEvent.toString());
+
+        try {
+            sendInAppNotification(appEvent, token);
+        }catch (ThirdPartyIntegrationException ex){
+            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
+
+    }
 
     public void pushINAPP(Map<String, String> map, String token) throws ThirdPartyIntegrationException {
         InAppEvent inAppEvent = buildInAppNotificationObject(map, token, EventType.IN_APP);
@@ -140,7 +154,7 @@ public class NotificationService {
 
         emailEvent.setData(data);
         emailEvent.setInitiator(map.get("userId"));
-        System.out.println("EMAIL ::: " + emailEvent);
+        log.info("EMAIL ::: " + emailEvent);
         try {
             sendEmailNotification(emailEvent, token);
         }catch (ThirdPartyIntegrationException ex){
@@ -177,7 +191,7 @@ public class NotificationService {
         smsEvent.setInitiator(paymentTransactionDetail.getUsername());
 
         try {
-            System.out.println(" smsEvent :: " + smsEvent);
+            log.info(" smsEvent :: " + smsEvent);
             smsNotification(smsEvent,token);
 
         }catch (ThirdPartyIntegrationException ex){
@@ -205,13 +219,13 @@ public class NotificationService {
         String msg = null;
         String name = null;
         List<ParamNameValue> valueList = paymentResponse.getData();
-        for (int i = 0; i < valueList.size(); i++) {
+        for (ParamNameValue paramNameValue : valueList) {
             ParamNameValue value = new ParamNameValue();
-            value.setName(valueList.get(i).getName());
-            value.setValue(valueList.get(i).getValue());
+            value.setName(paramNameValue.getName());
+            value.setValue(paramNameValue.getValue());
             name = value.getName();
-            msg = "Your account has "+ "\n" +
-                    ""+"been credited with:" + paymentTransactionDetail.getAmount() +" \n" +
+            msg = "Your account has " + "\n" +
+                    "" + "been credited with:" + paymentTransactionDetail.getAmount() + " \n" +
                     "" + value.getValue();
         }
 

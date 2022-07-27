@@ -11,6 +11,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
@@ -18,8 +19,11 @@ import javax.validation.constraints.Pattern;
 @Setter
 @ToString
 @NoArgsConstructor
-public class SmsEvent extends EventBase {
+public class SmsEvent {
 
+    @NotNull(message = "make sure you entered the right key *initiator* , and the value must not be null")
+    @NotBlank(message = "initiator field must not be blank, and make sure you use the right key *initiator*")
+    private String initiator;
 
     @NotNull(message = "make sure you entered the right key *eventType* , and the value must not be null")
     @Pattern(regexp = "(SMS)", message = "must match 'SMS'")

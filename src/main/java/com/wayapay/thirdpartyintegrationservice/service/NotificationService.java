@@ -48,6 +48,7 @@ public class NotificationService {
         inAppEvent.setData(data);
         inAppEvent.setInitiator(map.get("userId"));
         inAppEvent.setToken(token);
+        inAppEvent.setCategory(map.get("category"));
 
         return inAppEvent;
     }
@@ -108,7 +109,7 @@ public class NotificationService {
         appEvent.setToken("token");
         appEvent.setInitiator(Objects.requireNonNullElse(userId, "0"));
 
-        log.info(appEvent.toString());
+        log.info("INAPP : " + appEvent);
 
         try {
             sendInAppNotification(appEvent, token);
@@ -224,9 +225,9 @@ public class NotificationService {
             value.setName(paramNameValue.getName());
             value.setValue(paramNameValue.getValue());
             name = value.getName();
-            msg = "Your account has " + "\n" +
-                    "" + "been credited with:" + paymentTransactionDetail.getAmount() + " \n" +
-                    "" + value.getValue();
+//            msg = "Your account has " + "\n" +
+//                    "" + "been credited with:" + paymentTransactionDetail.getAmount() + " \n" +
+//                    "" + value.getValue();
         }
 
         String message= ""+"\n";

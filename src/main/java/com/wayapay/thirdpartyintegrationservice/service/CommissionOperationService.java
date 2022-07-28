@@ -226,6 +226,7 @@ public class CommissionOperationService {
         dto.put("amount", transfer.getAmount().toString());
         dto.put("sender", "WAYA-ADMIN");
         dto.put("initiator", userId);
+        dto.put("category", "BILLS-PAYMENT-COMMISSION");
         dto.put("in_app_recipient", inAppRecipient.toString());
 
 

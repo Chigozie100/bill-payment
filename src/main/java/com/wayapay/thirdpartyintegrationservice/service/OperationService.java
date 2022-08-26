@@ -103,6 +103,37 @@ public class OperationService {
 
     }
 
+    @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
+    public boolean secureFundAdmin(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
+        //Get user default wallet
+
+        ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWallet(userAccountNumber, token);
+        InfoResponse infoResponse = responseEntity.getBody();
+        NewWalletResponse mainWalletResponse = Objects.requireNonNull(infoResponse).data;
+        log.info( userAccountNumber + " mainWalletResponse:: " + mainWalletResponse);
+
+        if (mainWalletResponse.getClr_bal_amt() < amount.doubleValue())
+            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.INSUFFICIENT_FUND);
+
+        //consume
+        TransferFromWalletPojo trans = new TransferFromWalletPojo();
+        trans.setAmount(FeeBearer.CONSUMER.equals(feeBearer) ? amount.add(fee) : amount);
+
+        trans.setCustomerAccountNumber(mainWalletResponse.getAccountNo());
+        trans.setEventId(EventCharges.AITCOL.name());
+        trans.setPaymentReference(transactionId);
+        trans.setTranCrncy("NGN");
+        trans.setTransactionCategory(billType);
+        trans.setTranNarration(TransactionType.BILLS_PAYMENT.name());
+        trans.setUserId(Long.parseLong(userName));
+        try {
+            walletFeignClient.transferFromUserToWaya(trans,token);
+            return true;
+        } catch (FeignException exception) {
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, getErrorMessage(exception.contentUTF8()));
+        }
+    }
+
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {

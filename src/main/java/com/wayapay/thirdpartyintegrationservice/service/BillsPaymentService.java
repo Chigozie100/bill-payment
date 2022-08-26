@@ -278,6 +278,80 @@ public class BillsPaymentService {
 
     }
 
+    public PaymentResponse processPaymentOnBehalfOfUser(PaymentRequest paymentRequest, String userName,String token) throws ThirdPartyIntegrationException {
+        UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
+        //secure Payment
+        String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
+
+        String billType = getCategoryName(paymentRequest.getCategoryId());
+
+        ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
+        FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
+        if (operationService.secureFundAdmin(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType)){
+            try {
+                PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
+                //store the transaction information
+                PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
+
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        String phoneNumber = extractPhone(paymentRequest);
+                        userProfileResponse.setPhoneNumber(phoneNumber);
+                        notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
+
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                UserDetail userDetail = profileDetailsService.getUser(token);
+                if (userDetail.getCorporate()){
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            getCommissionForMakingBillsPayment(userDetail, userName,token, paymentRequest.getAmount());
+                        } catch (ThirdPartyIntegrationException e) {
+                            e.printStackTrace();
+                        }
+                    });
+
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
+                        } catch (ThirdPartyIntegrationException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                }
+
+                Map<String,String> map = new HashMap<>();
+                map.put("message", "Making Bills Payment");
+                map.put("userId", userName);
+                map.put("module", "Bills Payment");
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        operationService.logUserActivity(paymentRequest, map, token);
+                    } catch (ThirdPartyIntegrationException e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                return paymentResponse;
+            } catch (ThirdPartyIntegrationException e) {
+                log.info("Error in billspayment :: " +e.getMessage());
+                operationService.saveFailedTransactionDetail(userProfileResponse,paymentRequest, fee, null, userName, transactionId);
+
+                disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
+                throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
+            }
+        }
+
+        log.error("Unable to secure fund from user's wallet");
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+
+
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
         //secure Payment
@@ -295,13 +369,13 @@ public class BillsPaymentService {
                 PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
 
                 // call the receipt service
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        notificationService.pushINAPP2(userName,paymentTransactionDetail,paymentResponse,token);
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
+//                CompletableFuture.runAsync(() -> {
+//                    try {
+//                        notificationService.pushINAPP2(userName,paymentTransactionDetail,paymentResponse,token);
+//                    } catch (ThirdPartyIntegrationException e) {
+//                        e.printStackTrace();
+//                    }
+//                });
 
 //                CompletableFuture.runAsync(() -> {
 //                    try {
@@ -686,6 +760,13 @@ public class BillsPaymentService {
     public List<NewWalletResponse> adminSelectWayaOfficialAccount(String token) throws ThirdPartyIntegrationException {
         return operationService.getWayaOfficialWallet(token);
     }
+
+
+//    private  Object processAdminPayment(PaymentRequest paymentRequest, String userId){
+//        // use the userID to get Profile of the user
+//        //
+//
+//    }
 
 
 }

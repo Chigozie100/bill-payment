@@ -14,6 +14,8 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.mapper.Mapper;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +41,7 @@ public class AdminController {
     private final BillsPaymentService billsPaymentService;
     private final OperationService operationService;
     private final QuickTellerService iThirdPartyService;
-
+    private final ModelMapper modelMapper;
 //    @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 8)
 //    @ApiResponses(value = {
 //            @ApiResponse(code = 200, message = "Successful")
@@ -113,6 +115,20 @@ public class AdminController {
         PaymentResponse transactionDetailPage = billsPaymentService.processPayment(paymentRequest, userId, token);
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
+
+    @ApiOperation(value = "Admin make billspayment on-behalf of users : This API is used to make billspayment on-behalf of users")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @PostMapping("/admin/make-payment-for-user")
+    public ResponseEntity<ResponseHelper> adminMakeBillsPaymentOnBehalfOfUser(@Valid @RequestBody PaymentRequestOnbhalfOfUser payment, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, @RequestParam("userId") String userId) throws ThirdPartyIntegrationException {
+
+        PaymentRequest paymentRequest = modelMapper.map(payment,PaymentRequest.class);
+
+        PaymentResponse transactionDetailPage = billsPaymentService.processPaymentOnBehalfOfUser(paymentRequest, userId, token);
+        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
+    }
+
 
     //ABILITY for waya admin with the right access and permission to make bills payment to users - multiple webform
     @ApiOperation(value = "Bulk Bills Payment: This API is used to by the admin to pay bills on behalf of users using web form", tags = {"ADMIN"})

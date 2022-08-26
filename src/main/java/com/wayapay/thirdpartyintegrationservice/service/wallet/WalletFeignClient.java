@@ -27,6 +27,11 @@ public interface WalletFeignClient {
     @GetMapping("/api/v1/wallet/default/{userId}") //  ===> returns single
     ResponseEntity<InfoResponse> getDefaultWallet(@PathVariable("userId") String userId, @RequestHeader("Authorization") String token);
 
+    ///temporal-service/api/v1/wallet/user-account/{accountNo}
+    @GetMapping("/api/v1/wallet/user-account/{accountNo}") //  ===> returns single
+    ResponseEntity<InfoResponse> getUserWallet(@PathVariable("accountNo") String accountNo, @RequestHeader("Authorization") String token);
+
+
     ///api/v1/wallet/event/charge/payment /api/v1/wallet/event/charge/payment
     @PostMapping(path="/api/v1/wallet/event/charge/payment")
     ResponseEntity<String> transferFromUserToWaya(@RequestBody TransferFromWalletPojo transfer, @RequestHeader("Authorization") String token);

@@ -231,9 +231,9 @@ public class CommissionOperationService {
 
 
         if (infoResponse.getStatus()){
-            dto.put("message", "Fund Merchant Commission Wallet Successful:: " + transfer.getUserId());
+            dto.put("message", "Fund Merchant Commission Wallet Successful");
         }else{
-            dto.put("message", "Error Funding Merchant Commission Wallet :: " + transfer.getUserId());
+            dto.put("message", "Error Funding Merchant Commission Wallet");
         }
 
         CompletableFuture.runAsync(() -> {

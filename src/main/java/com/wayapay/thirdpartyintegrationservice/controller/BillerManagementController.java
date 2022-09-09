@@ -132,4 +132,20 @@ public class BillerManagementController {
         }
     }
 
+
+    @ApiOperation(value = "{ Don not use this endpoint}")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful", response = SampleListBillerManagementResponse.class),
+            @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
+            @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
+    })
+    @GetMapping("/sync-commission-billers")
+    public ResponseEntity<ResponseHelper> getAllBiller(){
+        try {
+            return ResponseEntity.ok(billerService.getAll());
+        } catch (ThirdPartyIntegrationException e) {
+            return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
 }

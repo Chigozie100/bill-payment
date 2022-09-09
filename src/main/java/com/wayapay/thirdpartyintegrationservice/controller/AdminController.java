@@ -190,6 +190,17 @@ public class AdminController {
         return ResponseEntity.ok(new SuccessResponse(iThirdPartyService.queryTransaction(transactionID)));
     }
 
+    @GetMapping("/total-successful-transaction")
+    public ResponseEntity<ResponseHelper> totalSuccessful() {
+        return ResponseEntity.ok(new SuccessResponse(billsPaymentService.totalSuccessful()));
+    }
+
+    @GetMapping("/total-failed-transaction")
+    public ResponseEntity<ResponseHelper> totalFailed() {
+        return ResponseEntity.ok(new SuccessResponse(billsPaymentService.totalFailed()));
+    }
+
+
 
 
 

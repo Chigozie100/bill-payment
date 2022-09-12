@@ -1,9 +1,11 @@
 package com.wayapay.thirdpartyintegrationservice.controller;
 
 import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementRequest;
+import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponse;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ErrorResponse;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
+import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseObj;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.sample.response.*;
 import com.wayapay.thirdpartyintegrationservice.service.BillerService;
@@ -17,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+
+import java.util.List;
 
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.SYNCED_IN_PROGRESS;
@@ -129,6 +133,22 @@ public class BillerManagementController {
             return ResponseEntity.ok(new SuccessResponse(SYNCED_IN_PROGRESS));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+
+    @ApiOperation(value = "{ Don not use this endpoint}")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful", response = SampleListBillerManagementResponse.class),
+            @ApiResponse(code = 400, message = "Bad Request", response = SampleErrorResponse.class),
+            @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
+    })
+    @GetMapping("/sync-commission-billers")
+    public ResponseEntity<ResponseObj<List<BillerManagementResponse>>> getAllBiller() throws Exception {
+        try {
+            return billerService.getAllBillers();
+        } catch (ThirdPartyIntegrationException e) {
+           throw new Exception(e.getMessage());
         }
     }
 

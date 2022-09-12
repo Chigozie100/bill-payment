@@ -1,9 +1,11 @@
 package com.wayapay.thirdpartyintegrationservice.controller;
 
 import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementRequest;
+import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponse;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ErrorResponse;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
+import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseObj;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.sample.response.*;
 import com.wayapay.thirdpartyintegrationservice.service.BillerService;
@@ -17,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+
+import java.util.List;
 
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.SYNCED_IN_PROGRESS;
@@ -140,11 +144,11 @@ public class BillerManagementController {
             @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
     })
     @GetMapping("/sync-commission-billers")
-    public ResponseEntity<ResponseHelper> getAllBiller(){
+    public ResponseEntity<ResponseObj<List<BillerManagementResponse>>> getAllBiller() throws Exception {
         try {
-            return ResponseEntity.ok(billerService.getAll());
+            return billerService.getAllBillers();
         } catch (ThirdPartyIntegrationException e) {
-            return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));
+           throw new Exception(e.getMessage());
         }
     }
 

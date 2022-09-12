@@ -612,6 +612,19 @@ public class BillsPaymentService {
         return getTransactionMap(transactionDetailList,transactionDetailPage);
     }
 
+    public Map<String, Object> totalSuccessful(){
+        long count =  paymentTransactionRepo.totalSuccessful(true);
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", count);
+        return  response;
+    }
+
+    public Map<String, Object> totalFailed(){
+        long count = paymentTransactionRepo.totalFailed(false);
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", count);
+        return  response;
+    }
 
     public Map<String, Object> searchByReferralCode(String referralCode, int page, int size){
         Pageable paging = getPageable(page, size);

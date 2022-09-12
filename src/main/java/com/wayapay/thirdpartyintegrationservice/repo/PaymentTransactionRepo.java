@@ -54,4 +54,12 @@ public interface PaymentTransactionRepo extends JpaRepository<PaymentTransaction
     @Query("select new com.wayapay.thirdpartyintegrationservice.dto.TransactionDetail(p.id, p.transactionId, p.thirdPartyName, p.amount, p.successful, p.category, p.biller, p.referralCode, p.paymentRequest, p.paymentResponse, p.createdAt, p.username, p.email, p.userAccountNumber) from PaymentTransactionDetail p where p.transactionId = ?1")
     Optional<TransactionDetail> findByTransactionId(@Param("transactionId") String transactionId);
 
+
+    @Query("select count(p.id) from PaymentTransactionDetail p where  p.successful =:status order by p.createdAt desc ")
+    long  totalSuccessful(boolean status);
+
+    @Query("select count(p.id) from PaymentTransactionDetail p where  p.successful =:status order by p.createdAt desc ")
+    long  totalFailed(boolean status);
+
+
 }

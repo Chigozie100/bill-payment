@@ -1,6 +1,7 @@
 package com.wayapay.thirdpartyintegrationservice.repo;
 
 import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponse;
+import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponseExtended;
 import com.wayapay.thirdpartyintegrationservice.dto.BillerResponse;
 import com.wayapay.thirdpartyintegrationservice.model.Biller;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -30,11 +31,18 @@ public interface BillerRepo extends JpaRepository<Biller, Long> {
     @Query("select new com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponse(b.id, b.name, b.billerAggregatorCode, b.billerWayaPayCode, b.active, b.category.id, b.category.name, t.thirdPartyNames) from Biller b join b.category.thirdParty t ")
     List<BillerManagementResponse> findAllBiller();
 
+    @Query("select new com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponseExtended(b.id, b.name, b.billerAggregatorCode, b.billerWayaPayCode, b.active, b.category.id, b.category.name, t.thirdPartyNames, b.category.categoryAggregatorCode) from Biller b join b.category.thirdParty t ")
+    List<BillerManagementResponseExtended> findAllBiller2();
+
     @Query("select b from Biller b where b.category.id = ?1 ")
     List<Biller> findAllByCategoryId(Long categoryId);
 
     @Query("select new com.wayapay.thirdpartyintegrationservice.dto.BillerResponse(b.billerAggregatorCode, b.name, b.billerWayaPayCode, b.category.categoryAggregatorCode) from Biller b where b.category.categoryAggregatorCode =?1 and b.active = true ")
     List<BillerResponse> findAllActiveBiller(String categoryId);
+
+
+    @Query("select new com.wayapay.thirdpartyintegrationservice.dto.BillerResponse(b.billerAggregatorCode, b.name, b.billerWayaPayCode, b.category.categoryAggregatorCode) from Biller b where b.category.categoryAggregatorCode =?1 and b.active = true ")
+    List<BillerResponse> findAllActiveBiller2(String categoryId);
 
 
 }

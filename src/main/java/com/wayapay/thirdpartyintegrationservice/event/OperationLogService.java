@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
@@ -193,5 +194,7 @@ public class OperationLogService {
     private void sendToKafka(OperationLog operationLog) throws JsonProcessingException {
         kafkaTemplate.send(appConfig.getKafka().getTransactionTopic(), CommonUtils.getObjectMapper().writeValueAsString(operationLog));
     }
+
+
 
 }

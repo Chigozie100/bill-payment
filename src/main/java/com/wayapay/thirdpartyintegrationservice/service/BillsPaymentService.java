@@ -414,7 +414,7 @@ public class BillsPaymentService {
                     CompletableFuture.runAsync(() -> {
                         try {
                             Map<String, Object> map = new HashMap<>();
-                            map.put("userDetails", userDetail);
+                            map.put("userDetail", userDetail);
                             map.put("billerId", paymentRequest.getBillerId());
                             map.put("userName", userName);
                             map.put("categoryCode", paymentRequest.getCategoryId());

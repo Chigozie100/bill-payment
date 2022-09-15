@@ -1,14 +1,17 @@
 package com.wayapay.thirdpartyintegrationservice.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.wayapay.thirdpartyintegrationservice.config.AppConfig;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.service.commission.*;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
 import com.wayapay.thirdpartyintegrationservice.util.*;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
@@ -17,13 +20,22 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
-@RequiredArgsConstructor
 @Service
 public class CommissionOperationService {
     private final CommissionFeignClient commissionFeignClient;
     private final WalletFeignClient walletFeignClient;
     private final NotificationService notificationService;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final AppConfig appConfig;
 
+    @Autowired
+    public CommissionOperationService(CommissionFeignClient commissionFeignClient, WalletFeignClient walletFeignClient, NotificationService notificationService, KafkaTemplate<String, String> kafkaTemplate, AppConfig appConfig) {
+        this.commissionFeignClient = commissionFeignClient;
+        this.walletFeignClient = walletFeignClient;
+        this.notificationService = notificationService;
+        this.kafkaTemplate = kafkaTemplate;
+        this.appConfig = appConfig;
+    }
 
     public UserCommissionDto findUserCommission(UserType userType, String token) throws ThirdPartyIntegrationException {
 
@@ -84,8 +96,7 @@ public class CommissionOperationService {
 
     private BigDecimal computePercentage(BigDecimal amount, BigDecimal percentageValue){
         BigDecimal per = BigDecimal.valueOf(percentageValue.doubleValue() / 100);
-        BigDecimal ans = BigDecimal.valueOf(per.doubleValue() * amount.doubleValue());
-        return ans;
+        return BigDecimal.valueOf(per.doubleValue() * amount.doubleValue());
     }
 
     public void payUserCommission(UserType userType,String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
@@ -101,14 +112,14 @@ public class CommissionOperationService {
         transfer.setCustomerAccountNumber(userCommissionWallet != null ? userCommissionWallet.getAccountNo() : null);
         transfer.setTranCrncy("NGN");
         transfer.setTranNarration("COMMISSION-PAYMENT-TRANSACTION");
-        transfer.setTransactionCategory("TRANSFER");
+        transfer.setTransactionCategory("COMMISSION");
 
-        log.info("Billspyament:: {} Merchant Commission Amount for buying billspayment " + transfer);
+        log.info("Billspyament::  Merchant Commission Amount for buying billspayment " + transfer);
 
         ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialCommissionToUserCommission(transfer,token);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
 
-        log.info("Billspyament:: {} Merchant Commission Amount for buying billspayment RESPONSE::" + infoResponse);
+        log.info("Billspyament::  Merchant Commission Amount for buying billspayment RESPONSE::" + infoResponse);
 
         List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
         List<WalletTransactionPojo> walletTransactionPojoList = new ArrayList<>(Objects.requireNonNull(mainWalletResponseList));
@@ -121,13 +132,13 @@ public class CommissionOperationService {
     }
 
     public void payOrganisationCommission(UserType userType,String billerId,String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
-        log.info("Billspyament:: {} in here start payOrganisationCommission after payment ::: ");
+        log.info("Billspyament:: in here start payOrganisationCommission after payment ::: ");
 
         TransferFromWalletPojo transfer = new TransferFromWalletPojo();
 
         //String token = BearerTokenUtil.getBearerTokenHeader();
         OrganisationCommissionResponse orgCommission = getOrgCommission(billerId,token);   // find organisation Commission Details
-        NewWalletResponse userCommissionWallet = getUserCommissionWallet(orgCommission.getCorporateUserId(),token); // get user commission wallet
+        NewWalletResponse userCommissionWallet = getUserCommissionWallet(Objects.requireNonNull(orgCommission).getCorporateUserId(),token); // get user commission wallet
 
         transfer.setAmount(computePercentage(amount,BigDecimal.valueOf(orgCommission.getCommissionValue())));
         transfer.setEventId(EventCharges.COMMPMT.name());
@@ -136,13 +147,13 @@ public class CommissionOperationService {
         transfer.setTranCrncy("NGN");
         transfer.setTranNarration("MERCHANT-COMMISSION-PAYMENT");
         transfer.setTransactionCategory("TRANSFER");
-        log.info("Billspyament:: {} Merchant Commission Amount for selling billspayment " + transfer);
+        log.info("Billspyament::  Merchant Commission Amount for selling billspayment " + transfer);
         ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialCommissionToUserCommission(transfer,token);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
 
         List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
         List<WalletTransactionPojo> walletTransactionPojoList = new ArrayList<>(Objects.requireNonNull(mainWalletResponseList));
-        log.info("Billspayment:: {} in here payOrganisationCommission after payment ::: RESPONSE" + walletTransactionPojoList);
+        log.info("Billspayment:: in here payOrganisationCommission after payment ::: RESPONSE" + walletTransactionPojoList);
 
         saveCommissionHistory(userId,transfer, walletTransactionPojoList,userType,token);
 
@@ -156,7 +167,7 @@ public class CommissionOperationService {
             }
         });
 
-        log.info("Billspyament:: {} in here payOrganisationCommission ::: ");
+        log.info("Billspyament::  in here payOrganisationCommission ::: ");
 
     }
 
@@ -164,7 +175,7 @@ public class CommissionOperationService {
         try {
             ResponseEntity<ApiResponseBody<NewWalletResponse>> commissionWallet = walletFeignClient.getUserCommissionWallet(userId,token);
             ApiResponseBody<NewWalletResponse> commissionWalletBody = commissionWallet.getBody();
-            log.info("Billspyament:: {} in here getUserCommissionWallet ::: "+ commissionWalletBody);
+            log.info("Billspyament::  in here getUserCommissionWallet ::: "+ commissionWalletBody);
             return commissionWalletBody != null ? commissionWalletBody.getData() : null;
         }catch (Exception exception){
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, exception.getMessage());
@@ -176,8 +187,8 @@ public class CommissionOperationService {
         try {
             ResponseEntity<ApiResponseBody<MerchantCommissionTrackerDto>> responseEntity = commissionFeignClient.recordMerchantCommission(request,token);
             ApiResponseBody<MerchantCommissionTrackerDto> responseBody = responseEntity.getBody();
-            log.info("Billspyament:: {} in here saveMerchantCommission ::: " + responseBody.getData());
-            return responseBody != null ? responseBody.getData() : null;
+            log.info("Billspyament::  in here saveMerchantCommission ::: " + responseBody.getData());
+            return responseBody.getData();
         }catch (Exception exception){
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, exception.getMessage());
         }
@@ -189,8 +200,8 @@ public class CommissionOperationService {
         try {
             ResponseEntity<ApiResponseBody<OrganisationCommissionResponse>> responseEntity = commissionFeignClient.getOrgCommission(biller,token);
             ApiResponseBody<OrganisationCommissionResponse> responseBody = responseEntity.getBody();
-            log.info("Billspyament:: {} in here saveMerchantCommission ::: " + responseBody.getData());
-            return responseBody != null ? responseBody.getData() : null;
+            log.info("Billspyament::  in here saveMerchantCommission ::: " + Objects.requireNonNull(responseBody).getData());
+            return responseBody.getData();
         }catch (Exception exception){
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, exception.getMessage());
         }
@@ -269,49 +280,9 @@ public class CommissionOperationService {
         notificationService.pushEMAIL(map, token);
     }
 
-//
-////    public TransactionRequest fundDefaultWallet(TransferFromWalletPojo walletDto, String token) throws ThirdPartyIntegrationException {
-////
-////        String user;
-////        ResponseEntity<String> response = null;
-////        try {
-////            response =  walletFeignClient.creditDefaultWallet(walletDto,token);
-////
-////            if (response.getStatusCode().isError()) {
-////                throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, response.getStatusCode().toString());
-////            }
-////            user = response.getBody();
-////            JSONObject jsonpObject = new JSONObject(user);
-////            String json = jsonpObject.getJSONObject("data").toString();
-////            TransactionRequest mainWalletResponse = GsonUtils.cast(json, TransactionRequest.class);
-////            return mainWalletResponse;
-////
-////        } catch (RestClientException | JSONException e) {
-////            System.out.println("Error in fundDefaultWallet " + e.getMessage());
-////            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
-////        }
-////    }
-//
-//    public TransactionRequest fundCommissionWallet(TransferFromWalletPojo walletDto, String token) throws ThirdPartyIntegrationException {
-//
-//        //String url = baseUrl + "/transaction/new/wallet/to/wallet?command=CREDIT";
-//        String user;
-//        ResponseEntity<String> response = null;
-//        try {
-//            response =  walletFeignClient.fundCommissionWallet(walletDto,token);
-//
-//            if (response.getStatusCode().isError()) {
-//                throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, response.getStatusCode().toString());
-//            }
-//            user = response.getBody();
-//            JSONObject jsonpObject = new JSONObject(user);
-//            String json = jsonpObject.getJSONObject("data").toString();
-//            TransactionRequest mainWalletResponse = GsonUtils.cast(json, TransactionRequest.class);
-//            return mainWalletResponse;
-//
-//        } catch (RestClientException | JSONException e) {
-//            System.out.println("Error in fundDefaultWallet " + e.getMessage());
-//            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
-//        }
-//    }
+
+    public void pushToCommissionService(Map<String, Object> map) throws JsonProcessingException {
+        kafkaTemplate.send(appConfig.getKafka().getSellBillsTopic(),  CommonUtils.getObjectMapper().writeValueAsString(map));
+    }
+
 }

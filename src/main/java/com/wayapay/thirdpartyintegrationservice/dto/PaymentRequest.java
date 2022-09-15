@@ -28,7 +28,7 @@ public class PaymentRequest {
     @NotBlank(message = "billerId is required")
     private String billerId;
 
-    @ApiModelProperty(example = "79")
+    @ApiModelProperty(example = "2011114160")
     @NotBlank(message = "source wallet account number is required")
     private String sourceWalletAccountNumber;
 

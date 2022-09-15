@@ -21,8 +21,6 @@ import com.wayapay.thirdpartyintegrationservice.util.*;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
@@ -105,23 +103,36 @@ public class OperationService {
 
     }
 
+    private NewWalletResponse getUserWallet(String userAccountNumber, String token){
+        ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWallet(userAccountNumber, token);
+        InfoResponse infoResponse = responseEntity.getBody();
+        return Objects.requireNonNull(infoResponse).data;
+    }
+
+    private void checkAccountBalance(NewWalletResponse mainWalletResponse, BigDecimal amount) throws ThirdPartyIntegrationException {
+       if (mainWalletResponse.getClr_bal_amt() < amount.doubleValue())
+        throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.INSUFFICIENT_FUND);
+
+    }
+
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFundAdmin(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
         //Get user default wallet
+        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType);
+        return true;
+    }
 
-        ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWallet(userAccountNumber, token);
-        InfoResponse infoResponse = responseEntity.getBody();
-        NewWalletResponse mainWalletResponse = Objects.requireNonNull(infoResponse).data;
-        log.info( userAccountNumber + " mainWalletResponse:: " + mainWalletResponse);
 
-        if (mainWalletResponse.getClr_bal_amt() < amount.doubleValue())
-            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.INSUFFICIENT_FUND);
+    private void processPayment(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
+        NewWalletResponse mainWalletResponse2 = getUserWallet(userAccountNumber, token);
+
+        checkAccountBalance(mainWalletResponse2,amount);
 
         //consume
         TransferFromWalletPojo trans = new TransferFromWalletPojo();
         trans.setAmount(FeeBearer.CONSUMER.equals(feeBearer) ? amount.add(fee) : amount);
 
-        trans.setCustomerAccountNumber(mainWalletResponse.getAccountNo());
+        trans.setCustomerAccountNumber(mainWalletResponse2.getAccountNo());
         trans.setEventId(EventCharges.AITCOL.name());
         trans.setPaymentReference(transactionId);
         trans.setTranCrncy("NGN");
@@ -130,7 +141,7 @@ public class OperationService {
         trans.setUserId(Long.parseLong(userName));
         try {
             walletFeignClient.transferFromUserToWaya(trans,token);
-            return true;
+
         } catch (FeignException exception) {
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, getErrorMessage(exception.contentUTF8()));
         }
@@ -140,39 +151,17 @@ public class OperationService {
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
         //Get user default wallet
-
-        ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getDefaultWallet(userName, token);
-        InfoResponse infoResponse = responseEntity.getBody();
-        NewWalletResponse mainWalletResponse = Objects.requireNonNull(infoResponse).data;
-        log.info( userAccountNumber + " mainWalletResponse:: " + mainWalletResponse);
-
-        if (mainWalletResponse.getClr_bal_amt() < amount.doubleValue())
-            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.INSUFFICIENT_FUND);
-
-        //consume
-        TransferFromWalletPojo trans = new TransferFromWalletPojo();
-        trans.setAmount(FeeBearer.CONSUMER.equals(feeBearer) ? amount.add(fee) : amount);
-
-        trans.setCustomerAccountNumber(mainWalletResponse.getAccountNo());
-        trans.setEventId(EventCharges.AITCOL.name());
-        trans.setPaymentReference(transactionId);
-        trans.setTranCrncy("NGN");
-        trans.setTransactionCategory(billType);
-        trans.setTranNarration(TransactionType.BILLS_PAYMENT.name());
-        trans.setUserId(Long.parseLong(userName));
-        try {
-            walletFeignClient.transferFromUserToWaya(trans,token);
-            return true;
-        } catch (FeignException exception) {
-            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, getErrorMessage(exception.contentUTF8()));
-        }
+        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType);
+        return true;
     }
-
-
 
     @AuditPaymentOperation(stage = Stage.SAVE_TRANSACTION_DETAIL, status = Status.END)
     public PaymentTransactionDetail saveTransactionDetail(UserProfileResponse userProfileResponse, PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId) throws ThirdPartyIntegrationException {
 
+        return processTransactionStatus(true,  userProfileResponse,  paymentRequest,  fee,  paymentResponse,  userName,  transactionId);
+    }
+
+    private PaymentTransactionDetail processTransactionStatus(boolean isSuccessful, UserProfileResponse userProfileResponse, PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId) throws ThirdPartyIntegrationException {
         PaymentTransactionDetail paymentTransactionDetail = new PaymentTransactionDetail();
         paymentTransactionDetail.setAmount(paymentRequest.getAmount());
         paymentTransactionDetail.setFee(fee);
@@ -180,111 +169,19 @@ public class OperationService {
         paymentTransactionDetail.setCategory(paymentRequest.getCategoryId());
         paymentTransactionDetail.setPaymentRequest(CommonUtils.objectToJson(paymentRequest).orElse(""));
         paymentTransactionDetail.setPaymentResponse(CommonUtils.objectToJson(paymentResponse).orElse(""));
-        paymentTransactionDetail.setSuccessful(true);
+        paymentTransactionDetail.setSuccessful(isSuccessful);
         paymentTransactionDetail.setThirdPartyName(categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE)));
         paymentTransactionDetail.setTransactionId(transactionId);
         paymentTransactionDetail.setUserAccountNumber(paymentRequest.getSourceWalletAccountNumber());
         paymentTransactionDetail.setUsername(userName);
         paymentTransactionDetail.setReferralCode(userProfileResponse.getReferral());
-        paymentTransactionDetail.setPhoneNumber(userProfileResponse.getPhoneNumber());
-        paymentTransactionDetail.setEmail(userProfileResponse.getEmail());
         return paymentTransactionRepo.save(paymentTransactionDetail);
     }
 
-//    @AuditPaymentOperation(stage = Stage.SAVE_TRANSACTION_DETAIL, status = Status.END)
-//    public void saveTransactionDetailMultiple(UserProfileResponse userProfileResponse, MultiplePaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId) throws ThirdPartyIntegrationException {
-//
-//        PaymentTransactionDetail paymentTransactionDetail = new PaymentTransactionDetail();
-//        paymentTransactionDetail.setAmount(paymentRequest.getAmount());
-//        paymentTransactionDetail.setFee(fee);
-//        paymentTransactionDetail.setBiller(paymentRequest.getBillerId());
-//        paymentTransactionDetail.setCategory(paymentRequest.getCategoryId());
-//        paymentTransactionDetail.setPaymentRequest(CommonUtils.objectToJson(paymentRequest).orElse(""));
-//        paymentTransactionDetail.setPaymentResponse(CommonUtils.objectToJson(paymentResponse).orElse(""));
-//        paymentTransactionDetail.setSuccessful(true);
-//        paymentTransactionDetail.setThirdPartyName(categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE)));
-//        paymentTransactionDetail.setTransactionId(transactionId);
-//        paymentTransactionDetail.setUserAccountNumber(paymentRequest.getSourceWalletAccountNumber());
-//        paymentTransactionDetail.setUsername(userName);
-//        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferral());
-//        paymentTransactionDetail.setPhoneNumber(userProfileResponse.getPhoneNumber());
-//        paymentTransactionDetail.setEmail(userProfileResponse.getEmail());
-//        paymentTransactionRepo.save(paymentTransactionDetail);
-//    }
 
     public void saveFailedTransactionDetail(UserProfileResponse userProfileResponse, PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId) throws ThirdPartyIntegrationException {
-        PaymentTransactionDetail paymentTransactionDetail = new PaymentTransactionDetail();
-        paymentTransactionDetail.setAmount(paymentRequest.getAmount());
-        paymentTransactionDetail.setFee(fee);
-        paymentTransactionDetail.setBiller(paymentRequest.getBillerId());
-        paymentTransactionDetail.setCategory(paymentRequest.getCategoryId());
-        paymentTransactionDetail.setPaymentRequest(CommonUtils.objectToJson(paymentRequest).orElse(""));
-        paymentTransactionDetail.setPaymentResponse(CommonUtils.objectToJson(paymentResponse).orElse(""));
-        paymentTransactionDetail.setSuccessful(false);
-        paymentTransactionDetail.setThirdPartyName(categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE)));
-        paymentTransactionDetail.setTransactionId(transactionId);
-        paymentTransactionDetail.setUserAccountNumber(paymentRequest.getSourceWalletAccountNumber());
-        paymentTransactionDetail.setUsername(userName);
-        paymentTransactionDetail.setReferralCode(userProfileResponse.getReferral());
-        paymentTransactionRepo.save(paymentTransactionDetail);
+       processTransactionStatus(false,  userProfileResponse,  paymentRequest,  fee,  paymentResponse,  userName,  transactionId);
     }
-
-
-//    private void saveCounter(ReferralCodePojo referralCodePojo, UserProfileResponse userProfileResponse){
-//        String referreeId = userProfileResponse.getUserId();
-//        TransactionTracker transactionOpt = transactionTrackerRepository.findByReferreeId(referreeId);
-//        log.info("transactionOpt is present :: " + transactionOpt);
-//        log.info("transactionOpt is present :: referralCodePojo" + referralCodePojo);
-//
-//        if (transactionOpt !=null && referralCodePojo ==null) {
-//            // DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL
-//            log.info("DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL");
-//
-//        } else if (transactionOpt !=null && referralCodePojo !=null){
-//            // COUNT TRANSACTIONS
-//            int newCount = transactionOpt.getCount() + 1;
-//            transactionOpt.setCount(newCount);
-//            transactionOpt.setReferralCode(userProfileResponse.getReferral());
-//            transactionOpt.setReferralCodeOwner(referralCodePojo.getUserId()); // if this is null the obj wont save referralCodePojo.getUserId()
-//            transactionOpt.setReferreeId(userProfileResponse.getUserId());
-//            transactionOpt.setTransactionType(TransactionType.BILLS_PAYMENT);
-//            transactionTrackerRepository.save(transactionOpt);
-//            log.info("Billspayment counter {} for referralCodePojo !=null :: " + userProfileResponse.getUserId() + "==****==" + newCount);
-//        } else if (referralCodePojo != null){
-//            // COUNT TRANSACTIONS
-//            log.info("This  referralCodePojo " + referralCodePojo);
-//            log.info("This  transactionOpt " + transactionOpt);
-//            TransactionTracker transactionTracker = new TransactionTracker();
-//            transactionTracker.setCount(1);
-//            transactionTracker.setReferralCode(userProfileResponse.getReferral());
-//            transactionTracker.setReferralCodeOwner(referralCodePojo.getUserId());
-//            transactionTracker.setReferreeId(userProfileResponse.getUserId());
-//            transactionTracker.setTransactionType(TransactionType.BILLS_PAYMENT);
-//            transactionTrackerRepository.save(transactionTracker);
-//            log.info("This is my first time here Last " + transactionTracker);
-//
-//
-//        } else {
-//            // DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL
-//            log.info("DONT COUNT TRANSACTIONS; USER HAS NO REFERRAL");
-//        }
-//    }
-////
-//    public ReferralCodePojo getReferralDetails(String referralCode, String token) {
-//        log.info("ReferralCode :: " + referralCode);
-//        try{
-//            ResponseEntity<ApiResponseBody<ReferralCodePojo>> responseEntity = referralFeignClient.getUserByReferralCode(referralCode,token);
-//            ApiResponseBody<ReferralCodePojo> responseBody = responseEntity.getBody();
-//            ReferralCodePojo referralCodePojo = Objects.requireNonNull(responseBody).getData();
-//            log.info("referralCodePojo ::: " + referralCodePojo);
-//
-//            return referralCodePojo;
-//        } catch (FeignException exception) {
-//            return null;
-//        }
-//    }
-
-
 
     public List<TransactionTracker> getListOfTransactions(String referralCode) throws ThirdPartyIntegrationException {
         try{
@@ -383,7 +280,7 @@ public class OperationService {
 
             billsPaymentRefundRepository.save(billsPaymentRefund);
         } catch (Exception e) {
-            System.out.println("Error is here " + e.getMessage());
+            log.info("Error is here " + e.getMessage());
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
         }
     }

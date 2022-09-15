@@ -2,6 +2,7 @@ package com.wayapay.thirdpartyintegrationservice.service;
 
 import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementRequest;
 import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponse;
+import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponseExtended;
 import com.wayapay.thirdpartyintegrationservice.dto.BillerResponse;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.Biller;
@@ -104,10 +105,10 @@ public class BillerService {
         }
     }
 
-    public ResponseEntity<ResponseObj<List<BillerManagementResponse>>> getAllBillers() throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseObj<List<BillerManagementResponseExtended>>> getAllBillers() throws ThirdPartyIntegrationException {
         try {
             //Date timeStamp, boolean status, String message, T data
-            return ResponseEntity.ok(new ResponseObj<>(new Date(), true, "success", billerRepo.findAllBiller()));
+            return ResponseEntity.ok(new ResponseObj<>(new Date(), true, "success", billerRepo.findAllBiller2()));
         } catch (Exception exception) {
             log.error("Unable to fetch all billers ",exception);
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch all billers");

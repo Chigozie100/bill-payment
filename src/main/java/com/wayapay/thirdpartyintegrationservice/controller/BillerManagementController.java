@@ -2,6 +2,7 @@ package com.wayapay.thirdpartyintegrationservice.controller;
 
 import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementRequest;
 import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponse;
+import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponseExtended;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ErrorResponse;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
@@ -144,7 +145,7 @@ public class BillerManagementController {
             @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
     })
     @GetMapping("/sync-commission-billers")
-    public ResponseEntity<ResponseObj<List<BillerManagementResponse>>> getAllBiller() throws Exception {
+    public ResponseEntity<ResponseObj<List<BillerManagementResponseExtended>>> getAllBiller() throws Exception {
         try {
             return billerService.getAllBillers();
         } catch (ThirdPartyIntegrationException e) {

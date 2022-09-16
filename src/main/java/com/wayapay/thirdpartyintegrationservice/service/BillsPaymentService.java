@@ -1,7 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.wayapay.thirdpartyintegrationservice.config.AppConfig;
 import com.wayapay.thirdpartyintegrationservice.config.ProfileDetailsService;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
@@ -11,7 +10,6 @@ import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.model.ThirdParty;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
-import com.wayapay.thirdpartyintegrationservice.service.auth.AuthFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.auth.UserDetail;
 import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
 import com.wayapay.thirdpartyintegrationservice.service.commission.MerchantCommissionTrackerDto;
@@ -27,7 +25,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,7 +57,6 @@ public class BillsPaymentService {
     private final CategoryService categoryService;
     private final BillerService billerService;
     private final ThirdPartyService thirdPartyService;
-    private final AuthFeignClient authFeignClient;
     private final ProfileDetailsService profileDetailsService;
 
 
@@ -635,7 +631,7 @@ public class BillsPaymentService {
     // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment
     public void getCommissionForMakingBillsPayment(UserDetail userDetail, String userId, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
 
-        String userType = getUserType(userDetail, userId,token);
+        String userType = getUserType(userDetail);
 
         if (userType !=null){
             MerchantCommissionTrackerDto trackerDto= new MerchantCommissionTrackerDto();
@@ -652,18 +648,9 @@ public class BillsPaymentService {
 
     }
 
-    private UserProfileResponsePojo getUserProfile(String userId, String token) throws ThirdPartyIntegrationException {
-        try {
-            ResponseEntity<ApiResponseBody<UserProfileResponsePojo>> userProfile = authFeignClient.getUserByUserId(userId, token);
-            ApiResponseBody<UserProfileResponsePojo> responseBody = userProfile.getBody();
-            return Objects.requireNonNull(responseBody).getData();
-        }catch (Exception e){
-            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
 
-    }
-    private String getUserType(UserDetail userDetail, String userId, String token) {
-      //  UserProfileResponsePojo userProfile =  getUserProfile(userId, token);
+    private String getUserType(UserDetail userDetail) {
+
         for(String role : userDetail.getRoles()) {
             if(UserType.ROLE_CORP.name().equalsIgnoreCase(role)
                     || UserType.ROLE_CORP_ADMIN.name().equalsIgnoreCase(role)
@@ -683,7 +670,7 @@ public class BillsPaymentService {
 
     //as a merchant user anytime i sell billspayment a certain % amount of the item sold amount is transferred on real time to my commission wallet from WAYA
     private void calculateMerchantPercentage(UserDetail userDetail, String billerId, String userName, String token, BigDecimal amount) throws ThirdPartyIntegrationException {
-        String userType = getUserType(userDetail,userName,token);
+        String userType = getUserType(userDetail);
         commissionOperationService.payOrganisationCommission(UserType.valueOf(userType),billerId,userName,token, amount); // log commission
        // 1. get the biller  2. find the biller commission 3. find the corporate user Id 4. compute the Percetage 5. credit the commission wallet
     }

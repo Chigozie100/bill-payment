@@ -9,7 +9,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
 import java.util.List;
 
 @FeignClient(name = "wallet-feign-client", url = "${app.config.wallet.base-url}")

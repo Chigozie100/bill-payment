@@ -183,12 +183,12 @@ public class CommissionOperationService {
 
     }
 
-    public MerchantCommissionTrackerDto saveMerchantCommission(MerchantCommissionTrackerDto request, String token) throws ThirdPartyIntegrationException {
+    public void saveMerchantCommission(MerchantCommissionTrackerDto request, String token) throws ThirdPartyIntegrationException {
         try {
             ResponseEntity<ApiResponseBody<MerchantCommissionTrackerDto>> responseEntity = commissionFeignClient.recordMerchantCommission(request,token);
             ApiResponseBody<MerchantCommissionTrackerDto> responseBody = responseEntity.getBody();
-            log.info("Billspyament::  in here saveMerchantCommission ::: " + responseBody.getData());
-            return responseBody.getData();
+            log.info("Billspyament::  in here saveMerchantCommission ::: " + Objects.requireNonNull(responseBody).getData());
+
         }catch (Exception exception){
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, exception.getMessage());
         }
@@ -239,6 +239,7 @@ public class CommissionOperationService {
         dto.put("initiator", userId);
         dto.put("category", "BILLS-PAYMENT-COMMISSION");
         dto.put("in_app_recipient", inAppRecipient.toString());
+        log.info(walletTransactionPojoList.toString());
 
 
         if (infoResponse.getStatus()){
@@ -257,8 +258,6 @@ public class CommissionOperationService {
     }
 
     private void emailNotification(OrganisationCommissionResponse response, String userId, TransferFromWalletPojo transfer, List<WalletTransactionPojo> walletTransactionPojoList, String token, ApiResponseBody<List<WalletTransactionPojo>> infoResponse) throws ThirdPartyIntegrationException {
-        List<String> inAppRecipient = new ArrayList<>();
-        inAppRecipient.add(userId);
 
         Map<String, String> map = new HashMap<>();
 
@@ -276,6 +275,8 @@ public class CommissionOperationService {
         }else{
             map.put("message", "Error Funding Merchant Commission Wallet");
         }
+
+        log.info(userId+walletTransactionPojoList.toString());
 
         notificationService.pushEMAIL(map, token);
     }

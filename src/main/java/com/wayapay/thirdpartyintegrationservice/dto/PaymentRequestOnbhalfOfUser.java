@@ -18,8 +18,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @ToString
-public class PaymentRequest {
-
+public class PaymentRequestOnbhalfOfUser {
     @ApiModelProperty(example = "Airtime")
     @NotBlank(message = "categoryId is required")
     private String categoryId;
@@ -29,7 +28,7 @@ public class PaymentRequest {
     private String billerId;
 
     @ApiModelProperty(example = "2011114160")
-    @NotBlank(message = "source wallet account number is required")
+    @NotBlank(message = "user account number is required")
     private String sourceWalletAccountNumber;
 
     @ApiModelProperty(example = "50")
@@ -57,5 +56,4 @@ public class PaymentRequest {
             "  ]")
     @NotEmpty(message = "No item provided, AtLeast provide an item for validation")
     private List<ParamNameValue> data = new ArrayList<>();
-
 }

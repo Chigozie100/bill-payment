@@ -78,20 +78,20 @@ app:
     dispute:
       base-url: ${DISPUTE_BASE:https://services.staging.wayabank.ng/complaint-service/dispute}
     wallet:
-      base-url: ${CONFIG_BASEURL_TWALLET:https://services.staging.wayabank.ng/temporal-service}
+      base-url: ${CONFIG_BASEURL_TWALLET:http://localhost:8066/temporal-service}
     auth:
-      base-url: ${CONFIG_BASEURL_AUTH:https://services.staging.wayabank.ng/auth-service}
+      base-url: ${CONFIG_BASEURL_AUTH:http://localhost:8091/auth-service}
     notification:
-      base-url: ${NOTIFICATION_BASE:https://services.staging.wayabank.ng/notification-service}
+      base-url: ${NOTIFICATION_BASE:http://localhost:8099/notification-service}
     log-service:
       base-url: ${CONFIG_BASEURL_LOGAUDIT:https://services.staging.wayabank.ng/logs-service}
     commission:
       base-url: ${COMMISSION_BASE:https://services.staging.wayabank.ng/commission-service}
     kafka:
       transaction-topic: ${TRANSACTION_TOPIC:transaction}
+      sell-bills-topic: ${SELL_BILLSPAYMENT_TOPIC:comm-for-selling-billspayment}
     referral:
       base-url: ${REFERRAL_SERVICE:https://services.staging.wayabank.ng/referral-service}
-
 feign:
   client:
     config:

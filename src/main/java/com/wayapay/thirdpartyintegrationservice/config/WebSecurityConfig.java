@@ -49,6 +49,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/","/actuator/**").permitAll()
                 .antMatchers("/api/v1/commission/get-transactions-by-referralCode/{referralCode}").permitAll()
                 .antMatchers("/api/v1/commission/update-transactions-status/{id}").permitAll()
+                .antMatchers("/api/v1/config/biller/sync-commission-billers").permitAll()
                 .antMatchers(SWAGGER_WHITELIST).permitAll()
 //                .antMatchers(HttpMethod.GET, API_V1+"/config/fee/**").hasRole("APP_ADMIN")
 //                .antMatchers(HttpMethod.POST, API_V1+"/config/fee/**").hasRole("APP_ADMIN")

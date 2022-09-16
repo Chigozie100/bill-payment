@@ -9,7 +9,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
 import java.util.List;
 
 @FeignClient(name = "wallet-feign-client", url = "${app.config.wallet.base-url}")
@@ -26,6 +25,15 @@ public interface WalletFeignClient {
 
     @GetMapping("/api/v1/wallet/default/{userId}") //  ===> returns single
     ResponseEntity<InfoResponse> getDefaultWallet(@PathVariable("userId") String userId, @RequestHeader("Authorization") String token);
+
+
+    ///api/v1/wallet/accounts/user/
+
+
+    ///temporal-service/api/v1/wallet/user-account/{accountNo}
+    @GetMapping("/api/v1/wallet/user-account/{accountNo}") //  ===> returns single
+    ResponseEntity<InfoResponse> getUserWallet(@PathVariable("accountNo") String accountNo, @RequestHeader("Authorization") String token);
+
 
     ///api/v1/wallet/event/charge/payment /api/v1/wallet/event/charge/payment
     @PostMapping(path="/api/v1/wallet/event/charge/payment")

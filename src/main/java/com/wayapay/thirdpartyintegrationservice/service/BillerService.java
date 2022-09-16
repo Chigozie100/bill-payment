@@ -2,18 +2,22 @@ package com.wayapay.thirdpartyintegrationservice.service;
 
 import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementRequest;
 import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponse;
+import com.wayapay.thirdpartyintegrationservice.dto.BillerManagementResponseExtended;
 import com.wayapay.thirdpartyintegrationservice.dto.BillerResponse;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.Biller;
 import com.wayapay.thirdpartyintegrationservice.repo.BillerRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
+import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseObj;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -100,6 +104,17 @@ public class BillerService {
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch all billers");
         }
     }
+
+    public ResponseEntity<ResponseObj<List<BillerManagementResponseExtended>>> getAllBillers() throws ThirdPartyIntegrationException {
+        try {
+            //Date timeStamp, boolean status, String message, T data
+            return ResponseEntity.ok(new ResponseObj<>(new Date(), true, "success", billerRepo.findAllBiller2()));
+        } catch (Exception exception) {
+            log.error("Unable to fetch all billers ",exception);
+            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch all billers");
+        }
+    }
+
 
     //toggle
     public SuccessResponse toggle(Long id) throws ThirdPartyIntegrationException {

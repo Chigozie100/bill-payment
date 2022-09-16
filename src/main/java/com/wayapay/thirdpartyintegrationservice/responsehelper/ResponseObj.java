@@ -1,6 +1,5 @@
 package com.wayapay.thirdpartyintegrationservice.responsehelper;
 
-import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 
 import java.util.Date;
 

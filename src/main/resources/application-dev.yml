@@ -82,7 +82,7 @@ app:
     auth:
       base-url: ${CONFIG_BASEURL_AUTH:https://services.staging.wayabank.ng/auth-service}
     notification:
-      base-url: ${NOTIFICATION_BASE:http://localhost:8099/notification-service}
+      base-url: ${NOTIFICATION_BASE:https://services.staging.wayabank.ng/notification-service}
     log-service:
       base-url: ${CONFIG_BASEURL_LOGAUDIT:https://services.staging.wayabank.ng/logs-service}
     commission:

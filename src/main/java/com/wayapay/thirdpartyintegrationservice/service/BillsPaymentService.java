@@ -310,7 +310,7 @@ public class BillsPaymentService {
                 notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
             } catch (ThirdPartyIntegrationException e) {
-                e.printStackTrace();
+                log.info("error"+e.getMessage());
             }
         });
     }
@@ -345,7 +345,7 @@ public class BillsPaymentService {
                         try {
                             getCommissionForMakingBillsPayment(userDetail, userName,token, paymentRequest.getAmount());
                         } catch (ThirdPartyIntegrationException e) {
-                            e.printStackTrace();
+                            log.info("error"+e.getMessage());
                         }
                     });
 
@@ -353,7 +353,7 @@ public class BillsPaymentService {
                         try {
                             calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
                         } catch (ThirdPartyIntegrationException e) {
-                            e.printStackTrace();
+                            log.info("error"+e.getMessage());
                         }
                     });
                 }
@@ -363,7 +363,7 @@ public class BillsPaymentService {
                     try {
                         operationService.logUserActivity(paymentRequest, buildMap(userName), token);
                     } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
+                        log.info("error"+e.getMessage());
                     }
                 });
 
@@ -408,7 +408,7 @@ public class BillsPaymentService {
                         notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
                     } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
+                        log.info("error"+e.getMessage());
                     }
                 });
 
@@ -418,7 +418,7 @@ public class BillsPaymentService {
                         try {
                             getCommissionForMakingBillsPayment(userDetail, userName,token, paymentRequest.getAmount());
                         } catch (ThirdPartyIntegrationException e) {
-                            e.printStackTrace();
+                            log.info("error"+e.getMessage());
                         }
                     });
                     Map<String, Object> map = new HashMap<>();
@@ -433,7 +433,7 @@ public class BillsPaymentService {
                         try {
                             commissionOperationService.pushToCommissionService(map);
                         } catch (JsonProcessingException e) {
-                            e.printStackTrace();
+                            log.info("error"+e.getMessage());
                         }
                     });
 
@@ -442,7 +442,7 @@ public class BillsPaymentService {
                             calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
 
                         } catch (ThirdPartyIntegrationException e) {
-                            e.printStackTrace();
+                            log.info("error"+e.getMessage());
                         }
                     });
                 }
@@ -455,7 +455,7 @@ public class BillsPaymentService {
                     try {
                         operationService.logUserActivity(paymentRequest, mapp, token);
                     } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
+                        log.info("error"+e.getMessage());
                     }
                 });
 

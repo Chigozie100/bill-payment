@@ -161,18 +161,7 @@ public class BillsPaymentService {
                     continue;
                 }
 
-                if (billerResponseListFromApi.isEmpty()){
-                    log.error("No biller returned by category => {} from aggregator => {}", category.getCategoryAggregatorCode(), category.getThirdParty().getThirdPartyNames());
-                    continue;
-                }
-
-                List<String> billerCodesFromAPI = billerResponseListFromApi.stream().map(BillerResponse::getBillerId).collect(Collectors.toList());
-                List<Biller> billerListNotInAPI = billerListFromDB.stream().filter(biller -> !billerCodesFromAPI.contains(biller.getBillerAggregatorCode())).collect(Collectors.toList());
-                billerService.deleteAll(billerListNotInAPI);
-
-                List<String> billerCodesFromDB = billerListFromDB.stream().map(Biller::getBillerAggregatorCode).collect(Collectors.toList());
-                List<Biller> newBillerListToBeSaved = billerResponseListFromApi.stream().filter(billerResponse -> !billerCodesFromDB.contains(billerResponse.getBillerId())).map(billerResponse -> new Biller(billerResponse.getBillerName(), billerResponse.getBillerId(), category)).collect(Collectors.toList());
-                billerService.saveAll(newBillerListToBeSaved);
+                extractCheckBillerList(category, billerListFromDB, billerResponseListFromApi, billerService);
             }
 
             log.info(SYNCED_SUCCESSFULLY);
@@ -180,6 +169,22 @@ public class BillsPaymentService {
             log.error("Unable to sync biller", exception);
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, ERROR_MESSAGE);
         }
+    }
+
+    static boolean extractCheckBillerList(Category category, List<Biller> billerListFromDB, List<BillerResponse> billerResponseListFromApi, BillerService billerService) {
+        if (billerResponseListFromApi.isEmpty()){
+            log.error("No biller returned by category => {} from aggregator => {}", category.getCategoryAggregatorCode(), category.getThirdParty().getThirdPartyNames());
+            return true;
+        }
+
+        List<String> billerCodesFromAPI = billerResponseListFromApi.stream().map(BillerResponse::getBillerId).collect(Collectors.toList());
+        List<Biller> billerListNotInAPI = billerListFromDB.stream().filter(biller -> !billerCodesFromAPI.contains(biller.getBillerAggregatorCode())).collect(Collectors.toList());
+        billerService.deleteAll(billerListNotInAPI);
+
+        List<String> billerCodesFromDB = billerListFromDB.stream().map(Biller::getBillerAggregatorCode).collect(Collectors.toList());
+        List<Biller> newBillerListToBeSaved = billerResponseListFromApi.stream().filter(billerResponse -> !billerCodesFromDB.contains(billerResponse.getBillerId())).map(billerResponse -> new Biller(billerResponse.getBillerName(), billerResponse.getBillerId(), category)).collect(Collectors.toList());
+        billerService.saveAll(newBillerListToBeSaved);
+        return false;
     }
 
 
@@ -278,33 +283,61 @@ public class BillsPaymentService {
          }else{ return TransactionCategory.TRANSFER.name();}
 
     }
+    private UserProfileResponse getUserProfileResponse(String userName, String token) throws ThirdPartyIntegrationException {
+       return operationService.getUserProfile(userName,token);
+    }
+    private String getTransactionID(){
+          return String.valueOf(CommonUtils.generatePaymentTransactionId());
+    }
+    private String getBillType(PaymentRequest paymentRequest){
+        return getCategoryName(paymentRequest.getCategoryId());
+    }
 
+    private PaymentResponse getPaymentResponse(PaymentRequest paymentRequest, BigDecimal fee, String transactionId, String userName) throws ThirdPartyIntegrationException {
+        return getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
+    }
+
+    private PaymentTransactionDetail getPaymentTransactionDetail(UserProfileResponse userProfileResponse, PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String transactionId, String userName) throws ThirdPartyIntegrationException {
+
+        return operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
+    }
+
+    private void sendSMS(PaymentRequest paymentRequest, PaymentTransactionDetail paymentTransactionDetail, String token,  PaymentResponse paymentResponse, UserProfileResponse userProfileResponse){
+        CompletableFuture.runAsync(() -> {
+            try {
+                String phoneNumber = extractPhone(paymentRequest);
+                userProfileResponse.setPhoneNumber(phoneNumber);
+                notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
+
+            } catch (ThirdPartyIntegrationException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+    private Map<String, String> buildMap(String userName){
+        Map<String,String> map = new HashMap<>();
+        map.put("message", "Making Bills Payment");
+        map.put("userId", userName);
+        map.put("module", "Bills Payment");
+        return map;
+    }
     public PaymentResponse processPaymentOnBehalfOfUser(PaymentRequest paymentRequest, String userName,String token) throws ThirdPartyIntegrationException {
-        UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
+        UserProfileResponse userProfileResponse = getUserProfileResponse(userName,token);
         //secure Payment
-        String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
+        String transactionId = getTransactionID();
 
-        String billType = getCategoryName(paymentRequest.getCategoryId());
+        String billType = getBillType(paymentRequest);
 
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
         if (operationService.secureFundAdmin(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType)){
             try {
-                PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
+                PaymentResponse paymentResponse = getPaymentResponse(paymentRequest,fee,transactionId,userName);
                 //store the transaction information
-                PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
+                PaymentTransactionDetail paymentTransactionDetail = getPaymentTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
 
-                CompletableFuture.runAsync(() -> {
-                    try {
-                        String phoneNumber = extractPhone(paymentRequest);
-                        userProfileResponse.setPhoneNumber(phoneNumber);
-                        notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
-
-                    } catch (ThirdPartyIntegrationException e) {
-                        e.printStackTrace();
-                    }
-                });
+                sendSMS(paymentRequest, paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
                 UserDetail userDetail = profileDetailsService.getUser(token);
                 if (userDetail.getCorporate()){
@@ -325,13 +358,10 @@ public class BillsPaymentService {
                     });
                 }
 
-                Map<String,String> map = new HashMap<>();
-                map.put("message", "Making Bills Payment");
-                map.put("userId", userName);
-                map.put("module", "Bills Payment");
+
                 CompletableFuture.runAsync(() -> {
                     try {
-                        operationService.logUserActivity(paymentRequest, map, token);
+                        operationService.logUserActivity(paymentRequest, buildMap(userName), token);
                     } catch (ThirdPartyIntegrationException e) {
                         e.printStackTrace();
                     }
@@ -350,6 +380,8 @@ public class BillsPaymentService {
         log.error("Unable to secure fund from user's wallet");
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
+
+
 
 
 
@@ -406,33 +438,39 @@ public class BillsPaymentService {
                             e.printStackTrace();
                         }
                     });
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("userDetail", userDetail);
+                    map.put("billerId", paymentRequest.getBillerId());
+                    map.put("userName", userName);
+                    map.put("categoryCode", paymentRequest.getCategoryId());
+                    map.put("amount", paymentRequest.getAmount());
+
+                    // push to kafka topic
+                    CompletableFuture.runAsync(() -> {
+                        try {
+                            commissionOperationService.pushToCommissionService(map);
+                        } catch (JsonProcessingException e) {
+                            e.printStackTrace();
+                        }
+                    });
 
                     CompletableFuture.runAsync(() -> {
                         try {
-                            Map<String, Object> map = new HashMap<>();
-                            map.put("userDetail", userDetail);
-                            map.put("billerId", paymentRequest.getBillerId());
-                            map.put("userName", userName);
-                            map.put("categoryCode", paymentRequest.getCategoryId());
-                            map.put("amount", paymentRequest.getAmount());
-
-                            // push to kafka topic
-                            commissionOperationService.pushToCommissionService(map);
                             calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount());
 
-                        } catch (ThirdPartyIntegrationException | JsonProcessingException e) {
+                        } catch (ThirdPartyIntegrationException e) {
                             e.printStackTrace();
                         }
                     });
                 }
 
-                Map<String,String> map = new HashMap<>();
-                map.put("message", "Making Bills Payment");
-                map.put("userId", userName);
-                map.put("module", "Bills Payment");
+                Map<String,String> mapp = new HashMap<>();
+                mapp.put("message", "Making Bills Payment");
+                mapp.put("userId", userName);
+                mapp.put("module", "Bills Payment");
                 CompletableFuture.runAsync(() -> {
                     try {
-                        operationService.logUserActivity(paymentRequest, map, token);
+                        operationService.logUserActivity(paymentRequest, mapp, token);
                     } catch (ThirdPartyIntegrationException e) {
                         e.printStackTrace();
                     }
@@ -524,16 +562,21 @@ public class BillsPaymentService {
     }
 
 
+
     public Map<String, Object> search(String username, int pageNumber, int pageSize){
-        Pageable paging = getPageable(pageNumber, pageSize);
+
         Page<TransactionDetail> transactionDetailPage;
         List<TransactionDetail> transactionDetailList;
 
         if (CommonUtils.isEmpty(username)){
-            transactionDetailPage = paymentTransactionRepo.getAllTransaction(paging);
+            transactionDetailPage = paymentTransactionRepo.getAllTransaction(getPageable(pageNumber, pageSize));
             transactionDetailList = transactionDetailPage.getContent();
             return getTransactionMap(transactionDetailList,transactionDetailPage);
         }
+
+        Map<String, Object> mm = getPager( null,  pageNumber,  pageSize);
+        Pageable paging = (Pageable)  mm.get("paging");
+
         transactionDetailPage = paymentTransactionRepo.getAllTransactionByUsername(username, paging);
 
         transactionDetailList = transactionDetailPage.getContent();
@@ -555,7 +598,7 @@ public class BillsPaymentService {
         return  response;
     }
 
-    public Map<String, Object> searchByReferralCode(String referralCode, int page, int size){
+    private Map<String, Object> getPager(String referralCode, int page, int size){
         Pageable paging = getPageable(page, size);
         Page<TransactionDetail> transactionDetailPage;
         List<TransactionDetail> transactionDetailList;
@@ -565,8 +608,19 @@ public class BillsPaymentService {
             transactionDetailList = transactionDetailPage.getContent();
             return getTransactionMap(transactionDetailList,transactionDetailPage);
         }
+        Map<String, Object> mm = new HashMap<>();
+        mm.put("paging", paging);
+        return mm;
 
-        transactionDetailPage = paymentTransactionRepo.getAllTransactionByReferralCode(referralCode, paging);
+    }
+
+    public Map<String, Object> searchByReferralCode(String referralCode, int page, int size){
+
+        Map<String, Object> mm = getPager( referralCode,  page,  size);
+        Pageable paging = (Pageable)  mm.get("paging");
+        Page<TransactionDetail> transactionDetailPage;
+        List<TransactionDetail>  transactionDetailList;
+        transactionDetailPage = paymentTransactionRepo.getAllTransactionByReferralCode(referralCode,paging);
 
         transactionDetailList = transactionDetailPage.getContent();
 

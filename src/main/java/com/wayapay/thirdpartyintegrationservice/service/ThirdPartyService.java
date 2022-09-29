@@ -64,7 +64,6 @@ public class ThirdPartyService {
 
 
         // auto enable all the biller under this aggregator
-
         return new SuccessResponse(thirdParty.isActive() ? "successfully activated" : "successfully deactivated", new ThirdPartyResponse(thirdParty.getId(), thirdParty.getThirdPartyNames(), thirdParty.isActive()));
     }
 
@@ -73,56 +72,73 @@ public class ThirdPartyService {
 
         for (ThirdParty third: list){
             ThirdParty thirdParty2 = thirdPartyRepo.findById(third.getId()).orElse(null);
-            thirdParty2.setActive(false);
-            thirdPartyRepo.save(thirdParty2);
-            deactivateCategory(thirdParty2.getId());
+            if(thirdParty2 !=null){
+                thirdParty2.setActive(true);
+                thirdPartyRepo.save(thirdParty2);
+                deactivateCategory(thirdParty2.getId());
+            }
         }
-
     }
 
+    private List<Category> getCategory(){
+        return new ArrayList<>();
+    }
+
+    private  List<Category> getThirdParties(Long thirdParty){
+        return categoryRepo.findAllByAggregator(thirdParty);
+    }
     private void deactivateCategory(Long thirdParty){
-        System.out.println("inside deactivateCategory " + thirdParty);
-        List<Category> newList = new ArrayList<>();
-        List<Category> thirdParties = categoryRepo.findAllByAggregator(thirdParty);
+        List<Category> newList = getCategory();
+        List<Category> thirdParties = getThirdParties(thirdParty);
         for (Category data: thirdParties){
             Category category = categoryRepo.findById(data.getId()).orElse(null);
-            category.setActive(false);
-            categoryRepo.save(category);
-            newList.add(category);
+            if(category !=null){
+                category.setActive(true);
+                categoryRepo.save(category);
+                newList.add(category);
+            }
+
         }
         deactivateBillers(newList);
     }
     private void deactivateBillers(List<Category> newList){
-        System.out.println("inside deactivateBillers " + newList);
         for (Category data: newList){
             getBillers(data.getId());
         }
     }
 
+    private List<Biller> getBills(Long category){
+        return billerRepo.findAllByCategoryId(category);
+    }
+
     private void getBillers(Long category){
-        System.out.println("inside getBillers " + category);
-        List<Biller> billers = billerRepo.findAllByCategoryId(category);
+        List<Biller> billers = getBills(category);
         for (Biller data: billers){
             Biller biller = billerRepo.findById(data.getId()).orElse(null);
-            biller.setActive(false);
-            billerRepo.save(biller);
+            if(biller !=null){
+                biller.setActive(true);
+                billerRepo.save(biller);
+            }
         }
     }
 
     private void activateCategory(Long thirdParty){
-        System.out.println("inside activateCategory " + thirdParty);
+
         List<Category> newList = new ArrayList<>();
         List<Category> thirdParties = categoryRepo.findAllByAggregator(thirdParty);
         for (Category data: thirdParties){
             Category category = categoryRepo.findById(data.getId()).orElse(null);
-            category.setActive(true);
-            categoryRepo.save(category);
-            newList.add(category);
+            if (category !=null){
+                category.setActive(true);
+                categoryRepo.save(category);
+                newList.add(category);
+            }
+
         }
         activateBillers(newList);
     }
     private void activateBillers(List<Category> newList){
-        System.out.println("inside activateBillers " + newList);
+
         for (Category data: newList){
             getBillersForActivation(data.getId());
         }
@@ -133,12 +149,13 @@ public class ThirdPartyService {
         List<Biller> billers = billerRepo.findAllByCategoryId(category);
         for (Biller data: billers){
             Biller biller = billerRepo.findById(data.getId()).orElse(null);
-            biller.setActive(true);
-            billerRepo.save(biller);
+            if(biller !=null){
+                biller.setActive(true);
+                billerRepo.save(biller);
+            }
+
         }
     }
-
-
 
     //sync
     public SuccessResponse syncAggregator() throws ThirdPartyIntegrationException {

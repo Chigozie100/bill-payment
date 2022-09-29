@@ -1,14 +1,7 @@
 package com.wayapay.thirdpartyintegrationservice.service.profile;
 
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import javax.persistence.Column;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import java.util.Date;
 import java.util.UUID;
 
 @Data

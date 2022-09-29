@@ -56,43 +56,6 @@ public class CommissionOperationService {
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
         }
     }
-//
-//    // method to pay
-//    public TransactionRequest payUserCommission(UserType userType, String token, String username) throws ThirdPartyIntegrationException {
-//        log.info("UserType ::: " + userType);
-//        String transactionId = CommonUtils.generatePaymentTransactionId();
-//
-//        UserCommissionDto userCommissionDto = findUserCommission(userType,token);   // get Commission Value For the Customer Type
-//
-//        NewWalletResponse wayCommissionResponse = getUserCommissionWallet(username,token); // get user commission
-//
-//        TransferFromWalletPojo trans = new TransferFromWalletPojo();
-//        trans.setAmount(userCommissionDto.getCommissionValue());
-//        trans.setCustomerAccountNumber(wayCommissionResponse.getAccountNo()); // customer wallet ID
-//        trans.setEventId(EventCharges.COMPAYM.name());
-//        trans.setPaymentReference(transactionId);
-//        trans.setTranCrncy("NGN");
-//        trans.setTranNarration("COMMISSION-PAYMENT-TRANSACTION");
-//
-//        try{
-//            log.info("BillsPayment:Commission {} Sending data to Commission Service loading .....");
-//            TransactionRequest transactionRequest =  new TransactionRequest();
-//
-//            walletService.walletTransfer(trans,token);
-//
-//            PaymentTransactionDetail paymentTransactionDetail = new PaymentTransactionDetail();
-//            paymentTransactionDetail.setAmount(BigDecimal.valueOf(0.0));
-//            paymentTransactionDetail.setPaymentRequest(CommonUtils.objectToJson(trans).orElse(""));
-//            paymentTransactionDetail.setPaymentResponse(CommonUtils.objectToJson(null).orElse(""));
-//
-//           // notificationService.pushINAPP(paymentTransactionDetail, token, null, trans.toString());
-//
-//            log.info("BillsPayment:Commission {} Done sending data .....");    // register under commission history
-//            return transactionRequest;
-//        }catch (Exception ex){
-//            throw new ThirdPartyIntegrationException(HttpStatus.MULTI_STATUS, Constants.ERROR_MESSAGE);
-//        }
-//    }
 
     private BigDecimal computePercentage(BigDecimal amount, BigDecimal percentageValue){
         BigDecimal per = BigDecimal.valueOf(percentageValue.doubleValue() / 100);

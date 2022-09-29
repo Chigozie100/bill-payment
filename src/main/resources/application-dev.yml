@@ -37,9 +37,9 @@ server:
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_SERVER_URL:https://services.staging.wayabank.ng/eureka}
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost/eureka}
     service-url:
-      default-zone: ${EUREKA_SERVER_URL:https://services.staging.wayabank.ng/eureka}
+      default-zone: ${EUREKA_SERVER_URL:http://localhost/eureka}
   register-with-eureka: false
   fetch-registry: false
   instance:
@@ -82,7 +82,7 @@ app:
     auth:
       base-url: ${CONFIG_BASEURL_AUTH:http://localhost:8091/auth-service}
     notification:
-      base-url: ${NOTIFICATION_BASE:http://localhost:8099/notification-service}
+      base-url: ${NOTIFICATION_BASE:https://services.staging.wayabank.ng/notification-service}
     log-service:
       base-url: ${CONFIG_BASEURL_LOGAUDIT:https://services.staging.wayabank.ng/logs-service}
     commission:

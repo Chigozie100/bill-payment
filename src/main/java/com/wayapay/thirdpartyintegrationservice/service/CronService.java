@@ -64,18 +64,8 @@ public class CronService {
                     continue;
                 }
 
-                if (billerResponseListFromApi.isEmpty()){
-                    log.error("No biller returned by category => {} from aggregator => {}", category.getCategoryAggregatorCode(), category.getThirdParty().getThirdPartyNames());
+                if (BillsPaymentService.extractCheckBillerList(category, billerListFromDB, billerResponseListFromApi, billerService))
                     continue;
-                }
-
-                List<String> billerCodesFromAPI = billerResponseListFromApi.stream().map(BillerResponse::getBillerId).collect(Collectors.toList());
-                List<Biller> billerListNotInAPI = billerListFromDB.stream().filter(biller -> !billerCodesFromAPI.contains(biller.getBillerAggregatorCode())).collect(Collectors.toList());
-                billerService.deleteAll(billerListNotInAPI);
-
-                List<String> billerCodesFromDB = billerListFromDB.stream().map(Biller::getBillerAggregatorCode).collect(Collectors.toList());
-                List<Biller> newBillerListToBeSaved = billerResponseListFromApi.stream().filter(billerResponse -> !billerCodesFromDB.contains(billerResponse.getBillerId())).map(billerResponse -> new Biller(billerResponse.getBillerName(), billerResponse.getBillerId(), category)).collect(Collectors.toList());
-                billerService.saveAll(newBillerListToBeSaved);
             }
 
             log.info(SYNCED_SUCCESSFULLY);

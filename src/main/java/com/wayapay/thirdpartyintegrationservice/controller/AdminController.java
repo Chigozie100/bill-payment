@@ -14,7 +14,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.mapper.Mapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
@@ -42,20 +41,7 @@ public class AdminController {
     private final OperationService operationService;
     private final QuickTellerService iThirdPartyService;
     private final ModelMapper modelMapper;
-//    @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction report", position = 8)
-//    @ApiResponses(value = {
-//            @ApiResponse(code = 200, message = "Successful")
-//    })
-//    @GetMapping("/biller/report/transaction/{transaction_id}")
-//    public ResponseEntity<ResponseHelper> getTransactionReportByTransactionId(@PathVariable String transaction_id) throws ThirdPartyIntegrationException {
-//
-//        TransactionDetail transactionDetailPage = billsPaymentService.searchTransactionByTransactionID(transaction_id);
-//        return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
-//    }
 
-    // faild transactions
-    // get all failed transaction
-    // get all successful transaction
 
     @ApiOperation(value = "Get Transaction Status Report : This API is used to get all transaction report failed or successful")
     @ApiResponses(value = {

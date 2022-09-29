@@ -340,7 +340,7 @@ public class BillsPaymentService {
                 sendSMS(paymentRequest, paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
                 UserDetail userDetail = profileDetailsService.getUser(token);
-                if (userDetail.getCorporate()){
+                if (userDetail.isCorporate()){
                     CompletableFuture.runAsync(() -> {
                         try {
                             getCommissionForMakingBillsPayment(userDetail, userName,token, paymentRequest.getAmount());
@@ -401,23 +401,6 @@ public class BillsPaymentService {
                 //store the transaction information
                 PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
 
-                // call the receipt service
-//                CompletableFuture.runAsync(() -> {
-//                    try {
-//                        notificationService.pushINAPP2(userName,paymentTransactionDetail,paymentResponse,token);
-//                    } catch (ThirdPartyIntegrationException e) {
-//                        e.printStackTrace();
-//                    }
-//                });
-
-//                CompletableFuture.runAsync(() -> {
-//                    try {
-//                        Map<String, String> map = emailMessageBuilder(paymentResponse,paymentTransactionDetail,userProfileResponse);
-//                        notificationService.pushEMAIL(map,token);
-//                    } catch (ThirdPartyIntegrationException e) {
-//                        e.printStackTrace();
-//                    }
-//                });
                 CompletableFuture.runAsync(() -> {
                     try {
                         String phoneNumber = extractPhone(paymentRequest);
@@ -430,7 +413,7 @@ public class BillsPaymentService {
                 });
 
                 UserDetail userDetail = profileDetailsService.getUser(token);
-                if (userDetail.getCorporate()){
+                if (userDetail.isCorporate()){
                     CompletableFuture.runAsync(() -> {
                         try {
                             getCommissionForMakingBillsPayment(userDetail, userName,token, paymentRequest.getAmount());

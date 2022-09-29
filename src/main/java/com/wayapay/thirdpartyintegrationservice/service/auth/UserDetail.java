@@ -23,6 +23,6 @@ public class UserDetail {
     private String emailVerified;
     private String pinCreated;
     private List<String> roles;
-    private Boolean corporate;
+    private boolean corporate;
 
 }

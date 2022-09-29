@@ -89,36 +89,6 @@ public class NotificationService {
 
     }
 
-    public void pushINAPP2(String userId, PaymentTransactionDetail paymentTransactionDetail, PaymentResponse paymentResponse,  String token) throws ThirdPartyIntegrationException {
-        // InAppEvent inAppEvent = buildInAppNotificationObject(map, token, EventType.IN_APP);
-
-        InAppEvent appEvent = new InAppEvent();
-        InAppPayload data = new InAppPayload();
-        data.setMessage(formatMessageSMS(paymentResponse, paymentTransactionDetail));
-        InAppRecipient appRecipient = new InAppRecipient();
-        appRecipient.setUserId(Objects.requireNonNullElse(userId, "0"));
-
-        List<InAppRecipient> addUserId = new ArrayList<>();
-        addUserId.add(appRecipient);
-
-        data.setUsers(addUserId);
-        appEvent.setData(data);
-
-        appEvent.setEventType("IN_APP");
-        appEvent.setCategory("BILLS-PAYMENT");
-        appEvent.setToken("token");
-        appEvent.setInitiator(Objects.requireNonNullElse(userId, "0"));
-
-        log.info("INAPP : " + appEvent);
-
-        try {
-            sendInAppNotification(appEvent, token);
-        }catch (ThirdPartyIntegrationException ex){
-            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
-        }
-
-    }
-
     public void pushINAPP(Map<String, String> map, String token) throws ThirdPartyIntegrationException {
         InAppEvent inAppEvent = buildInAppNotificationObject(map, token, EventType.IN_APP);
         try {
@@ -217,7 +187,7 @@ public class NotificationService {
     }
 
     public String formatMessageSMS(PaymentResponse paymentResponse, PaymentTransactionDetail paymentTransactionDetail){
-        String msg = null;
+        String msg = "message";
         String name = null;
         List<ParamNameValue> valueList = paymentResponse.getData();
         for (ParamNameValue paramNameValue : valueList) {

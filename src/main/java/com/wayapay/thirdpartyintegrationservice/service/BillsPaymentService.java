@@ -297,7 +297,7 @@ public class BillsPaymentService {
         return getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
     }
 
-    private PaymentTransactionDetail getPaymentTransactionDetail(UserProfileResponse userProfileResponse, PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String transactionId, String userName) throws ThirdPartyIntegrationException {
+    private PaymentTransactionDetail getPaymentTransactionDetail(UserProfileResponse userProfileResponse, PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId) throws ThirdPartyIntegrationException {
 
         return operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
     }

@@ -75,6 +75,7 @@ public class QuickTellerService implements IThirdPartyService {
         } catch (Exception exception) {
             log.error("Exception occurred while trying to fetch the header : ", exception);
         }
+        appConfig.getQuickteller().getTerminalId();
         return new HashMap<>();
     }
 
@@ -153,7 +154,7 @@ public class QuickTellerService implements IThirdPartyService {
         Optional<GetBillerPaymentItemResponse> billerPaymentItemsResponseOptional = Optional.empty();
         try {
             Map<String, String> headers = generateHeader(HttpMethod.GET, appConfig.getQuickteller().getBaseUrl() + appConfig.getQuickteller().getBillerPaymentItemUrl().replace("{billerId}", billerId));
-            billerPaymentItemsResponseOptional = Optional.of(feignClient.getBillerPaymentItems(billerId, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers)));
+            billerPaymentItemsResponseOptional = Optional.of(feignClient.getBillerPaymentItems(billerId, getAuthorisation(headers), getSignature(headers), getNonce(headers), getTimeStamp(headers), getSignatureMethod(headers), appConfig.getQuickteller().getTerminalId()));
         } catch (FeignException e) {
             log.error("Unable to fetch billers paymentitems, billerId is => {} from interswitch ", billerId, e);
         }

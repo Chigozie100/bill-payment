@@ -112,7 +112,6 @@ public class OperationService {
     private void checkAccountBalance(NewWalletResponse mainWalletResponse, BigDecimal amount) throws ThirdPartyIntegrationException {
        if (mainWalletResponse.getClr_bal_amt() < amount.doubleValue())
         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.INSUFFICIENT_FUND);
-
     }
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)

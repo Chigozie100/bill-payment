@@ -22,7 +22,7 @@ public class DisputeService {
 
     @Async
     @AuditPaymentOperation(stage = Stage.LOG_AS_DISPUTE, status = Status.END)
-    public Boolean logTransactionAsDispute(String username, Object request, ThirdPartyNames thirdPartyName,
+    public void logTransactionAsDispute(String username, Object request, ThirdPartyNames thirdPartyName,
                                         String billerId, String categoryId, BigDecimal amount, BigDecimal fee, String transactionId){
         DisputeRequest disputeRequest = new DisputeRequest();
         disputeRequest.setUserId(username);
@@ -35,10 +35,10 @@ public class DisputeService {
         try {
             DisputeResponse disputeResponse = disputeServiceFeignClient.logTransactionAsDispute(disputeRequest);
             log.info("Response from dispute service -> {}", disputeResponse);
-            return true;
+
         } catch (Exception e) {
             log.error("Unable log transaction for dispute ", e);
-            return false;
+
         }
     }
 

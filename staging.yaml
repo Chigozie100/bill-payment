@@ -31,6 +31,9 @@ spec:
       containers:
       - name: bill-payment-service
         image: 863852973330.dkr.ecr.eu-west-2.amazonaws.com/bill-payment-service:imgtag
+        resources:
+          requests:
+            memory: "200Mi"
         envFrom:
         - configMapRef:
             name: common-services-config
@@ -42,7 +45,9 @@ spec:
           mountPath: "/app/application-cfgprofile.yml"  # "secret-file" file will be created in "/app" directory
           subPath: application.yml
         - name: tz-lagos
-          mountPath: /etc/localtime  
+          mountPath: /etc/localtime
+      nodeSelector:
+        node.kubernetes.io/description: cfgprofile  
       volumes:
         - name: config-file
           secret:

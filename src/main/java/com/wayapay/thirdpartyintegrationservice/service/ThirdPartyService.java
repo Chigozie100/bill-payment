@@ -52,31 +52,48 @@ public class ThirdPartyService {
 
     //toggle
     public SuccessResponse toggle(Long id) throws ThirdPartyIntegrationException {
-        deactivateOthers();
+        // get the current status of the biller
         if (Objects.isNull(id)){
             throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ID_IS_REQUIRED);
         }
 
+        deactivateOthers(id);
+
         ThirdParty thirdParty = thirdPartyRepo.findById(id).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ID_IS_UNKNOWN));
-        thirdParty.setActive(!thirdParty.isActive());
-        thirdParty = thirdPartyRepo.save(thirdParty);
-        activateCategory(thirdParty.getId());
+
+        System.out.println("Original ====> thirdParty :: "  + thirdParty);
+
+        if(thirdParty.isActive()){
+            thirdParty.setActive(!thirdParty.isActive());
+        }else{
+            thirdParty.setActive(true);
+        }
+
+        ThirdParty thirdParty1 = thirdPartyRepo.save(thirdParty);
+
+        System.out.println("Current thirdParty :: "  + thirdParty1);
+        activateCategory(thirdParty1.getId());
+
+
 
 
         // auto enable all the biller under this aggregator
-        return new SuccessResponse(thirdParty.isActive() ? "successfully activated" : "successfully deactivated", new ThirdPartyResponse(thirdParty.getId(), thirdParty.getThirdPartyNames(), thirdParty.isActive()));
+        return new SuccessResponse(thirdParty1.isActive() ? "successfully activated" : "successfully deactivated", new ThirdPartyResponse(thirdParty1.getId(), thirdParty1.getThirdPartyNames(), thirdParty1.isActive()));
     }
 
-    private void deactivateOthers(){
+    private void deactivateOthers(Long id){
         List<ThirdParty> list = thirdPartyRepo.findAllActiveAggregators();
 
         for (ThirdParty third: list){
-            ThirdParty thirdParty2 = thirdPartyRepo.findById(third.getId()).orElse(null);
-            if(thirdParty2 !=null){
-                thirdParty2.setActive(true);
-                thirdPartyRepo.save(thirdParty2);
-                deactivateCategory(thirdParty2.getId());
+            if(!id.equals(third.getId())){
+                ThirdParty thirdParty2 = thirdPartyRepo.findById(third.getId()).orElse(null);
+                if(thirdParty2 !=null){
+                    thirdParty2.setActive(!thirdParty2.isActive());
+                    thirdPartyRepo.save(thirdParty2);
+                    deactivateCategory(thirdParty2.getId());
+                }
             }
+
         }
     }
 
@@ -87,13 +104,14 @@ public class ThirdPartyService {
     private  List<Category> getThirdParties(Long thirdParty){
         return categoryRepo.findAllByAggregator(thirdParty);
     }
+
     private void deactivateCategory(Long thirdParty){
         List<Category> newList = getCategory();
         List<Category> thirdParties = getThirdParties(thirdParty);
         for (Category data: thirdParties){
             Category category = categoryRepo.findById(data.getId()).orElse(null);
             if(category !=null){
-                category.setActive(true);
+                category.setActive(!category.isActive());
                 categoryRepo.save(category);
                 newList.add(category);
             }
@@ -116,7 +134,7 @@ public class ThirdPartyService {
         for (Biller data: billers){
             Biller biller = billerRepo.findById(data.getId()).orElse(null);
             if(biller !=null){
-                biller.setActive(true);
+                biller.setActive(!biller.isActive());
                 billerRepo.save(biller);
             }
         }

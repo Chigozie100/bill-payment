@@ -1,2 +1,4 @@
-package com.wayapay.thirdpartyintegrationservice.config;public class RedisConfig {
+package com.wayapay.thirdpartyintegrationservice.config;
+
+public class RedisConfig {
 }

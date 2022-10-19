@@ -57,7 +57,7 @@ public class ThirdPartyService {
             throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ID_IS_REQUIRED);
         }
 
-        deactivateOthers(id);
+
 
         ThirdParty thirdParty = thirdPartyRepo.findById(id).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ID_IS_UNKNOWN));
 
@@ -74,21 +74,20 @@ public class ThirdPartyService {
         System.out.println("Current thirdParty :: "  + thirdParty1);
         activateCategory(thirdParty1.getId());
 
-
-
+        deactivateOthers(id,thirdParty1.isActive());
 
         // auto enable all the biller under this aggregator
         return new SuccessResponse(thirdParty1.isActive() ? "successfully activated" : "successfully deactivated", new ThirdPartyResponse(thirdParty1.getId(), thirdParty1.getThirdPartyNames(), thirdParty1.isActive()));
     }
 
-    private void deactivateOthers(Long id){
+    private void deactivateOthers(Long id, boolean status){
         List<ThirdParty> list = thirdPartyRepo.findAllActiveAggregators();
 
         for (ThirdParty third: list){
             if(!id.equals(third.getId())){
                 ThirdParty thirdParty2 = thirdPartyRepo.findById(third.getId()).orElse(null);
                 if(thirdParty2 !=null){
-                    thirdParty2.setActive(!thirdParty2.isActive());
+                    thirdParty2.setActive(false);
                     thirdPartyRepo.save(thirdParty2);
                     deactivateCategory(thirdParty2.getId());
                 }
@@ -111,7 +110,7 @@ public class ThirdPartyService {
         for (Category data: thirdParties){
             Category category = categoryRepo.findById(data.getId()).orElse(null);
             if(category !=null){
-                category.setActive(!category.isActive());
+                category.setActive(false);
                 categoryRepo.save(category);
                 newList.add(category);
             }
@@ -134,7 +133,7 @@ public class ThirdPartyService {
         for (Biller data: billers){
             Biller biller = billerRepo.findById(data.getId()).orElse(null);
             if(biller !=null){
-                biller.setActive(!biller.isActive());
+                biller.setActive(false);
                 billerRepo.save(biller);
             }
         }

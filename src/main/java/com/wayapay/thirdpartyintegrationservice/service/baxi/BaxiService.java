@@ -31,12 +31,13 @@ import static com.wayapay.thirdpartyintegrationservice.service.baxi.BillerCatego
 @Service
 public class BaxiService implements IThirdPartyService {
 
-    private AppConfig appConfig;
-    private BaxiFeignClient feignClient;
+    private final AppConfig appConfig;
+    private final BaxiFeignClient feignClient;
     private static final String SUCCESS_RESPONSE_CODE = "200";
     private static final String AMOUNT = "amount";
     private static final String PHONE = "phone";
     private static final String ACCOUNT_NUMBER = "account_number";
+    private static final String WALLET_FUNDING = "WALLET_FUNDING";
 
     @Autowired
     TransactionLogRepository transactionLogRepository;
@@ -112,6 +113,8 @@ public class BaxiService implements IThirdPartyService {
                 return getAirtimePaymentItems(categoryId, billerId);
             case DATABUNDLE:
                 return getDataBundlePaymentItems(categoryId, billerId);
+            case SPECTRANET:
+                return getSpectranetBundlePaymentItems(categoryId, billerId);
             case CABLETV:
                 return getCableTvPaymentItems(categoryId, billerId);
             case ELECTRICITY:
@@ -125,21 +128,31 @@ public class BaxiService implements IThirdPartyService {
 
     @Override
     public CustomerValidationResponse validateCustomerValidationFormByBiller(CustomerValidationRequest request) throws ThirdPartyIntegrationException {
+        System.out.println("START :: " + request);
+
         if (CommonUtils.isEmpty(request.getCategoryId()) || CommonUtils.isEmpty(request.getBillerId())){
             log.error("categoryId => {} or billerId => {} is empty/null ", request.getCategoryId(), request.getBillerId());
             throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Invalid category or biller provided");
         }
+
 
         switch (request.getCategoryId()){
             case AIRTIME:
             case DATABUNDLE:
             case EPIN:
                 return new CustomerValidationResponse(request.getCategoryId(), request.getBillerId());
+            case SPECTRANET:
+                return validateSpectranet(request);
+            case BETTING:
+                return validateBetting(request);
             case CABLETV:
                 return validateCableTv(request);
             case ELECTRICITY:
                 return validateElectricity(request);
             default:
+                if(request.getBillerId() !=null){
+                    return validateSpectranet(request);
+                }
                 throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Invalid CategoryId provided");
         }
     }
@@ -164,10 +177,24 @@ public class BaxiService implements IThirdPartyService {
                 return cableTvPayment(request, transactionId);
             case ELECTRICITY:
                 return electricityPayment(request, transactionId);
+            case BETTING:
+                return bettingPayment(request, transactionId);
+            // betway
             default:
                 throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Invalid CategoryId provided");
         }
 
+    }
+
+    public Object reQueryTransaction(String agentReference){
+        Optional<Object> reQueryTransaction = Optional.empty();
+        try {
+            reQueryTransaction = Optional.of(feignClient.reQueryTransaction(appConfig.getBaxi().getXApiKey(), agentReference));
+            System.out.println("electricPaymentResponseOptional ;;;;" + reQueryTransaction);
+        } catch (FeignException e) {
+            log.error("Unable to process customer epin payment via baxi ", e);
+        }
+        return reQueryTransaction;
     }
 
     @Override
@@ -203,6 +230,7 @@ public class BaxiService implements IThirdPartyService {
         electricPaymentRequest.setAgentReference(transactionId);
         electricPaymentRequest.setAmount(String.valueOf(request.getAmount()));
         electricPaymentRequest.setService_type(request.getBillerId());
+        electricPaymentRequest.setMetadata("");
         request.getData().forEach(paramNameValue -> {
             if (ACCOUNT_NUMBER.equals(paramNameValue.getName())){ electricPaymentRequest.setAccount_number(paramNameValue.getValue()); }
             if (PHONE.equals(paramNameValue.getName())){ electricPaymentRequest.setPhone(paramNameValue.getValue()); }
@@ -270,17 +298,27 @@ public class BaxiService implements IThirdPartyService {
         String tranID = getCustomRefCode(transactionId);
         CablePaymentRequest cablePaymentRequest = new CablePaymentRequest();
         request.getData().forEach(paramNameValue -> {
-            if ("plan".equals(paramNameValue.getName())){ cablePaymentRequest.setProduct_code(paramNameValue.getValue()); }
-            if ("smartcard_number".equals(paramNameValue.getName())){ cablePaymentRequest.setSmartcard_number(paramNameValue.getValue()); }
+            if ("plan".equals(paramNameValue.getName())){ cablePaymentRequest.setProductCode(paramNameValue.getValue()); }
+            if ("smartcard_number".equals(paramNameValue.getName())){ cablePaymentRequest.setSmartcardNumber(paramNameValue.getValue()); }
+            if ("phone".equals(paramNameValue.getName())){ cablePaymentRequest.setPhone(paramNameValue.getValue()); }
+            if ("product_monthsPaidFor".equals(paramNameValue.getName())){ cablePaymentRequest.setProductMonthsPaidFor(paramNameValue.getValue()); }
+
         });
+
+        cablePaymentRequest.setAgentId(appConfig.getBaxi().getAgentCode());
+        cablePaymentRequest.setAgentReference(tranID);
+        cablePaymentRequest.setServiceType(request.getBillerId());
+        cablePaymentRequest.setTotalAmount(String.valueOf(request.getAmount()));
+
         logTransactionCableTv(cablePaymentRequest, String.valueOf(request.getAmount()), tranID);
 
-        String cableTvAddons = getCableTvAddons(request);
+      //  String cableTvAddons = getCableTvAddons(request);
 
         Optional<CablePaymentResponse> cablePaymentResponseOptional = Optional.empty();
         String errorMessage = null;
         try {
-            cablePaymentResponseOptional = Optional.of(feignClient.cableTvPayment(appConfig.getBaxi().getXApiKey(), cablePaymentRequest.getSmartcard_number(), String.valueOf(request.getAmount()), cablePaymentRequest.getProduct_code(), "1", cableTvAddons, "0", request.getBillerId(), appConfig.getBaxi().getAgentCode(), tranID));
+            //cablePaymentRequest.getSmartcardNumber(),, cablePaymentRequest.getProductCode(), "1", cableTvAddons, "0", request.getBillerId(), appConfig.getBaxi().getAgentCode(), tranID
+            cablePaymentResponseOptional = Optional.of(feignClient.cableTvPayment(appConfig.getBaxi().getXApiKey(), cablePaymentRequest));
         } catch (FeignException e) {
             logErrorResponse(e,tranID);
             log.error("Unable to process customer cableTv payment via baxi ", e);
@@ -304,17 +342,25 @@ public class BaxiService implements IThirdPartyService {
         String tranID = getCustomRefCode(transactionId);
         CablePaymentRequest cablePaymentRequest = new CablePaymentRequest();
         request.getData().forEach(paramNameValue -> {
-            if ("plan".equals(paramNameValue.getName())){ cablePaymentRequest.setProduct_code(paramNameValue.getValue()); }
-            if ("smartcard_number".equals(paramNameValue.getName())){ cablePaymentRequest.setSmartcard_number(paramNameValue.getValue()); }
+            if ("plan".equals(paramNameValue.getName())){ cablePaymentRequest.setProductCode(paramNameValue.getValue()); }
+            if ("smartcard_number".equals(paramNameValue.getName())){ cablePaymentRequest.setSmartcardNumber(paramNameValue.getValue()); }
+            if ("phone".equals(paramNameValue.getName())){ cablePaymentRequest.setPhone(paramNameValue.getValue()); }
+            if ("product_monthsPaidFor".equals(paramNameValue.getName())){ cablePaymentRequest.setProductMonthsPaidFor(paramNameValue.getValue()); }
+
         });
+
+        cablePaymentRequest.setAgentId(appConfig.getBaxi().getAgentCode());
+        cablePaymentRequest.setAgentReference(tranID);
+        cablePaymentRequest.setServiceType(request.getBillerId());
+        cablePaymentRequest.setTotalAmount(String.valueOf(request.getAmount()));
         logTransactionCableTv(cablePaymentRequest, String.valueOf(request.getAmount()), tranID);
 
-        String cableTvAddons = getCableTvAddonsMultiple(request);
+        //String cableTvAddons = getCableTvAddonsMultiple(request);
 
         Optional<CablePaymentResponse> cablePaymentResponseOptional = Optional.empty();
         String errorMessage = null;
         try {
-            cablePaymentResponseOptional = Optional.of(feignClient.cableTvPayment(appConfig.getBaxi().getXApiKey(), cablePaymentRequest.getSmartcard_number(), String.valueOf(request.getAmount()), cablePaymentRequest.getProduct_code(), "1", cableTvAddons, "0", request.getBillerId(), appConfig.getBaxi().getAgentCode(), transactionId));
+            cablePaymentResponseOptional = Optional.of(feignClient.cableTvPayment(appConfig.getBaxi().getXApiKey(), cablePaymentRequest));
         } catch (FeignException e) {
             log.error("Unable to process customer cableTv payment via baxi ", e);
             errorMessage = getErrorMessage(e.contentUTF8());
@@ -337,7 +383,11 @@ public class BaxiService implements IThirdPartyService {
         ParamNameValue paramNameValuePlan = request.getData().stream().filter(paramNameValue -> paramNameValue.getName().equals("plan")).findFirst().orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "plan is required"));
         Optional<CableTvAddonsResponse> cableTvAddonsResponseOptional = Optional.empty();
         try {
-            cableTvAddonsResponseOptional = Optional.of(feignClient.getCableTvAddons(appConfig.getBaxi().getXApiKey(), paramNameValuePlan.getValue(), request.getBillerId()));
+            AddonRequest request1 = new AddonRequest();
+            request1.setProductCode(paramNameValuePlan.getValue());
+            request1.setServiceType(request.getBillerId());
+
+            cableTvAddonsResponseOptional = Optional.of(feignClient.getCableTvAddons(appConfig.getBaxi().getXApiKey(), request1));
         } catch (FeignException e) {
             log.error("Unable to get addons for the cableTv smartnumber -> {}", paramNameValuePlan.getValue(), e);
         }
@@ -349,7 +399,10 @@ public class BaxiService implements IThirdPartyService {
         ParamNameValue paramNameValuePlan = request.getData().stream().filter(paramNameValue -> paramNameValue.getName().equals("plan")).findFirst().orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "plan is required"));
         Optional<CableTvAddonsResponse> cableTvAddonsResponseOptional = Optional.empty();
         try {
-            cableTvAddonsResponseOptional = Optional.of(feignClient.getCableTvAddons(appConfig.getBaxi().getXApiKey(), paramNameValuePlan.getValue(), request.getBillerId()));
+            AddonRequest request1 = new AddonRequest();
+            request1.setProductCode(paramNameValuePlan.getValue());
+            request1.setServiceType(request.getBillerId());
+            cableTvAddonsResponseOptional = Optional.of(feignClient.getCableTvAddons(appConfig.getBaxi().getXApiKey(), request1));
         } catch (FeignException e) {
             log.error("Unable to get addons for the cableTv smartnumber -> {}", paramNameValuePlan.getValue(), e);
         }
@@ -370,7 +423,12 @@ public class BaxiService implements IThirdPartyService {
 
         Optional<EPinPaymentResponse> ePinPaymentResponseOptional = Optional.empty();
         try {
-            ePinPaymentResponseOptional = Optional.of(feignClient.epinPayment(appConfig.getBaxi().getXApiKey(), request.getBillerId(), ePinPaymentRequest.getNumberOfPins(), ePinPaymentRequest.getPinValue(), String.valueOf(request.getAmount()), appConfig.getBaxi().getAgentCode(), tranID));
+
+            ePinPaymentRequest.setAgentId(appConfig.getBaxi().getAgentCode());
+            ePinPaymentRequest.setAgentReference(tranID);
+            ePinPaymentRequest.setAmount(String.valueOf(request.getAmount()));
+            ePinPaymentRequest.setServiceType(request.getBillerId());
+            ePinPaymentResponseOptional = Optional.of(feignClient.epinPayment(appConfig.getBaxi().getXApiKey(),ePinPaymentRequest));
         } catch (FeignException e) {
             log.error("Unable to process customer epin payment via baxi ", e);
         }
@@ -405,7 +463,11 @@ public class BaxiService implements IThirdPartyService {
 
         Optional<EPinPaymentResponse> ePinPaymentResponseOptional = Optional.empty();
         try {
-            ePinPaymentResponseOptional = Optional.of(feignClient.epinPayment(appConfig.getBaxi().getXApiKey(), request.getBillerId(), ePinPaymentRequest.getNumberOfPins(), ePinPaymentRequest.getPinValue(), String.valueOf(request.getAmount()), appConfig.getBaxi().getAgentCode(), tranID));
+            ePinPaymentRequest.setAgentId(appConfig.getBaxi().getAgentCode());
+            ePinPaymentRequest.setAgentReference(tranID);
+            ePinPaymentRequest.setAmount(String.valueOf(request.getAmount()));
+            ePinPaymentRequest.setServiceType(request.getBillerId());
+            ePinPaymentResponseOptional = Optional.of(feignClient.epinPayment(appConfig.getBaxi().getXApiKey(), ePinPaymentRequest));
         } catch (FeignException e) {
             logErrorResponse(e,tranID);
             log.error("Unable to process customer epin payment via baxi ", e);
@@ -433,14 +495,27 @@ public class BaxiService implements IThirdPartyService {
         String tranID = getCustomRefCode(transactionId);
         BundlePaymentRequest bundlePaymentRequest = new BundlePaymentRequest();
         request.getData().forEach(paramNameValue -> {
-            if (PHONE.equals(paramNameValue.getName())){ bundlePaymentRequest.setPhone(paramNameValue.getValue()); }
+            if (PHONE.equals(paramNameValue.getName())){
+
+                String phone = paramNameValue.getValue();
+                System.out.println("PHONE phone" + phone);
+                if (phone.startsWith("+")){
+                    StringBuilder sb = new StringBuilder(phone);
+                    sb.replace(0,4,"0");
+                    System.out.println("PHONE = = sb" + sb);
+                    bundlePaymentRequest.setPhone(sb.toString());
+                }
+
+            }
             if ("bundles".equals(paramNameValue.getName())){ bundlePaymentRequest.setDatacode(paramNameValue.getValue()); }
         });
 
         logTransactionData(bundlePaymentRequest,String.valueOf(request.getAmount()),request.getBillerId(),tranID);
         Optional<BundlePaymentResponse> bundlePaymentResponseOptional = Optional.empty();
         try {
-            bundlePaymentResponseOptional = Optional.of(feignClient.bundlePayment(appConfig.getBaxi().getXApiKey(), bundlePaymentRequest.getPhone(), String.valueOf(request.getAmount()), request.getBillerId(), bundlePaymentRequest.getDatacode(), appConfig.getBaxi().getAgentCode(), tranID));
+            DataPayment dataPayment = getDataPayment(request, tranID, bundlePaymentRequest);
+            System.out.println( "DataPayment ::: " + dataPayment);
+            bundlePaymentResponseOptional = Optional.of(feignClient.bundlePayment(appConfig.getBaxi().getXApiKey(),dataPayment));
         } catch (FeignException e) {
             logErrorResponse(e,tranID);
             log.error("Unable to process customer bundle payment via baxi ", e);
@@ -460,6 +535,72 @@ public class BaxiService implements IThirdPartyService {
         }
 
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private PaymentResponse bettingPayment(PaymentRequest request, String transactionId) throws ThirdPartyIntegrationException {
+        String tranID = getCustomRefCode(transactionId);
+        BettingRequest bettingRequest = new BettingRequest();
+        request.getData().forEach(paramNameValue -> {
+            if (ACCOUNT_NUMBER.equals(paramNameValue.getName())){  bettingRequest.setAccountNumber(paramNameValue.getValue()); }
+        });
+        bettingRequest.setAmount(String.valueOf(request.getAmount()));
+        bettingRequest.setAction(WALLET_FUNDING);
+        bettingRequest.setServiceType(request.getBillerId());
+
+        logTransactionData(bettingRequest,String.valueOf(request.getAmount()),request.getBillerId(),tranID);
+
+        Optional<BettingPaymentRespose> bundlePaymentResponseOptional = Optional.empty();
+        try {
+
+            bundlePaymentResponseOptional = Optional.of(feignClient.bettingPayment(appConfig.getBaxi().getXApiKey(),bettingRequest));
+        } catch (FeignException e) {
+            logErrorResponse(e,tranID);
+            log.error("Unable to process customer bundle payment via baxi ", e);
+        }
+
+
+        BettingPaymentRespose bundlePaymentResponse = bundlePaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+
+        responseLogTransaction(bundlePaymentResponse.getData(),tranID);
+
+        if(SUCCESS_RESPONSE_CODE.equals(bundlePaymentResponse.getCode()) && !Objects.isNull(bundlePaymentResponse.getData())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue("transactionReference", bundlePaymentResponse.getData().getTransactionReference()));
+            paymentResponse.getData().add(new ParamNameValue("transactionMessage", bundlePaymentResponse.getData().getTransactionMessage()));
+            return paymentResponse;
+
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private void logTransactionData(BettingRequest bettingRequest,String amount,String biller,String tranID){
+        Map<String, Object> map = new HashMap<>();
+        map.put("service_type", biller);
+        map.put("account_number", bettingRequest.getAccountNumber());
+        map.put("amount", amount);
+        map.put("action", bettingRequest.getAction());
+        map.put("transactionID", bettingRequest);
+        TransactionLog transactionLog = new TransactionLog();
+        transactionLog.setThirdParty(BAXI);
+        transactionLog.setPaymentRequest(CommonUtils.objectToJson(map).orElse(""));
+        transactionLog.setRequestReference(tranID);
+        transactionLogRepository.save(transactionLog);
+    }
+
+
+
+
+    private DataPayment getDataPayment(PaymentRequest request, String tranID, BundlePaymentRequest bundlePaymentRequest){
+
+        DataPayment dataPayment = new DataPayment();
+        dataPayment.setAgentId(appConfig.getBaxi().getAgentCode());
+        dataPayment.setAgentReference(tranID);
+        dataPayment.setAmount(String.valueOf(request.getAmount()));
+        dataPayment.setDatacode(bundlePaymentRequest.getDatacode());
+        dataPayment.setPhone(bundlePaymentRequest.getPhone());
+        dataPayment.setServiceType(request.getBillerId());
+        return dataPayment;
     }
     private void logTransactionEpin(EPinPaymentRequest ePinPaymentRequest, String amount, String transactionID){
         Map<String, Object> map = new HashMap<>();
@@ -490,8 +631,8 @@ public class BaxiService implements IThirdPartyService {
     }
     private void logTransactionCableTv(CablePaymentRequest ePinPaymentRequest, String amount, String transactionID){
         Map<String, Object> map = new HashMap<>();
-        map.put("productCode", ePinPaymentRequest.getProduct_code());
-        map.put("smartCardNumber", ePinPaymentRequest.getSmartcard_number());
+        map.put("productCode", ePinPaymentRequest.getProductCode());
+        map.put("smartCardNumber", ePinPaymentRequest.getSmartcardNumber());
         map.put("amount", amount);
         map.put("transactionID", transactionID);
         TransactionLog transactionLog = new TransactionLog();
@@ -516,12 +657,15 @@ public class BaxiService implements IThirdPartyService {
 
     }
 
-    private void responseLogTransactionEPins(EpinDetail bundlePaymentResponse, String referenceID){
-        TransactionLog transactionLog = transactionLogRepository.findByReference(referenceID);
-        transactionLog.setPaymentResponse(CommonUtils.objectToJson(bundlePaymentResponse).orElse(""));
-        transactionLog.setStatusCode(bundlePaymentResponse.getStatusCode());
-        transactionLog.setStatusMessage(bundlePaymentResponse.getTransactionStatus());
-        transactionLogRepository.save(transactionLog);
+    private void responseLogTransactionEPins(EpinDetail epinDetail, String referenceID){
+        if(epinDetail !=null){
+            TransactionLog transactionLog = transactionLogRepository.findByReference(referenceID);
+            transactionLog.setPaymentResponse(CommonUtils.objectToJson(epinDetail).orElse(""));
+            transactionLog.setStatusCode(epinDetail.getStatusCode());
+            transactionLog.setStatusMessage(epinDetail.getTransactionStatus());
+            transactionLogRepository.save(transactionLog);
+        }
+
     }
 
 
@@ -533,19 +677,26 @@ public class BaxiService implements IThirdPartyService {
 
 
     private void responseLogElectricity(ElectricDetail bundlePaymentResponse, String referenceID){
-        TransactionLog transactionLog = transactionLogRepository.findByReference(referenceID);
-        transactionLog.setPaymentResponse(CommonUtils.objectToJson(bundlePaymentResponse).orElse(""));
-        transactionLog.setStatusCode(bundlePaymentResponse.getStatusCode());
-        transactionLog.setStatusMessage(bundlePaymentResponse.getTransactionStatus());
-        transactionLogRepository.save(transactionLog);
+        if(bundlePaymentResponse !=null){
+            TransactionLog transactionLog = transactionLogRepository.findByReference(referenceID);
+            transactionLog.setPaymentResponse(CommonUtils.objectToJson(bundlePaymentResponse).orElse(""));
+            transactionLog.setStatusCode(bundlePaymentResponse.getStatusCode());
+            transactionLog.setStatusMessage(bundlePaymentResponse.getTransactionStatus());
+            transactionLogRepository.save(transactionLog);
+        }
+
     }
 
     private void responseLogTransaction(PaymentDetail bundlePaymentResponse, String referenceID){
-        TransactionLog transactionLog = transactionLogRepository.findByReference(referenceID);
-        transactionLog.setPaymentResponse(CommonUtils.objectToJson(bundlePaymentResponse).orElse(""));
-        transactionLog.setStatusCode(bundlePaymentResponse.getStatusCode());
-        transactionLog.setStatusMessage(bundlePaymentResponse.getTransactionStatus());
-        transactionLogRepository.save(transactionLog);
+        System.out.println("PaymentDetail ::  " + bundlePaymentResponse);
+        if(bundlePaymentResponse !=null){
+            TransactionLog transactionLog = transactionLogRepository.findByReference(referenceID);
+            transactionLog.setPaymentResponse(CommonUtils.objectToJson(bundlePaymentResponse).orElse(""));
+            transactionLog.setStatusCode(bundlePaymentResponse.getStatusCode());
+            transactionLog.setStatusMessage(bundlePaymentResponse.getTransactionStatus());
+            transactionLogRepository.save(transactionLog);
+        }
+
     }
 
 
@@ -574,7 +725,14 @@ public class BaxiService implements IThirdPartyService {
 
         Optional<BundlePaymentResponse> bundlePaymentResponseOptional = Optional.empty();
         try {
-            bundlePaymentResponseOptional = Optional.of(feignClient.bundlePayment(appConfig.getBaxi().getXApiKey(), bundlePaymentRequest.getPhone(), String.valueOf(request.getAmount()), request.getBillerId(), bundlePaymentRequest.getDatacode(), appConfig.getBaxi().getAgentCode(), tranID));
+            DataPayment dataPayment = new DataPayment();
+            dataPayment.setAgentId(appConfig.getBaxi().getAgentCode());
+            dataPayment.setAgentReference(tranID);
+            dataPayment.setAmount(String.valueOf(request.getAmount()));
+            dataPayment.setDatacode(bundlePaymentRequest.getDatacode());
+            dataPayment.setPhone(bundlePaymentRequest.getPhone());
+            dataPayment.setServiceType(request.getBillerId());
+            bundlePaymentResponseOptional = Optional.of(feignClient.bundlePayment(appConfig.getBaxi().getXApiKey(), dataPayment));
         } catch (FeignException e) {
             log.error("Unable to process customer bundle payment via baxi ", e);
         }
@@ -591,17 +749,42 @@ public class BaxiService implements IThirdPartyService {
     }
 
     private PaymentResponse airtimePayment(PaymentRequest request, String transactionId) throws ThirdPartyIntegrationException {
+
+        System.out.println("airtimePayment request :: " + request);
         String tranID = getCustomRefCode(transactionId);
         AirtimePaymentRequest airtimePaymentRequest = new AirtimePaymentRequest();
         request.getData().forEach(paramNameValue -> {
-            if (PHONE.equals(paramNameValue.getName())){ airtimePaymentRequest.setPhone(paramNameValue.getValue()); }
+            if (PHONE.equals(paramNameValue.getName())){
+
+            String phone = paramNameValue.getValue();
+                System.out.println("PHONE phone" + phone);
+                if (phone.startsWith("+")){
+                    StringBuilder sb = new StringBuilder(phone);
+                    sb.replace(0,4,"0");
+                    System.out.println("PHONE = = sb" + sb);
+                    airtimePaymentRequest.setPhone(sb.toString());
+                }else{
+                    airtimePaymentRequest.setPhone(phone);
+                }
+
+            }
             if ("plan".equals(paramNameValue.getName())){ airtimePaymentRequest.setPlan(paramNameValue.getValue()); }
         });
+
+
+
         logTransactionAirtime(airtimePaymentRequest,String.valueOf(request.getAmount()),request.getBillerId(),tranID);
 
         Optional<AirtimePaymentResponse> airtimePaymentResponseOptional = Optional.empty();
         try {
-            airtimePaymentResponseOptional = Optional.of(feignClient.airtimePayment(appConfig.getBaxi().getXApiKey(), airtimePaymentRequest.getPhone(), String.valueOf(request.getAmount()), request.getBillerId(), airtimePaymentRequest.getPlan(), appConfig.getBaxi().getAgentCode(),tranID));
+            AirtimePayment payment = new AirtimePayment();
+            payment.setAgentId(appConfig.getBaxi().getAgentCode());
+            payment.setAgentReference(tranID);
+            payment.setAmount(String.valueOf(request.getAmount()));
+            payment.setPhone(airtimePaymentRequest.getPhone());
+            payment.setPlan(airtimePaymentRequest.getPlan());
+            payment.setServiceType(request.getBillerId());
+            airtimePaymentResponseOptional = Optional.of(feignClient.airtimePayment(appConfig.getBaxi().getXApiKey(), payment));   //airtimePaymentRequest.getPhone(), String.valueOf(request.getAmount()), request.getBillerId(), airtimePaymentRequest.getPlan(), appConfig.getBaxi().getAgentCode(),tranID
         } catch (FeignException e) {
             log.error("Unable to process customer airtime payment via baxi ", e);
         }
@@ -623,13 +806,33 @@ public class BaxiService implements IThirdPartyService {
 
         AirtimePaymentRequest airtimePaymentRequest = new AirtimePaymentRequest();
         request.getData().forEach(paramNameValue -> {
-            if (PHONE.equals(paramNameValue.getName())){ airtimePaymentRequest.setPhone(paramNameValue.getValue()); }
+            if (PHONE.equals(paramNameValue.getName())){
+
+                String phone = paramNameValue.getValue();
+                System.out.println("PHONE phone" + phone);
+                if (phone.startsWith("+")){
+                    StringBuilder sb = new StringBuilder(phone);
+                    sb.replace(0,4,"0");
+                    System.out.println("PHONE = = sb" + sb);
+                    airtimePaymentRequest.setPhone(sb.toString());
+                }else{
+                    airtimePaymentRequest.setPhone(phone);
+                }
+
+            }
             if ("plan".equals(paramNameValue.getName())){ airtimePaymentRequest.setPlan(paramNameValue.getValue()); }
         });
 
         Optional<AirtimePaymentResponse> airtimePaymentResponseOptional = Optional.empty();
         try {
-            airtimePaymentResponseOptional = Optional.of(feignClient.airtimePayment(appConfig.getBaxi().getXApiKey(), airtimePaymentRequest.getPhone(), String.valueOf(request.getAmount()), request.getBillerId(), airtimePaymentRequest.getPlan(), appConfig.getBaxi().getAgentCode(), transactionId));
+            AirtimePayment payment = new AirtimePayment();
+            payment.setAgentId(appConfig.getBaxi().getAgentCode());
+            payment.setAgentReference(transactionId);
+            payment.setAmount(String.valueOf(request.getAmount()));
+            payment.setPhone(airtimePaymentRequest.getPhone());
+            payment.setPlan(airtimePaymentRequest.getPlan());
+            payment.setServiceType(request.getBillerId());
+            airtimePaymentResponseOptional = Optional.of(feignClient.airtimePayment(appConfig.getBaxi().getXApiKey(), payment));
         } catch (FeignException e) {
             log.error("Unable to process customer airtime payment via baxi ", e);
         }
@@ -668,6 +871,106 @@ public class BaxiService implements IThirdPartyService {
 
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
+
+    private CustomerValidationResponse validateSpectranet(CustomerValidationRequest request) throws ThirdPartyIntegrationException {
+
+        List<ParamNameValue> paramNameValues = request.getData();
+        DataBundleRequest request1 = new DataBundleRequest();
+        for (ParamNameValue data : paramNameValues){
+            if (ACCOUNT_NUMBER.equals(data.getName())){
+                request1.setAccountNumber(data.getValue());
+            }
+        }
+        request1.setServiceType(request.getBillerId());
+
+        Optional<DataBundleResponse> bundleResponseOptional = Optional.empty();
+        try {
+            bundleResponseOptional = Optional.of(feignClient.getDataBundles(appConfig.getBaxi().getXApiKey(), request1));
+        } catch (FeignException e) {
+            log.error("Unable to verify customer Spectranet account number via Baxi ", e);
+        }
+        DataBundleResponse dataBundleResponse = bundleResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch data bundles"));
+
+        //get the params, then also get it sublist
+        PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(request.getCategoryId(), request.getBillerId());
+        paymentItemsResponse.setIsValidationRequired(false);
+        paymentItemsResponse.getItems().add(new Item(PHONE));
+        paymentItemsResponse.getItems().add(new Item(AMOUNT));
+        Item itemBundles = new Item();
+        itemBundles.setParamName("bundles");
+        itemBundles.setIsAmountFixed(Boolean.TRUE);
+        dataBundleResponse.getData().forEach(dataBundle -> itemBundles.getSubItems().add(new SubItem(dataBundle.getDatacode(), dataBundle.getName(), dataBundle.getPrice(), dataBundle.getPrice())));
+        paymentItemsResponse.getItems().add(itemBundles);
+//        if(SUCCESS_RESPONSE_CODE.equals(dataBundleResponse.getCode()) && !Objects.isNull(dataBundleResponse.getData())) {
+//            CustomerValidationResponse customerValidationResponse = new CustomerValidationResponse(request.getCategoryId(), request.getBillerId());
+//            customerValidationResponse.getData().add(new ParamNameValue("name", nameFinderQueryResponse.getData().getUser().getName()));
+//            customerValidationResponse.getData().add(new ParamNameValue("outstandingBalance", nameFinderQueryResponse.getData().getUser().getOutstandingBalance()));
+//            customerValidationResponse.getData().add(new ParamNameValue("dueDate", nameFinderQueryResponse.getData().getUser().getDueDate()));
+//            return customerValidationResponse;
+//        }
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+
+    private void processValidation(CustomerValidationRequest request, DataBundleRequest request1) throws ThirdPartyIntegrationException {
+        Optional<DataBundleResponse> bundleResponseOptional = Optional.empty();
+        try {
+            bundleResponseOptional = Optional.of(feignClient.getDataBundles(appConfig.getBaxi().getXApiKey(), request1));
+        } catch (FeignException e) {
+            log.error("Unable to verify customer Spectranet account number via Baxi ", e);
+        }
+        DataBundleResponse dataBundleResponse = bundleResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch data bundles"));
+
+        //get the params, then also get it sublist
+        PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(request.getCategoryId(), request.getBillerId());
+        paymentItemsResponse.setIsValidationRequired(false);
+        paymentItemsResponse.getItems().add(new Item(PHONE));
+        paymentItemsResponse.getItems().add(new Item(AMOUNT));
+        Item itemBundles = new Item();
+        itemBundles.setParamName("bundles");
+        itemBundles.setIsAmountFixed(Boolean.TRUE);
+        dataBundleResponse.getData().forEach(dataBundle -> itemBundles.getSubItems().add(new SubItem(dataBundle.getDatacode(), dataBundle.getName(), dataBundle.getPrice(), dataBundle.getPrice())));
+        paymentItemsResponse.getItems().add(itemBundles);
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    private CustomerValidationResponse validateBetting(CustomerValidationRequest request) throws ThirdPartyIntegrationException {
+
+        List<ParamNameValue> paramNameValues = request.getData();
+        DataBundleRequest request1 = new DataBundleRequest();
+        for (ParamNameValue data : paramNameValues){
+            if (ACCOUNT_NUMBER.equals(data.getName())){
+                request1.setAccountNumber(data.getValue());
+            }
+        }
+        request1.setServiceType(request.getBillerId());
+
+        System.out.println("validateSpectranet :: " + request1);
+
+        Optional<DataBundleResponse> bundleResponseOptional = Optional.empty();
+        try {
+            bundleResponseOptional = Optional.of(feignClient.getDataBundles(appConfig.getBaxi().getXApiKey(), request1));
+        } catch (FeignException e) {
+            log.error("Unable to verify customer Spectranet account number via Baxi ", e);
+        }
+        DataBundleResponse dataBundleResponse = bundleResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch data bundles"));
+
+        //get the params, then also get it sublist
+        PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(request.getCategoryId(), request.getBillerId());
+        paymentItemsResponse.setIsValidationRequired(false);
+        paymentItemsResponse.getItems().add(new Item(PHONE));
+        paymentItemsResponse.getItems().add(new Item(AMOUNT));
+        Item itemBundles = new Item();
+        itemBundles.setParamName("bundles");
+        itemBundles.setIsAmountFixed(Boolean.TRUE);
+        dataBundleResponse.getData().forEach(dataBundle -> itemBundles.getSubItems().add(new SubItem(dataBundle.getDatacode(), dataBundle.getName(), dataBundle.getPrice(), dataBundle.getPrice())));
+        paymentItemsResponse.getItems().add(itemBundles);
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
+    //
 
     private CustomerValidationResponse validateElectricity(CustomerValidationRequest request) throws ThirdPartyIntegrationException {
         ElectricityRequest electricityRequest = generateElectricityRequest(request);
@@ -719,7 +1022,10 @@ public class BaxiService implements IThirdPartyService {
 
         Optional<DataBundleResponse> bundleResponseOptional = Optional.empty();
         try {
-            bundleResponseOptional = Optional.of(feignClient.getDataBundles(appConfig.getBaxi().getXApiKey(), billerId));
+            DataBundleRequest request = new DataBundleRequest();
+            request.setServiceType(billerId);
+
+            bundleResponseOptional = Optional.of(feignClient.getDataBundles(appConfig.getBaxi().getXApiKey(), request));
         } catch (FeignException e) {
             log.error("Unable to fetch Data Bundles", e);
         }
@@ -739,11 +1045,41 @@ public class BaxiService implements IThirdPartyService {
         return paymentItemsResponse;
     }
 
+    private PaymentItemsResponse getSpectranetBundlePaymentItems(String categoryId, String billerId) throws ThirdPartyIntegrationException {
+
+        Optional<DataBundleResponse> bundleResponseOptional = Optional.empty();
+        try {
+            DataBundleRequest request = new DataBundleRequest();
+            request.setServiceType(billerId);
+
+            bundleResponseOptional = Optional.of(feignClient.getDataBundles(appConfig.getBaxi().getXApiKey(), request));
+        } catch (FeignException e) {
+            log.error("Unable to fetch Data Bundles", e);
+        }
+        DataBundleResponse dataBundleResponse = bundleResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch data bundles"));
+
+        //get the params, then also get it sublist
+        PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(categoryId, billerId);
+        paymentItemsResponse.setIsValidationRequired(false);
+        paymentItemsResponse.getItems().add(new Item(PHONE));
+        paymentItemsResponse.getItems().add(new Item(AMOUNT));
+        Item itemBundles = new Item();
+        itemBundles.setParamName("bundles");
+        itemBundles.setIsAmountFixed(Boolean.TRUE);
+        dataBundleResponse.getData().forEach(dataBundle -> itemBundles.getSubItems().add(new SubItem(dataBundle.getDatacode(), dataBundle.getName(), dataBundle.getPrice(), dataBundle.getPrice())));
+        paymentItemsResponse.getItems().add(itemBundles);
+
+        return paymentItemsResponse;
+    }
+
+
     private PaymentItemsResponse getCableTvPaymentItems(String categoryId, String billerId) throws ThirdPartyIntegrationException {
 
         Optional<CableTvPlanResponse> cableTvPlanResponseOptional = Optional.empty();
         try {
-            cableTvPlanResponseOptional = Optional.of(feignClient.getCableTvPlans(appConfig.getBaxi().getXApiKey(), billerId));
+            CableTvRequest request = new CableTvRequest();
+            request.setServiceType(billerId);
+            cableTvPlanResponseOptional = Optional.of(feignClient.getCableTvPlans(appConfig.getBaxi().getXApiKey(), request));
         } catch (FeignException e) {
             log.error("Unable to fetch Cable Tv Plans",e );
         }
@@ -812,8 +1148,10 @@ public class BaxiService implements IThirdPartyService {
 class BillerCategoryName{
     static final String AIRTIME = "airtime";
     static final String DATABUNDLE = "databundle";
+    static final String SPECTRANET = "spectranet";
     static final String CABLETV = "cabletv";
     static final String ELECTRICITY = "electricity";
+    static final String BETTING = "betting";
     static final String EPIN = "epin";
     static final String BAXI = "BAXI";
 

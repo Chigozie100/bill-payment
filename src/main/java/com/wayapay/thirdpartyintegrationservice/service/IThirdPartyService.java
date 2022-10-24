@@ -14,4 +14,6 @@ public interface IThirdPartyService {
     CustomerValidationResponse validateCustomerValidationFormByBiller(CustomerValidationRequest request) throws ThirdPartyIntegrationException;
     PaymentResponse processPayment(PaymentRequest request, BigDecimal fee, String transactionId, String username) throws ThirdPartyIntegrationException;
     PaymentResponse processMultiplePayment(MultiplePaymentRequest paymentRequest, BigDecimal fee, String transactionId, String username) throws ThirdPartyIntegrationException;
+    Object reQueryTransaction(String agentReference);
+
 }

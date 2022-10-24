@@ -61,8 +61,8 @@ app:
       transaction-ref-code: ${QUICK_TELLER_TRANSACTION_REF_CODE:1453}
       terminal-id: ${QUICK_TELLER_TERMIAL_ID:3DMO0001}
     baxi:
-      base-url: ${BAXI_BASE:https://payments.baxipay.com.ng/api/baxipay}
-      x-api-key: ${BAXI_X_API_KEY:5adea9-044a85-708016-7ae662-646d59}
+      base-url: ${BAXI_BASE:https://api.staging.baxibap.com}  #https://payments.baxipay.com.ng/api/baxipay
+      x-api-key: ${BAXI_X_API_KEY:YGODc+V3e1LB6vgf6Z1y1JFGa2XcHscouuzLdcgPhLY=}  #  5adea9-044a85-708016-7ae662-646d59
       agent-code: ${BAXI_AGENT_CODE:69}
       account-number: ${BAXI_ACCOUNT_NUMBER:0000000001}
     itex:
@@ -78,7 +78,7 @@ app:
     dispute:
       base-url: ${DISPUTE_BASE:https://services.staging.wayabank.ng/complaint-service/dispute}
     wallet:
-      base-url: ${CONFIG_BASEURL_TWALLET:http://localhost:8066/temporal-service}
+      base-url: ${CONFIG_BASEURL_TWALLET:https://services.staging.wayabank.ng/temporal-service}
     auth:
       base-url: ${CONFIG_BASEURL_AUTH:http://localhost:8091/auth-service}
     notification:

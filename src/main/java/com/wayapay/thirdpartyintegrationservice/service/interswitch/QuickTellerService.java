@@ -306,6 +306,11 @@ public class QuickTellerService implements IThirdPartyService {
 
     }
 
+    @Override
+    public Object reQueryTransaction(String agentReference) {
+        return null;
+    }
+
     private PaymentResponse getPaymentResponse(SendPaymentAdviceResponse paymentAdviceResponse){
         PaymentResponse paymentResponse = new PaymentResponse();
 

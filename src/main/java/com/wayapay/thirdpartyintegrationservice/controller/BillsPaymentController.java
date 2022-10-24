@@ -152,6 +152,19 @@ public class BillsPaymentController {
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
+
+    @ApiOperation(value = "ReQuery Transaction")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @GetMapping("/reQueryTransaction/{categoryId}/biller/{agentReference}")
+    public ResponseEntity<?> reQueryTransaction(@PathVariable("categoryId") String categoryId, @PathVariable("agentReference") String agentReference ) throws ThirdPartyIntegrationException {
+
+        Object customerValidationFormByBiller = billsPaymentService.getBillsPaymentService(categoryId).reQueryTransaction(agentReference);
+        log.info("customerValidationFormByBiller ::: " + customerValidationFormByBiller);
+        return ResponseEntity.ok(customerValidationFormByBiller);
+    }
+
     
 
 }

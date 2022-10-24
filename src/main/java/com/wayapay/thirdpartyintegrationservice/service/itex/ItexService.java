@@ -262,6 +262,10 @@ public class ItexService implements IThirdPartyService {
         }
     }
 
+    @Override
+    public Object reQueryTransaction(String agentReference) {
+        return null;
+    }
 
 
     private CustomerValidationResponse validateLCC(CustomerValidationRequest request) throws ThirdPartyIntegrationException {

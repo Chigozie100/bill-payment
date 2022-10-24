@@ -15,5 +15,6 @@ public class ElectricPaymentRequest {
     private String phone;
     private String service_type;
     private String agentId;
+    private String metadata;
     private String agentReference;
 }

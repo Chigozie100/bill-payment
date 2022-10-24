@@ -102,6 +102,7 @@ public class OperationLogService {
         operationLog.setUserId(String.valueOf(joinPoint.getArgs()[2]));
         operationLog.setResponse(String.valueOf(response));
         operationLog.setLogType(BILLS_PAYMENT);
+        operationLog.setCategory(BILLS_PAYMENT);
         try {
             sendToKafka(operationLog);
         } catch (Exception exception) {

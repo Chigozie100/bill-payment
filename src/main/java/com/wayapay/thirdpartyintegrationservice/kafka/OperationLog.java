@@ -29,4 +29,5 @@ public class OperationLog {
     private Status status; //log phrase - start/end
     private FinalStatus finalStatus; //Completed, Failed, Critical
     private Date createdAt = new Date();
+    private String category;
 }

@@ -82,9 +82,10 @@ public class BillsPaymentService {
                 return itexService;
             case BAXI:
                 return baxiService;
-            default:
             case QUICKTELLER:
                 return quickTellerService;
+            default:
+                return baxiService;
         }
     }
 
@@ -542,6 +543,13 @@ public class BillsPaymentService {
         }
         // build payment request
         return new ResponseEntity<>(new SuccessResponse(paymentResponse), HttpStatus.OK);
+    }
+
+
+    public Object requeryTransaction(String categry) throws ThirdPartyIntegrationException {
+        Object obj =  getBillsPaymentService(categry).reQueryTransaction(categry);
+        return obj;
+
     }
 
 

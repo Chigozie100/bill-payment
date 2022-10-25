@@ -61,6 +61,15 @@ public interface BaxiFeignClient {
     @GetMapping("/services/namefinder/query")
     Object namefinder(@RequestHeader(X_API_KEY) String xApiKey, @RequestBody ValidateBettingAccount request);
 
+    @PostMapping("/services/insurance/request")
+    BettingPaymentRespose insurancePayment(@RequestHeader(X_API_KEY) String xApiKey, @RequestBody InsurancePaymentRequest insurancePaymentRequest);
+
+    @PostMapping("/services/vehiclepaper/request")
+    BettingPaymentRespose carPaddyPayment(@RequestHeader(X_API_KEY) String xApiKey, @RequestBody InsurancePaymentRequest insurancePaymentRequest);
+
+
+//https://api.staging.baxibap.com/services/vehiclepaper/request
+
     //https://api.staging.baxibap.com/services/namefinder/query
     //https://api.staging.baxibap.com/services/superagent/transaction/requery?agentReference=bap-1234513
 }

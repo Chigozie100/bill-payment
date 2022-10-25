@@ -179,7 +179,8 @@ public class BaxiService implements IThirdPartyService {
                 return electricityPayment(request, transactionId);
             case BETTING:
                 return bettingPayment(request, transactionId);
-            // betway
+            case INSURANCE:
+                return insurancePayment(request, transactionId);
             default:
                 throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Invalid CategoryId provided");
         }
@@ -537,6 +538,97 @@ public class BaxiService implements IThirdPartyService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
+    private Optional<BettingPaymentRespose> bundlePaymentResponseOptional(){
+        return Optional.empty();
+    }
+
+    private PaymentResponse insurancePayment(PaymentRequest request, String transactionId) throws ThirdPartyIntegrationException {
+        String tranID = getCustomRefCode(transactionId);
+
+        System.out.println("Request :: " + request.getData());
+
+        InsurancePaymentRequest request1 = new InsurancePaymentRequest();
+
+        ClientRequest clientRequest = new ClientRequest();
+
+        VehicleOrderRequest vehicleOrderRequest = new VehicleOrderRequest();
+        VehicleRequest vehicleRequest = new VehicleRequest();
+
+        request.getData().forEach(paramNameValue -> {
+            if ("firstName".equals(paramNameValue.getName())){  clientRequest.setFirstName(paramNameValue.getValue()); }
+            if ("lastName".equals(paramNameValue.getName())){  clientRequest.setLastName(paramNameValue.getValue()); }
+            if ("email".equals(paramNameValue.getName())){  clientRequest.setEmail(paramNameValue.getValue()); }
+            if (PHONE.equals(paramNameValue.getName())){  clientRequest.setPhone(paramNameValue.getValue()); }
+            if ("address".equals(paramNameValue.getName())){  clientRequest.setAddress(paramNameValue.getValue()); }
+            if ("gender".equals(paramNameValue.getName())){  clientRequest.setGender(paramNameValue.getValue()); }
+            if ("companyName".equals(paramNameValue.getName())){  clientRequest.setCompanyName(paramNameValue.getValue()); }
+            if ("dateOfBirth".equals(paramNameValue.getName())){  clientRequest.setDateOfBirth(paramNameValue.getValue()); }
+            if ("occupation".equals(paramNameValue.getName())){  clientRequest.setOccupation(paramNameValue.getValue()); }
+
+
+            if ("vehicleType".equals(paramNameValue.getName())){  vehicleRequest.setVehicleType(paramNameValue.getValue()); }
+            if ("vehicleManufacturer".equals(paramNameValue.getName())){  vehicleRequest.setVehicleManufacturer(paramNameValue.getValue()); }
+            if ("vehicleModel".equals(paramNameValue.getName())){  vehicleRequest.setVehicleModel(paramNameValue.getValue()); }
+            if ("registrationNumber".equals(paramNameValue.getName())){  vehicleRequest.setRegistrationNumber(paramNameValue.getValue()); }
+            if ("engineNumber".equals(paramNameValue.getName())){  vehicleRequest.setEngineNumber(paramNameValue.getValue()); }
+            if ("chassisNumber".equals(paramNameValue.getName())){  vehicleRequest.setChassisNumber(paramNameValue.getValue()); }
+            if ("yearOfManufacture".equals(paramNameValue.getName())){  vehicleRequest.setYearOfPurchase(Long.parseLong(paramNameValue.getValue())); }
+            if ("color".equals(paramNameValue.getName())){  vehicleRequest.setColor(paramNameValue.getValue()); }
+            if ("yearOfPurchase".equals(paramNameValue.getName())){ vehicleRequest.setYearOfPurchase(Long.parseLong(paramNameValue.getValue())); }
+
+
+            if ("vehicleTypeId".equals(paramNameValue.getName())){  vehicleOrderRequest.setVehicleTypeId(paramNameValue.getValue()); }
+            if ("orderDescriptionId".equals(paramNameValue.getName())){  vehicleOrderRequest.setOrderDescriptionId(paramNameValue.getValue()); }
+            if ("orderDescriptionName".equals(paramNameValue.getName())){  vehicleOrderRequest.setOrderDescriptionName(paramNameValue.getValue()); }
+            if ("vehicleManufacturerId".equals(paramNameValue.getName())){  vehicleOrderRequest.setVehicleManufacturerId(paramNameValue.getValue()); }
+            if ("vehicleModelId".equals(paramNameValue.getName())){  vehicleOrderRequest.setVehicleModelId(paramNameValue.getValue()); }
+            if ("city".equals(paramNameValue.getName())){  vehicleOrderRequest.setCity(paramNameValue.getValue()); }
+            if ("amount".equals(paramNameValue.getName())){  vehicleOrderRequest.setAmount(BigDecimal.valueOf(Double.parseDouble(paramNameValue.getValue()))); }
+            if ("transactionCode".equals(paramNameValue.getName())){  vehicleOrderRequest.setTransactionCode(paramNameValue.getValue()); }
+            if ("policyholder".equals(paramNameValue.getName())){  vehicleOrderRequest.setPolicyholder(paramNameValue.getValue()); }
+            if ("action".equals(paramNameValue.getName())){  vehicleOrderRequest.setAction(paramNameValue.getValue()); }
+
+        });
+
+        request1.setClient(clientRequest);
+        request1.setOrder(vehicleOrderRequest);
+        request1.setVehicle(vehicleRequest);
+
+        request1.setServiceType(request.getBillerId());
+        request1.setAgentReference(appConfig.getBaxi().getAgentCode());
+
+       // logTransactionData(bettingRequest,String.valueOf(request.getAmount()),request.getBillerId(),tranID);
+
+        Optional<BettingPaymentRespose> bundlePaymentResponseOptional = bundlePaymentResponseOptional();
+        try {
+
+            if(request.getBillerId().equals("carpaddy")){
+                bundlePaymentResponseOptional = Optional.of(feignClient.carPaddyPayment(appConfig.getBaxi().getXApiKey(),request1));
+            }else{
+                bundlePaymentResponseOptional = Optional.of(feignClient.insurancePayment(appConfig.getBaxi().getXApiKey(),request1));
+                //carPaddyPayment
+            }
+
+        } catch (FeignException e) {
+            logErrorResponse(e,tranID);
+            log.error("Unable to process customer bundle payment via baxi ", e);
+        }
+
+        BettingPaymentRespose bundlePaymentResponse = bundlePaymentResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+
+        responseLogTransaction(bundlePaymentResponse.getData(),tranID);
+
+        if(SUCCESS_RESPONSE_CODE.equals(bundlePaymentResponse.getCode()) && !Objects.isNull(bundlePaymentResponse.getData())) {
+            PaymentResponse paymentResponse = new PaymentResponse();
+            paymentResponse.getData().add(new ParamNameValue("transactionReference", bundlePaymentResponse.getData().getTransactionReference()));
+            paymentResponse.getData().add(new ParamNameValue("transactionMessage", bundlePaymentResponse.getData().getTransactionMessage()));
+            return paymentResponse;
+
+        }
+
+        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+    }
+
     private PaymentResponse bettingPayment(PaymentRequest request, String transactionId) throws ThirdPartyIntegrationException {
         String tranID = getCustomRefCode(transactionId);
         BettingRequest bettingRequest = new BettingRequest();
@@ -546,7 +638,7 @@ public class BaxiService implements IThirdPartyService {
         bettingRequest.setAmount(String.valueOf(request.getAmount()));
         bettingRequest.setAction(WALLET_FUNDING);
         bettingRequest.setServiceType(request.getBillerId());
-
+        bettingRequest.setAgentReference(appConfig.getBaxi().getAgentCode());
         logTransactionData(bettingRequest,String.valueOf(request.getAmount()),request.getBillerId(),tranID);
 
         Optional<BettingPaymentRespose> bundlePaymentResponseOptional = Optional.empty();
@@ -1152,6 +1244,7 @@ class BillerCategoryName{
     static final String CABLETV = "cabletv";
     static final String ELECTRICITY = "electricity";
     static final String BETTING = "betting";
+    static final String INSURANCE = "insurance";
     static final String EPIN = "epin";
     static final String BAXI = "BAXI";
 

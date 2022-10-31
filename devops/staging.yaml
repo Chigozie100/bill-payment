@@ -47,7 +47,7 @@ spec:
         - name: tz-lagos
           mountPath: /etc/localtime
       nodeSelector:
-        node.kubernetes.io/description: cfgprofile  
+        node.kubernetes.io/description: wayabank-cfgprofile  
       volumes:
         - name: config-file
           secret:

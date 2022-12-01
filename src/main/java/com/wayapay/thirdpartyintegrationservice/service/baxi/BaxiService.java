@@ -121,8 +121,6 @@ public class BaxiService implements IThirdPartyService {
                 return getElectricityPaymentItems(categoryId, billerId);
             case EPIN:
                 return getEPinBundlePaymentItems(categoryId, billerId);
-            case BETTING:
-                return getEPinBundlePaymentItems(categoryId, billerId);
             default:
                 throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Invalid CategoryId provided");
         }

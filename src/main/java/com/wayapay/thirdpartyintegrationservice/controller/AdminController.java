@@ -8,6 +8,7 @@ import com.wayapay.thirdpartyintegrationservice.service.BillsPaymentService;
 import com.wayapay.thirdpartyintegrationservice.service.OperationService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
+import com.wayapay.thirdpartyintegrationservice.util.UserType;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -18,6 +19,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
@@ -35,6 +37,7 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 @RestController
 @Api(tags = "Admin Bills Payment API", description = "This is the main controller containing all the api to process admin billspayment")
 @RequestMapping(API_V1)
+@PreAuthorize("hasAnyRole('ROLE_ADMIN_OWNER', 'ROLE_ADMIN_SUPER', 'ROLE_ADMIN_APP')")
 public class AdminController {
 
     private final BillsPaymentService billsPaymentService;

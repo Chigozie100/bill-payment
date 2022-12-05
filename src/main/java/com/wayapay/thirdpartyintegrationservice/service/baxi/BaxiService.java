@@ -7,6 +7,7 @@ import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.model.TransactionLog;
 import com.wayapay.thirdpartyintegrationservice.repo.TransactionLogRepository;
+import com.wayapay.thirdpartyintegrationservice.service.BettingValidationResponse;
 import com.wayapay.thirdpartyintegrationservice.service.IThirdPartyService;
 import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
@@ -545,7 +546,6 @@ public class BaxiService implements IThirdPartyService {
     private PaymentResponse insurancePayment(PaymentRequest request, String transactionId) throws ThirdPartyIntegrationException {
         String tranID = getCustomRefCode(transactionId);
 
-        System.out.println("Request :: " + request.getData());
 
         InsurancePaymentRequest request1 = new InsurancePaymentRequest();
 
@@ -1030,7 +1030,7 @@ public class BaxiService implements IThirdPartyService {
     private CustomerValidationResponse validateBetting(CustomerValidationRequest request) throws ThirdPartyIntegrationException {
 
         List<ParamNameValue> paramNameValues = request.getData();
-        DataBundleRequest request1 = new DataBundleRequest();
+        ValidateBettingAccount request1 = new ValidateBettingAccount();
         for (ParamNameValue data : paramNameValues){
             if (ACCOUNT_NUMBER.equals(data.getName())){
                 request1.setAccountNumber(data.getValue());
@@ -1038,28 +1038,32 @@ public class BaxiService implements IThirdPartyService {
         }
         request1.setServiceType(request.getBillerId());
 
-        System.out.println("validateSpectranet :: " + request1);
+        log.info("validateBetting :: " + request1);
 
-        Optional<DataBundleResponse> bundleResponseOptional = Optional.empty();
+        Optional<BettingValidationResponse> bundleResponseOptional = Optional.empty();
         try {
-            bundleResponseOptional = Optional.of(feignClient.getDataBundles(appConfig.getBaxi().getXApiKey(), request1));
+            bundleResponseOptional = Optional.of(feignClient.namefinder(appConfig.getBaxi().getXApiKey(), request1));
         } catch (FeignException e) {
             log.error("Unable to verify customer Spectranet account number via Baxi ", e);
         }
-        DataBundleResponse dataBundleResponse = bundleResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch data bundles"));
+        BettingValidationResponse dataBundleResponse = bundleResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch data bundles"));
 
+        dataBundleResponse.getData();
+        log.info("dataBundleResponse :: " + dataBundleResponse);
         //get the params, then also get it sublist
-        PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(request.getCategoryId(), request.getBillerId());
-        paymentItemsResponse.setIsValidationRequired(false);
-        paymentItemsResponse.getItems().add(new Item(PHONE));
-        paymentItemsResponse.getItems().add(new Item(AMOUNT));
-        Item itemBundles = new Item();
-        itemBundles.setParamName("bundles");
-        itemBundles.setIsAmountFixed(Boolean.TRUE);
-        dataBundleResponse.getData().forEach(dataBundle -> itemBundles.getSubItems().add(new SubItem(dataBundle.getDatacode(), dataBundle.getName(), dataBundle.getPrice(), dataBundle.getPrice())));
-        paymentItemsResponse.getItems().add(itemBundles);
+        CustomerValidationResponse customerValidationResponse = new CustomerValidationResponse(request.getCategoryId(), request.getBillerId());
 
-        throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+//        PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(request.getCategoryId(), request.getBillerId());
+//        paymentItemsResponse.setIsValidationRequired(false);
+//        paymentItemsResponse.getItems().add(new Item(PHONE));
+//        paymentItemsResponse.getItems().add(new Item(AMOUNT));
+//        Item itemBundles = new Item();
+//        itemBundles.setParamName("bundles");
+//        itemBundles.setIsAmountFixed(Boolean.TRUE);
+//        dataBundleResponse.getData().forEach(dataBundle -> itemBundles.getSubItems().add(new SubItem(dataBundle.getDatacode(), dataBundle.getName(), dataBundle.getPrice(), dataBundle.getPrice())));
+//        paymentItemsResponse.getItems().add(itemBundles);
+        return customerValidationResponse;
+
     }
 
     //
@@ -1221,6 +1225,32 @@ public class BaxiService implements IThirdPartyService {
         itemPinValues.setParamName("pinValue");
         ePinBundleResponse.getData().forEach(ePinBundle -> itemPinValues.getSubItems().add(new SubItem(ePinBundle.getAmount(), ePinBundle.getDescription(), ePinBundle.getAmount(), ePinBundle.getAmount())));
         paymentItemsResponse.getItems().add(itemPinValues);
+        return paymentItemsResponse;
+    }
+
+    private PaymentItemsResponse getBettingPaymentItems(String categoryId, String billerId) throws ThirdPartyIntegrationException {
+        ValidateBettingAccount betting = new ValidateBettingAccount();
+        betting.setAccountNumber(categoryId);
+        betting.setServiceType(billerId);
+
+
+        Optional<Object> ePinBundleResponseOptional = Optional.empty();
+        try {
+            ePinBundleResponseOptional = Optional.of(feignClient.namefinder(appConfig.getBaxi().getXApiKey(), betting));
+        } catch (FeignException e) {
+            log.error("Unable to fetch Epin Bundles", e);
+        }
+        Object ePinBundleResponse = ePinBundleResponseOptional.orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, "Unable to fetch EPin bundles"));
+
+        //get the params, then also get it sublist
+        PaymentItemsResponse paymentItemsResponse = new PaymentItemsResponse(categoryId, billerId);
+//        paymentItemsResponse.setIsValidationRequired(false);
+//        paymentItemsResponse.getItems().add(new Item("numberOfPins"));
+//        Item itemPinValues = new Item();
+//        itemPinValues.setIsAmountFixed(Boolean.TRUE);
+//        itemPinValues.setParamName("pinValue");
+//        ePinBundleResponse.getData().forEach(ePinBundle -> itemPinValues.getSubItems().add(new SubItem(ePinBundle.getAmount(), ePinBundle.getDescription(), ePinBundle.getAmount(), ePinBundle.getAmount())));
+//        paymentItemsResponse.getItems().add(itemPinValues);
         return paymentItemsResponse;
     }
 

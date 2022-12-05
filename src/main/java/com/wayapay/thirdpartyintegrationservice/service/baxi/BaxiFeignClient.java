@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.service.baxi;
 
+import com.wayapay.thirdpartyintegrationservice.service.BettingValidationResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,7 +60,7 @@ public interface BaxiFeignClient {
     BettingPaymentRespose bettingPayment(@RequestHeader(X_API_KEY) String xApiKey, @RequestBody BettingRequest bettingRequest);
 
     @GetMapping("/services/namefinder/query")
-    Object namefinder(@RequestHeader(X_API_KEY) String xApiKey, @RequestBody ValidateBettingAccount request);
+    BettingValidationResponse namefinder(@RequestHeader(X_API_KEY) String xApiKey, @RequestBody ValidateBettingAccount request);
 
     @PostMapping("/services/insurance/request")
     BettingPaymentRespose insurancePayment(@RequestHeader(X_API_KEY) String xApiKey, @RequestBody InsurancePaymentRequest insurancePaymentRequest);

@@ -25,6 +25,22 @@ public class Constants {
     public static final String NOT_FOUND = "Id not found";
     public static final String ALREADY_RESOLVED = "Dispute already reversed";
 
+    
+    public static final String BAXI_INTRANSIT = "BAXI";
+    public static final String VAT_BAXI_VAS_FEE_ACCOUNT = "VAT_BAXI";
+    public static final String COLLECTION_BAXI_ACCOUNT = "INCOME_BAXI";
+    public static final String DISBURSEMENT_BAXI_VAS_INTRANSIT_ACCOUNT = "DISBURS_BAXI";
+   
+    
+    public static final String QUICKTELLER__INTRANSIT = "QUICKTELLER";
+    public static final String VAT_QUICKTELLER_VAS_FEE_ACCOUNT = "VAT_QUICKTELLER";
+    public static final String COMMISSION_QUICKTELLER_RECEIVABLE_ACCOUNT = "INCOME_QUICKTELLER";
+    public static final String DISBURSEMENT_QUICKTELLER_VAS_INTRANSIT_ACCOUNT = "DISBURS_QUICKTELLER";
+    
+
+
+
+
     private Constants() {
     }
 }

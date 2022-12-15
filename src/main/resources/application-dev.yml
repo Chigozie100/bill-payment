@@ -78,7 +78,7 @@ app:
     dispute:
       base-url: ${DISPUTE_BASE:https://services.staging.wayabank.ng/complaint-service/dispute}
     wallet:
-      base-url: ${CONFIG_BASEURL_TWALLET:https://services.staging.wayabank.ng/temporal-service}
+      base-url: ${CONFIG_BASEURL_TWALLET:http://localhost:8066/temporal-service}
     auth:
       base-url: ${CONFIG_BASEURL_AUTH:http://localhost:8091/auth-service}
     notification:

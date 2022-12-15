@@ -330,9 +330,10 @@ public class BillsPaymentService {
         String billType = getBillType(paymentRequest);
 
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        String eventId = getThirdPartyEvent(thirdPartyName.name());
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFundAdmin(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType)){
+        if (operationService.secureFundAdmin(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType, eventId)){
             try {
                 PaymentResponse paymentResponse = getPaymentResponse(paymentRequest,fee,transactionId,userName);
                 //store the transaction information
@@ -383,7 +384,20 @@ public class BillsPaymentService {
     }
 
 
+    private String getThirdPartyEvent(String thirdPartyName){
+       String eventId = "";
+        if(thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())){
+            // VAT_QUICKTELLER_VAS_FEE_ACCOUNT
+            // COMMISSION_QUICKTELLER_RECEIVABLE_ACCOUNT
+            eventId = Constants.QUICKTELLER__INTRANSIT;
+        }else if(thirdPartyName.equals(ThirdPartyNames.BAXI.name())){
+            // VAT_BAXI_VAS_FEE_ACCOUNT
+            // COMMISSION_BAXI_VAS_INTRANSIT_ACCOUNT
+            eventId = Constants.BAXI_INTRANSIT;
+        }
 
+        return eventId;
+    }
 
 
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
@@ -394,9 +408,14 @@ public class BillsPaymentService {
         String billType = getCategoryName(paymentRequest.getCategoryId());
 
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+
+        String eventID = getThirdPartyEvent(thirdPartyName.name());
+        System.out.println("getThirdPartyEvent eventID -> :: " + eventID); 
+        System.out.println("thirdPartyName processPayment -> :: " + thirdPartyName.name());
+ 
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType)){
+        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType, eventID)){
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information

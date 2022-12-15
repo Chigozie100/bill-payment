@@ -1,9 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.service.wallet;
 
-import com.wayapay.thirdpartyintegrationservice.dto.MainWalletResponse;
-import com.wayapay.thirdpartyintegrationservice.dto.TransactionRequest;
 import com.wayapay.thirdpartyintegrationservice.dto.TransferFromWalletPojo;
-import com.wayapay.thirdpartyintegrationservice.dto.TransferFromWalletToWallet;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;

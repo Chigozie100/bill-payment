@@ -29,5 +29,13 @@ public interface WalletFeignClient {
 
     @PostMapping("/api/v1/wallet/admin/commission/payment")
     ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialCommissionToUserCommission(@RequestBody TransferFromWalletPojo transfer, @RequestHeader("Authorization") String token);
+    
+    @GetMapping("/api/v1/wallet/offical-account/{eventID}")
+    ResponseEntity<ApiResponseBody<?>> officialAccount(@PathVariable("eventID") String eventID, @RequestHeader("Authorization") String token);
 
+
+    
+    @PostMapping("/api/v1/wallet/official/user/transfer")
+    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialToUserCommission(@RequestBody OfficialToUserCommission transfer, @RequestHeader("Authorization") String token);
+    
 }

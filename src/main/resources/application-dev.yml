@@ -86,7 +86,7 @@ app:
     log-service:
       base-url: ${CONFIG_BASEURL_LOGAUDIT:https://services.staging.wayabank.ng/logs-service}
     commission:
-      base-url: ${COMMISSION_BASE:https://services.staging.wayabank.ng/commission-service}
+      base-url: ${COMMISSION_BASE:http://localhost:8090/commission-service}
     kafka:
       transaction-topic: ${TRANSACTION_TOPIC:transaction}
       sell-bills-topic: ${SELL_BILLSPAYMENT_TOPIC:comm-for-selling-billspayment}
@@ -100,6 +100,11 @@ feign:
         read-timeout: 50000
         logger-level: full
 
+
+waya:
+  service:
+    username: admin@wayapaychat.com
+    password: kKo0a9@=&?*#
 
 jwt:
   secret: ${JWT_SECRET:test}

@@ -5,10 +5,10 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.BillsPaymentService;
+import com.wayapay.thirdpartyintegrationservice.service.CommissionOperationService;
 import com.wayapay.thirdpartyintegrationservice.service.OperationService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
-import com.wayapay.thirdpartyintegrationservice.util.Constants;
-import com.wayapay.thirdpartyintegrationservice.util.UserType;
+import com.wayapay.thirdpartyintegrationservice.util.Constants; 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -44,7 +44,7 @@ public class AdminController {
     private final OperationService operationService;
     private final QuickTellerService iThirdPartyService;
     private final ModelMapper modelMapper;
-
+    private final CommissionOperationService commissionOperationService;
 
     @ApiOperation(value = "Get Transaction Status Report : This API is used to get all transaction report failed or successful")
     @ApiResponses(value = {
@@ -191,13 +191,18 @@ public class AdminController {
 
 
 
-
-
-
-
-
-
-
+    @GetMapping("/offical-account/{eventId}")
+    public String offical(@PathVariable("eventId") String eventId) {
+        
+        try {
+            return commissionOperationService.getOfficialAccount(eventId);
+        } catch (ThirdPartyIntegrationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+ 
 
 
 }

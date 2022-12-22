@@ -21,4 +21,7 @@ public class TransferFromWalletPojo {
 	private String tranNarration;
 	private String transactionCategory;
 	private Long userId;
+ 
+
+	
 }

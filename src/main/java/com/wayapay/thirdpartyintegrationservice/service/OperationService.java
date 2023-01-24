@@ -115,14 +115,16 @@ public class OperationService {
     }
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFundAdmin(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
+    public boolean secureFundAdmin(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId) throws ThirdPartyIntegrationException {
         //Get user default wallet
-        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType);
+        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType, eventId);
         return true;
     }
 
 
-    private void processPayment(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
+    private void processPayment(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId) throws ThirdPartyIntegrationException {
+        System.out.println(" inside processPayment ::  " + eventId);
+        
         NewWalletResponse mainWalletResponse2 = getUserWallet(userAccountNumber, token);
 
         checkAccountBalance(mainWalletResponse2,amount);
@@ -132,7 +134,7 @@ public class OperationService {
         trans.setAmount(FeeBearer.CONSUMER.equals(feeBearer) ? amount.add(fee) : amount);
 
         trans.setCustomerAccountNumber(mainWalletResponse2.getAccountNo());
-        trans.setEventId(EventCharges.AITCOL.name());
+        trans.setEventId(eventId);
         trans.setPaymentReference(transactionId);
         trans.setTranCrncy("NGN");
         trans.setTransactionCategory(billType);
@@ -148,9 +150,9 @@ public class OperationService {
 
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
+    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId) throws ThirdPartyIntegrationException {
         //Get user default wallet
-        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType);
+        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType, eventId);
         return true;
     }
 

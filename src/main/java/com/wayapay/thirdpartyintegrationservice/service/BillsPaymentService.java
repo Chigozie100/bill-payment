@@ -416,8 +416,6 @@ public class BillsPaymentService {
         //secure Payment
         String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
 
-        String systemToken = tokenImpl.getToken();
-
         String billType = getCategoryName(paymentRequest.getCategoryId());
 
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
@@ -450,7 +448,7 @@ public class BillsPaymentService {
                     String commEventId = getThirdPartyCommissionEvent(thirdPartyName);
                     CompletableFuture.runAsync(() -> {
                         try { 
-
+                            String systemToken = tokenImpl.getToken();
                             getCommissionForMakingBillsPayment(userDetail, userName,systemToken, paymentRequest.getAmount(), commEventId);
 
                         } catch (ThirdPartyIntegrationException e) {

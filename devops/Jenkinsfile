@@ -13,13 +13,13 @@ pipeline {
     }
 
     stages {
-        /*stage('Security Scan') {
+        stage('Security Scan') {
             steps {
                 withSonarQubeEnv('Waya Sonar') {
                     sh 'mvn clean verify sonar:sonar -DskipTests -Dsonar.projectKey=WAYA-PAY-CHAT-2.0-BILL-PAYMENT-SERVICE'
                 }
             }
-        }*/
+        }
 
         stage('build') {
             steps {
@@ -58,32 +58,17 @@ pipeline {
             }
         }
 
-        stage('Deploy to Staging') {
-            when {
-                branch 'staging'
-            }
+        stage('Deploy') {
             steps {
                 script {
-                    sh '''
-                        chmod +x ./deploy.sh
-                        ./deploy.sh
-                        '''
+                    dir('devops') {
+                        sh '''
+                            chmod +x ./deploy.sh
+                            ./deploy.sh
+                            '''
+                    }
                 }
             }
-        }
-
-        stage('Deploy to Production') {
-            when {
-                branch 'production'
-            }
-            steps {
-                script {
-                    sh '''
-                        chmod +x ./deploy.sh
-                        ./deploy.sh
-                        '''
-                }
-            }
-        }
+        }   
     }
 }

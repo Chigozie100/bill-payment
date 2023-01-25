@@ -328,7 +328,6 @@ public class BillsPaymentService {
         UserProfileResponse userProfileResponse = getUserProfileResponse(userName,token);
         //secure Payment
         String transactionId = getTransactionID();
-        String systemToken = tokenImpl.getToken();
         String billType = getBillType(paymentRequest);
 
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
@@ -417,8 +416,6 @@ public class BillsPaymentService {
         //secure Payment
         String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
 
-        String systemToken = tokenImpl.getToken();
-
         String billType = getCategoryName(paymentRequest.getCategoryId());
 
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
@@ -429,7 +426,7 @@ public class BillsPaymentService {
  
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, systemToken, billType, eventID)){
+        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType, eventID)){
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
@@ -452,7 +449,7 @@ public class BillsPaymentService {
                     String commEventId = getThirdPartyCommissionEvent(thirdPartyName);
                     CompletableFuture.runAsync(() -> {
                         try { 
-
+                            String systemToken = tokenImpl.getToken();
                             getCommissionForMakingBillsPayment(userDetail, userName,systemToken, paymentRequest.getAmount(), commEventId);
 
                         } catch (ThirdPartyIntegrationException e) {

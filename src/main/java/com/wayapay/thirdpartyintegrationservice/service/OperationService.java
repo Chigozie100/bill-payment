@@ -123,7 +123,7 @@ public class OperationService {
 
 
     private void processPayment(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId) throws ThirdPartyIntegrationException {
-        System.out.println(" inside processPayment ::  " + eventId);
+        log.info(" inside processPayment ::  " + eventId);
         
         NewWalletResponse mainWalletResponse2 = getUserWallet(userAccountNumber, token);
 

@@ -193,7 +193,7 @@ public class AdminController {
 
     @GetMapping("/offical-account/{eventId}")
     public String offical(@PathVariable("eventId") String eventId, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) {
-        
+
         try {
             return commissionOperationService.getOfficialAccount(eventId, token);
         } catch (ThirdPartyIntegrationException e) {

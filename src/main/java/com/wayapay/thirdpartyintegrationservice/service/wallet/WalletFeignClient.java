@@ -11,7 +11,7 @@ import java.util.List;
 @FeignClient(name = "wallet-feign-client", url = "${app.config.wallet.base-url}")
 public interface WalletFeignClient {
 
-    @GetMapping("/api/v1/wallet/user-account/{accountNo}") //  ===> returns single
+    @GetMapping("/api/v1/wallet/admin/user-account/{accountNo}") //  ===> returns single
     ResponseEntity<InfoResponse> getUserWallet(@PathVariable("accountNo") String accountNo, @RequestHeader("Authorization") String token);
 
     @PostMapping(path="/api/v1/wallet/event/charge/payment")

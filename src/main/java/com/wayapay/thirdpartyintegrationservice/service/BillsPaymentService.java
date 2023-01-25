@@ -424,8 +424,8 @@ public class BillsPaymentService {
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
 
         String eventID = getThirdPartyEvent(thirdPartyName.name());
-        System.out.println("getThirdPartyEvent eventID -> :: " + eventID); 
-        System.out.println("thirdPartyName processPayment -> :: " + thirdPartyName.name());
+        log.info("getThirdPartyEvent eventID -> :: " + eventID); 
+        log.info("thirdPartyName processPayment -> :: " + thirdPartyName.name());
  
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
@@ -447,6 +447,7 @@ public class BillsPaymentService {
                 });
 
                 UserDetail userDetail = profileDetailsService.getUser(token);
+                log.info(" userDetail -> :: " + userDetail);
                 if (userDetail.isCorporate()){
                     String commEventId = getThirdPartyCommissionEvent(thirdPartyName);
                     CompletableFuture.runAsync(() -> {
@@ -464,7 +465,7 @@ public class BillsPaymentService {
                     map.put("userName", userName);
                     map.put("categoryCode", paymentRequest.getCategoryId());
                     map.put("amount", paymentRequest.getAmount());
-
+                    log.info(" userDetail map -> :: " + map);
                     // push to kafka topic
                     CompletableFuture.runAsync(() -> {
                         try {
@@ -519,11 +520,11 @@ public class BillsPaymentService {
     }
 
     private ReferralCodePojo getUser(String referralCode, String token)throws ThirdPartyIntegrationException{
-     
-        ResponseEntity<ApiResponseBody<ReferralCodePojo>> responseEntity =  authFeignClient.getUserByReferralCode(referralCode, token);
-        ApiResponseBody<ReferralCodePojo> infoResponse = responseEntity.getBody();
+    
+    ResponseEntity<ApiResponseBody<ReferralCodePojo>> responseEntity = authFeignClient.getUserByReferralCode(referralCode, token);
+    ApiResponseBody<ReferralCodePojo> infoResponse = responseEntity.getBody();
    
-        return infoResponse.getData();
+    return infoResponse.getData();
     }
 
     private String extractPhone(PaymentRequest paymentRequest){

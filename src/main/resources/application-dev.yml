@@ -37,9 +37,9 @@ server:
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_SERVER_URL:http://localhost/eureka}
+      defaultZone: ${EUREKA_SERVER_URL:https://services.staging.wayabank.ng/eureka}
     service-url:
-      default-zone: ${EUREKA_SERVER_URL:http://localhost/eureka}
+      default-zone: ${EUREKA_SERVER_URL:https://services.staging.wayabank.ng/eureka}
   register-with-eureka: false
   fetch-registry: false
   instance:
@@ -78,7 +78,7 @@ app:
     dispute:
       base-url: ${DISPUTE_BASE:https://services.staging.wayabank.ng/complaint-service/dispute}
     wallet:
-      base-url: ${CONFIG_BASEURL_TWALLET:http://localhost:8066/temporal-service}
+      base-url: ${CONFIG_BASEURL_TWALLET:https://services.staging.wayabank.ng/temporal-service}
     auth:
       base-url: ${CONFIG_BASEURL_AUTH:http://localhost:8091/auth-service}
     notification:

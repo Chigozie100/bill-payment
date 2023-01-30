@@ -80,7 +80,7 @@ app:
     wallet:
       base-url: ${CONFIG_BASEURL_TWALLET:https://services.staging.wayabank.ng/temporal-service}
     auth:
-      base-url: ${CONFIG_BASEURL_AUTH:https://services.staging.wayabank.ng/auth-service}
+      base-url: ${CONFIG_BASEURL_AUTH:http://localhost:8091/auth-service}
     notification:
       base-url: ${NOTIFICATION_BASE:https://services.staging.wayabank.ng/notification-service}
     log-service:

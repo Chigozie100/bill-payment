@@ -68,7 +68,7 @@ public class NotificationService {
 
         try {
           //  ResponseEntity<ResponseObj> responseEntity = notificationFeignClient.emailNotifyUser(emailEvent,token);
-            var responseEntity = notificationFeignClient.emailNotifyUserTransaction(emailEvent,token);
+          ResponseEntity<ResponseObj<Object>>  responseEntity = notificationFeignClient.emailNotifyUserTransaction(emailEvent,token);
 
             log.info(String.format("userProfileResponse email sent status :: %s", Objects.requireNonNull(responseEntity.getBody()).status));
         } catch (Exception e) {

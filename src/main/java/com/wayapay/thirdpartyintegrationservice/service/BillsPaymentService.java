@@ -191,7 +191,7 @@ public class BillsPaymentService {
     }
 
 
-    private String getCategoryName(String category){
+    private String getCategoryName(String category, String biller){
          if (category.equalsIgnoreCase("Airtime")){
              return TransactionCategory.AIRTIME_TOPUP.name();
          }else if (category.equalsIgnoreCase("insurance")){
@@ -228,8 +228,10 @@ public class BillsPaymentService {
          else if (category.equalsIgnoreCase("3")){
              return TransactionCategory.TRANSFER.name();
          }
-         else if (category.equalsIgnoreCase("4")){
-             return TransactionCategory.AIRTIME_TOPUP.name();
+         else if (category.equalsIgnoreCase("4") && "120".equalsIgnoreCase(biller)){
+            return TransactionCategory.DATA_TOPUP.name(); 
+         }else if(category.equalsIgnoreCase("4")){
+            return TransactionCategory.AIRTIME_TOPUP.name();
          }
          else if (category.equalsIgnoreCase("7")){
              return TransactionCategory.TRANSFER.name();
@@ -416,13 +418,16 @@ public class BillsPaymentService {
         //secure Payment
         String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
 
-        String billType = getCategoryName(paymentRequest.getCategoryId());
+        String systemToken = tokenImpl.getToken();
+
+        String billType = getCategoryName(paymentRequest.getCategoryId(), paymentRequest.getBillerId());
 
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
 
         String eventID = getThirdPartyEvent(thirdPartyName.name());
         log.info("getThirdPartyEvent eventID -> :: " + eventID); 
         log.info("thirdPartyName processPayment -> :: " + thirdPartyName.name());
+        log.info("billType processPayment -> :: " + billType);
  
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());

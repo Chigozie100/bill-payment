@@ -103,16 +103,16 @@ public class OperationService {
 
     }
 
-    private NewWalletResponse getUserWallet(String userAccountNumber, String systemToken,  String token, Boolean isAdmin){
-        if(isAdmin){
-            ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWallet(userAccountNumber, systemToken);
-            InfoResponse infoResponse = responseEntity.getBody();
-            return Objects.requireNonNull(infoResponse).data;
-        }else{
+    private NewWalletResponse getUserWallet(String userAccountNumber, String token, Boolean isAdmin){
+        // if(isAdmin){
+        //     ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWallet(userAccountNumber, systemToken);
+        //     InfoResponse infoResponse = responseEntity.getBody();
+        //     return Objects.requireNonNull(infoResponse).data;
+        // }else{
             ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWalletByUser(userAccountNumber, token);
             InfoResponse infoResponse = responseEntity.getBody();
             return Objects.requireNonNull(infoResponse).data;
-        }
+        // }
 
     }
 
@@ -124,15 +124,15 @@ public class OperationService {
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFundAdmin(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId) throws ThirdPartyIntegrationException {
         //Get user default wallet
-        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType, eventId, true, null);
+        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType, eventId, true);
         return true;
     }
 
 
-    private void processPayment(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String systemToken, String billType, String eventId, Boolean isAdmin, String token) throws ThirdPartyIntegrationException {
+    private void processPayment(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId, Boolean isAdmin) throws ThirdPartyIntegrationException {
         log.info(" inside processPayment ::  " + eventId);
         
-        NewWalletResponse mainWalletResponse2 = getUserWallet(userAccountNumber, systemToken, token, isAdmin);
+        NewWalletResponse mainWalletResponse2 = getUserWallet(userAccountNumber, token, isAdmin);
 
         checkAccountBalance(mainWalletResponse2,amount);
 
@@ -148,7 +148,7 @@ public class OperationService {
         trans.setTranNarration(TransactionType.BILLS_PAYMENT.name());
         trans.setUserId(Long.parseLong(userName));
         try {
-            walletFeignClient.transferFromUserToWaya(trans,systemToken);
+            walletFeignClient.transferFromUserToWaya(trans,token);
 
         } catch (FeignException exception) {
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, getErrorMessage(exception.contentUTF8()));
@@ -157,9 +157,9 @@ public class OperationService {
 
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String sytemToken, String billType, String eventId, String token) throws ThirdPartyIntegrationException {
+    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId) throws ThirdPartyIntegrationException {
         //Get user default wallet
-        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  sytemToken,  billType, eventId, false,token);
+        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType, eventId, false);
         return true;
     }
 

@@ -11,8 +11,12 @@ import java.util.List;
 @FeignClient(name = "wallet-feign-client", url = "${app.config.wallet.base-url}")
 public interface WalletFeignClient {
 
-    @GetMapping("/api/v1/wallet/admin/user-account/{accountNo}") //  ===> returns single
+    @GetMapping("/api/v1/wallet/admin/user-account/{accountNo}") //  ===> returns single for adm
     ResponseEntity<InfoResponse> getUserWallet(@PathVariable("accountNo") String accountNo, @RequestHeader("Authorization") String token);
+  
+    @GetMapping("/api/v1/wallet/user-account/{accountNo}") //  ===> returns single
+    ResponseEntity<InfoResponse> getUserWalletByUser(@PathVariable("accountNo") String accountNo, @RequestHeader("Authorization") String token);
+
 
     @PostMapping(path="/api/v1/wallet/event/charge/payment")
     ResponseEntity<String> transferFromUserToWaya(@RequestBody TransferFromWalletPojo transfer, @RequestHeader("Authorization") String token);
@@ -32,8 +36,7 @@ public interface WalletFeignClient {
     
     @GetMapping("/api/v1/wallet/offical-account/{eventID}")
     ResponseEntity<ApiResponseBody<?>> officialAccount(@PathVariable("eventID") String eventID, @RequestHeader("Authorization") String token);
-
-
+ 
     
     @PostMapping("/api/v1/wallet/official/user/transfer")
     ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialToUserCommission(@RequestBody OfficialToUserCommission transfer, @RequestHeader("Authorization") String token);

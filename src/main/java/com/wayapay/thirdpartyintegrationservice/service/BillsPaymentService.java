@@ -191,7 +191,7 @@ public class BillsPaymentService {
     }
 
 
-    private String getCategoryName(String category){
+    private String getCategoryName(String category, String biller){
          if (category.equalsIgnoreCase("Airtime")){
              return TransactionCategory.AIRTIME_TOPUP.name();
          }else if (category.equalsIgnoreCase("insurance")){
@@ -228,8 +228,10 @@ public class BillsPaymentService {
          else if (category.equalsIgnoreCase("3")){
              return TransactionCategory.TRANSFER.name();
          }
-         else if (category.equalsIgnoreCase("4")){
-             return TransactionCategory.AIRTIME_TOPUP.name();
+         else if (category.equalsIgnoreCase("4") && "120".equalsIgnoreCase(biller)){
+            return TransactionCategory.DATA_TOPUP.name(); 
+         }else if(category.equalsIgnoreCase("4")){
+            return TransactionCategory.AIRTIME_TOPUP.name();
          }
          else if (category.equalsIgnoreCase("7")){
              return TransactionCategory.TRANSFER.name();
@@ -293,7 +295,7 @@ public class BillsPaymentService {
           return String.valueOf(CommonUtils.generatePaymentTransactionId());
     }
     private String getBillType(PaymentRequest paymentRequest){
-        return getCategoryName(paymentRequest.getCategoryId());
+        return getCategoryName(paymentRequest.getCategoryId(), paymentRequest.getBillerId());
     }
 
     private PaymentResponse getPaymentResponse(PaymentRequest paymentRequest, BigDecimal fee, String transactionId, String userName) throws ThirdPartyIntegrationException {
@@ -400,12 +402,22 @@ public class BillsPaymentService {
         return eventId;
     }
 
-    private String getThirdPartyCommissionEvent(ThirdPartyNames thirdPartyName){
+    private String getThirdPartyCommissionEvent(String thirdPartyName){
         String eventId = "";
          if(thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())){
              eventId = Constants.QUICKTELLER_SETTLEMENT_ACCOUNT;
          }else if(thirdPartyName.equals(ThirdPartyNames.BAXI.name())){
              eventId = Constants.BAXI_SETTLEMENT_ACCOUNT;
+         }
+         return eventId;
+     }
+
+     private String getThirdPartyCommissionEvent2(String thirdPartyName){
+        String eventId = "";
+         if(thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())){
+             eventId = Constants.QUICKTELLER_BILLS_PAYMENT_COMMISSION;
+         }else if(thirdPartyName.equals(ThirdPartyNames.BAXI.name())){
+             eventId = Constants.BAXI_BILLS_PAYMENT_COMMISSION;
          }
          return eventId;
      }
@@ -416,13 +428,16 @@ public class BillsPaymentService {
         //secure Payment
         String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
 
-        String billType = getCategoryName(paymentRequest.getCategoryId());
+        String systemToken = tokenImpl.getToken();
+
+        String billType = getCategoryName(paymentRequest.getCategoryId(), paymentRequest.getBillerId());
 
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
 
         String eventID = getThirdPartyEvent(thirdPartyName.name());
         log.info("getThirdPartyEvent eventID -> :: " + eventID); 
         log.info("thirdPartyName processPayment -> :: " + thirdPartyName.name());
+        log.info("billType processPayment -> :: " + billType);
  
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
@@ -446,10 +461,11 @@ public class BillsPaymentService {
                 UserDetail userDetail = profileDetailsService.getUser(token);
                 log.info(" userDetail -> :: " + userDetail);
                 if (userDetail.isCorporate()){
-                    String commEventId = getThirdPartyCommissionEvent(thirdPartyName);
+                    String commEventId = getThirdPartyCommissionEvent2(eventID);
+                    log.info(" commEventId -> :: " + commEventId);
                     CompletableFuture.runAsync(() -> {
-                        try { 
-                            String systemToken = tokenImpl.getToken();
+                        try {
+                            log.info("###### getCommissionForMakingBillsPayment ######" );
                             getCommissionForMakingBillsPayment(userDetail, userName,systemToken, paymentRequest.getAmount(), commEventId);
 
                         } catch (ThirdPartyIntegrationException e) {
@@ -480,7 +496,7 @@ public class BillsPaymentService {
                     // get user referrence code
                         CompletableFuture.runAsync(() -> {
                             try {
-                                calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount(), commEventId);
+                                calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, systemToken,paymentRequest.getAmount(), commEventId);
 
                             } catch (ThirdPartyIntegrationException e) {
                                 log.info("error"+e.getMessage());
@@ -735,7 +751,7 @@ public class BillsPaymentService {
             trackerDto.setCommissionValue(BigDecimal.ONE.doubleValue());
             trackerDto.setTransactionType(TransactionType.BILLS_PAYMENT);
             commissionOperationService.saveMerchantCommission(trackerDto,token);
-
+            log.info("###### after saving ######" );
             payCommissionToMerchant(UserType.valueOf(userType),userId,token, amount, eventId);  // pay user commission
 
         }

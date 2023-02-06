@@ -103,10 +103,17 @@ public class OperationService {
 
     }
 
-    private NewWalletResponse getUserWallet(String userAccountNumber, String token){
-        ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWallet(userAccountNumber, token);
-        InfoResponse infoResponse = responseEntity.getBody();
-        return Objects.requireNonNull(infoResponse).data;
+    private NewWalletResponse getUserWallet(String userAccountNumber, String token, Boolean isAdmin){
+        // if(isAdmin){
+        //     ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWallet(userAccountNumber, systemToken);
+        //     InfoResponse infoResponse = responseEntity.getBody();
+        //     return Objects.requireNonNull(infoResponse).data;
+        // }else{
+            ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWalletByUser(userAccountNumber, token);
+            InfoResponse infoResponse = responseEntity.getBody();
+            return Objects.requireNonNull(infoResponse).data;
+        // }
+
     }
 
     private void checkAccountBalance(NewWalletResponse mainWalletResponse, BigDecimal amount) throws ThirdPartyIntegrationException {
@@ -117,15 +124,15 @@ public class OperationService {
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFundAdmin(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId) throws ThirdPartyIntegrationException {
         //Get user default wallet
-        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType, eventId);
+        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType, eventId, true);
         return true;
     }
 
 
-    private void processPayment(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId) throws ThirdPartyIntegrationException {
+    private void processPayment(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId, Boolean isAdmin) throws ThirdPartyIntegrationException {
         log.info(" inside processPayment ::  " + eventId);
         
-        NewWalletResponse mainWalletResponse2 = getUserWallet(userAccountNumber, token);
+        NewWalletResponse mainWalletResponse2 = getUserWallet(userAccountNumber, token, isAdmin);
 
         checkAccountBalance(mainWalletResponse2,amount);
 
@@ -152,7 +159,7 @@ public class OperationService {
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
     public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId) throws ThirdPartyIntegrationException {
         //Get user default wallet
-        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType, eventId);
+        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType, eventId, false);
         return true;
     }
 

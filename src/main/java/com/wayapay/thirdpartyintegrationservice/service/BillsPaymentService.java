@@ -466,7 +466,6 @@ public class BillsPaymentService {
                     CompletableFuture.runAsync(() -> {
                         try {
                             log.info("###### getCommissionForMakingBillsPayment ######" );
-                            String systemToken = tokenImpl.getToken();
                             getCommissionForMakingBillsPayment(userDetail, userName,systemToken, paymentRequest.getAmount(), commEventId);
 
                         } catch (ThirdPartyIntegrationException e) {
@@ -497,7 +496,7 @@ public class BillsPaymentService {
                     // get user referrence code
                         CompletableFuture.runAsync(() -> {
                             try {
-                                calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount(), commEventId);
+                                calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, systemToken,paymentRequest.getAmount(), commEventId);
 
                             } catch (ThirdPartyIntegrationException e) {
                                 log.info("error"+e.getMessage());

@@ -63,16 +63,19 @@ public class CommissionOperationService {
 
         try { 
  
+             
             ResponseEntity<ApiResponseBody<?>> response = walletFeignClient.officialAccount(eventId,token);
             ApiResponseBody<?> infoResponse =  response.getBody();
 
             log.info("Response from Commission Service" + infoResponse.getData());
+            log.info("Response from Commission Service 2" + infoResponse);
             if (response.getStatusCode().isError()) {
                 throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, response.getStatusCode().toString());
             }
-
-           return infoResponse.getData().toString();
-
+            if(infoResponse.getData() !=null){
+                return infoResponse.getData().toString();
+            }
+            return null; 
         } catch (RestClientException e) {
             System.out.println("Error is here " + e.getMessage());
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, e.getMessage());
@@ -96,12 +99,13 @@ public class CommissionOperationService {
   
         OfficialToUserCommission transfer = new OfficialToUserCommission();
        
-       // String systemToken = tokenImpl.getToken();
-           
-
-        String officialAccount = getOfficialAccount(eventId, token);
+       String systemToken = tokenImpl.getToken();
+       log.info("  systemToken " + systemToken); 
 
         // call offical account
+        String officialAccount = getOfficialAccount(eventId, systemToken);
+
+       
         //String token = BearerTokenUtil.getBearerTokenHeader();
         UserCommissionDto userCommissionDto = findUserCommission(userType,token);
         NewWalletResponse userCommissionWallet = getUserCommissionWallet(userId,token); // get user commission wallet
@@ -113,11 +117,11 @@ public class CommissionOperationService {
         transfer.setPaymentReference(String.valueOf(CommonUtils.generatePaymentTransactionId()));
         transfer.setTranNarration("COMMISSION-PAYMENT-TRANSACTION");
         transfer.setTranType("LOCAL");
- 
+        transfer.setTransactionCategory("COMMISSION");
 
         log.info("Billspyament::  Merchant Commission Amount for buying billspayment " + transfer);
 
-        ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialToUserCommission(transfer,token);
+        ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialToUserCommission(transfer,systemToken);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
 
         log.info("Billspyament::  Merchant Commission Amount for buying billspayment RESPONSE::" + infoResponse);

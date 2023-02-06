@@ -295,7 +295,7 @@ public class BillsPaymentService {
           return String.valueOf(CommonUtils.generatePaymentTransactionId());
     }
     private String getBillType(PaymentRequest paymentRequest){
-        return getCategoryName(paymentRequest.getCategoryId());
+        return getCategoryName(paymentRequest.getCategoryId(), paymentRequest.getBillerId());
     }
 
     private PaymentResponse getPaymentResponse(PaymentRequest paymentRequest, BigDecimal fee, String transactionId, String userName) throws ThirdPartyIntegrationException {
@@ -402,12 +402,22 @@ public class BillsPaymentService {
         return eventId;
     }
 
-    private String getThirdPartyCommissionEvent(ThirdPartyNames thirdPartyName){
+    private String getThirdPartyCommissionEvent(String thirdPartyName){
         String eventId = "";
          if(thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())){
              eventId = Constants.QUICKTELLER_SETTLEMENT_ACCOUNT;
          }else if(thirdPartyName.equals(ThirdPartyNames.BAXI.name())){
              eventId = Constants.BAXI_SETTLEMENT_ACCOUNT;
+         }
+         return eventId;
+     }
+
+     private String getThirdPartyCommissionEvent2(String thirdPartyName){
+        String eventId = "";
+         if(thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())){
+             eventId = Constants.QUICKTELLER_BILLS_PAYMENT_COMMISSION;
+         }else if(thirdPartyName.equals(ThirdPartyNames.BAXI.name())){
+             eventId = Constants.BAXI_BILLS_PAYMENT_COMMISSION;
          }
          return eventId;
      }
@@ -451,10 +461,11 @@ public class BillsPaymentService {
                 UserDetail userDetail = profileDetailsService.getUser(token);
                 log.info(" userDetail -> :: " + userDetail);
                 if (userDetail.isCorporate()){
-                    String commEventId = getThirdPartyCommissionEvent(thirdPartyName);
+                    String commEventId = getThirdPartyCommissionEvent2(eventID);
+                    log.info(" commEventId -> :: " + commEventId);
                     CompletableFuture.runAsync(() -> {
-                        try { 
-                            String systemToken = tokenImpl.getToken();
+                        try {
+                            log.info("###### getCommissionForMakingBillsPayment ######" );
                             getCommissionForMakingBillsPayment(userDetail, userName,systemToken, paymentRequest.getAmount(), commEventId);
 
                         } catch (ThirdPartyIntegrationException e) {
@@ -485,7 +496,7 @@ public class BillsPaymentService {
                     // get user referrence code
                         CompletableFuture.runAsync(() -> {
                             try {
-                                calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, token,paymentRequest.getAmount(), commEventId);
+                                calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, systemToken,paymentRequest.getAmount(), commEventId);
 
                             } catch (ThirdPartyIntegrationException e) {
                                 log.info("error"+e.getMessage());
@@ -740,7 +751,7 @@ public class BillsPaymentService {
             trackerDto.setCommissionValue(BigDecimal.ONE.doubleValue());
             trackerDto.setTransactionType(TransactionType.BILLS_PAYMENT);
             commissionOperationService.saveMerchantCommission(trackerDto,token);
-
+            log.info("###### after saving ######" );
             payCommissionToMerchant(UserType.valueOf(userType),userId,token, amount, eventId);  // pay user commission
 
         }

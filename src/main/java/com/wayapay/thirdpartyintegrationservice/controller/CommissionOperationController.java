@@ -5,7 +5,10 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.model.TransactionTracker;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
+import com.wayapay.thirdpartyintegrationservice.service.CommissionOperationService;
 import com.wayapay.thirdpartyintegrationservice.service.OperationService;
+import com.wayapay.thirdpartyintegrationservice.util.UserType;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -15,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
@@ -28,6 +32,7 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 public class CommissionOperationController {
 
     private final OperationService operationService;
+    private final CommissionOperationService commission;
 
     @ApiOperation(value = "Get Transaction Report : This API is used to get all transaction count by referralCode", position = 8)
     @ApiResponses(value = {

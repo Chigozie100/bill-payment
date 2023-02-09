@@ -346,9 +346,10 @@ public class BillsPaymentService {
 
                 UserDetail userDetail = profileDetailsService.getUser(token);
                 if (userDetail.isCorporate()){
-                    CompletableFuture.runAsync(() -> {
+                    String settelmentEvent = getThirdPartyCommissionSettlementEvent(eventId);
+                    CompletableFuture.runAsync(() -> { 
                         try {
-                            getCommissionForMakingBillsPayment(userDetail, userName,token, paymentRequest.getAmount(),eventId);
+                            getCommissionForMakingBillsPayment(userDetail, userName,token, paymentRequest.getAmount(),eventId, settelmentEvent, paymentRequest.getBillerId(), paymentRequest.getCategoryId());
                         } catch (ThirdPartyIntegrationException e) {
                             log.info("error"+e.getMessage());
                         }
@@ -402,7 +403,7 @@ public class BillsPaymentService {
         return eventId;
     }
 
-    private String getThirdPartyCommissionEvent(String thirdPartyName){
+    private String getThirdPartyCommissionSettlementEvent(String thirdPartyName){
         String eventId = "";
          if(thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())){
              eventId = Constants.QUICKTELLER_SETTLEMENT_ACCOUNT;
@@ -462,11 +463,12 @@ public class BillsPaymentService {
                 log.info(" userDetail -> :: " + userDetail);
                 if (userDetail.isCorporate()){
                     String commEventId = getThirdPartyCommissionEvent2(eventID);
+                    String settelmentEvent = getThirdPartyCommissionSettlementEvent(eventID);
                     log.info(" commEventId -> :: " + commEventId);
                     CompletableFuture.runAsync(() -> {
                         try {
                             log.info("###### getCommissionForMakingBillsPayment ######" );
-                            getCommissionForMakingBillsPayment(userDetail, userName,systemToken, paymentRequest.getAmount(), commEventId);
+                            getCommissionForMakingBillsPayment(userDetail, userName,systemToken, paymentRequest.getAmount(), commEventId, settelmentEvent, paymentRequest.getBillerId(), paymentRequest.getCategoryId());
 
                         } catch (ThirdPartyIntegrationException e) {
                             log.info("error"+e.getMessage());
@@ -496,8 +498,8 @@ public class BillsPaymentService {
                     // get user referrence code
                         CompletableFuture.runAsync(() -> {
                             try {
-                                calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, systemToken,paymentRequest.getAmount(), commEventId);
-
+                                calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, systemToken,paymentRequest.getAmount(), commEventId,paymentRequest.getCategoryId());
+                                //UserDetail userDetail, String billerId, String userName, String token, BigDecimal amount, String eventId, String categoryId
                             } catch (ThirdPartyIntegrationException e) {
                                 log.info("error"+e.getMessage());
                             }
@@ -739,7 +741,7 @@ public class BillsPaymentService {
     }
 
     // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment
-    public void getCommissionForMakingBillsPayment(UserDetail userDetail, String userId, String token, BigDecimal amount,String eventId) throws ThirdPartyIntegrationException {
+    public void getCommissionForMakingBillsPayment(UserDetail userDetail, String userId, String token, BigDecimal amount,String eventId, String thridParty,String billerId, String categoryId) throws ThirdPartyIntegrationException {
 
         String userType = getUserType(userDetail);
 
@@ -752,7 +754,7 @@ public class BillsPaymentService {
             trackerDto.setTransactionType(TransactionType.BILLS_PAYMENT);
             commissionOperationService.saveMerchantCommission(trackerDto,token);
             log.info("###### after saving ######" );
-            payCommissionToMerchant(UserType.valueOf(userType),userId,token, amount, eventId);  // pay user commission
+            payCommissionToMerchant(UserType.valueOf(userType),userId,token, amount, eventId, thridParty, billerId, categoryId);  // pay user commission
 
         }
 
@@ -771,15 +773,17 @@ public class BillsPaymentService {
         return null;
 
     }
-
-    public void payCommissionToMerchant(UserType userType,String userName, String token, BigDecimal amount, String eventId) throws ThirdPartyIntegrationException {
-        commissionOperationService.payUserCommission(userType,userName,token, amount, eventId); // log commission
+ 
+    public void payCommissionToMerchant(UserType userType,String userName, String token, BigDecimal amount, String eventId, String thirdParty, String billerId, String categoryId) throws ThirdPartyIntegrationException {
+        commissionOperationService.payUserCommission(userType,userName,token, amount, eventId, thirdParty, billerId, categoryId); // log commission
+        //                                              payUserCommission(userType, userId, token,  amount,  eventId, settleEventId, biller, categoryId )
     }
 
     //as a merchant user anytime i sell billspayment a certain % amount of the item sold amount is transferred on real time to my commission wallet from WAYA
-    private void calculateMerchantPercentage(UserDetail userDetail, String billerId, String userName, String token, BigDecimal amount, String eventId) throws ThirdPartyIntegrationException {
+    private void calculateMerchantPercentage(UserDetail userDetail, String billerId, String userName, String token, BigDecimal amount, String eventId, String categoryId) throws ThirdPartyIntegrationException {
         String userType = getUserType(userDetail);
-        commissionOperationService.payOrganisationCommission(UserType.valueOf(userType),billerId,userName,token, amount, eventId); // log commission
+        commissionOperationService.payOrganisationCommission(UserType.valueOf(userType),billerId,userName,token, amount, eventId, categoryId); // log commission
+        //UserType userType,String billerId,String userId, String token, BigDecimal amount, String eventId, String categoryId
        // 1. get the biller  2. find the biller commission 3. find the corporate user Id 4. compute the Percetage 5. credit the commission wallet
     }
 

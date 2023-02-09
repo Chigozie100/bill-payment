@@ -41,4 +41,8 @@ public interface WalletFeignClient {
     @PostMapping("/api/v1/wallet/official/user/transfer")
     ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialToUserCommission(@RequestBody OfficialToUserCommission transfer, @RequestHeader("Authorization") String token);
     
+
+    @PostMapping("/api/v1/wallet/official/transfer")
+    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialToOfficial(@RequestBody OfficalToOfficial transfer, @RequestHeader("Authorization") String token);
+    
 }

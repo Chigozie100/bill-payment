@@ -55,4 +55,18 @@ public class CommissionOperationController {
     }
 
 
+    @ApiOperation(value = "", position = 8)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful")
+    })
+    @PostMapping("/getOfficialAccount")
+    public ResponseEntity<?> getOfficialAccount(@RequestParam("eventId") String eventId, @RequestParam("token") String token
+    ) throws ThirdPartyIntegrationException {
+         commission.getOfficialAccount(eventId, token);
+   
+        return ResponseEntity.ok(null);
+    }
+
+    //String getOfficialAccount(String eventId, String token)
+
 }

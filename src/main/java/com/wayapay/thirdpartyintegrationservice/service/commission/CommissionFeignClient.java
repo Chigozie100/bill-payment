@@ -1,6 +1,7 @@
 package com.wayapay.thirdpartyintegrationservice.service.commission;
 
 import com.wayapay.thirdpartyintegrationservice.dto.ApiResponseBody;
+import com.wayapay.thirdpartyintegrationservice.dto.BillspaymentCommissionRespones;
 import com.wayapay.thirdpartyintegrationservice.dto.OrganisationCommissionResponse;
 import com.wayapay.thirdpartyintegrationservice.util.TransactionType;
 import com.wayapay.thirdpartyintegrationservice.util.UserType;
@@ -26,6 +27,10 @@ public interface CommissionFeignClient {
 
     @GetMapping("/api/v1/organisation/commission/biller/{biller}")
     ResponseEntity<ApiResponseBody<OrganisationCommissionResponse>> getOrgCommission(@PathVariable String biller, @RequestHeader("Authorization") String token);
+
+    /// BillspaymentCommission
+    @GetMapping("/api/v1/user/getBillsPaymentCommission/{userId}/{biller_id}/{categoryCode}")
+    ResponseEntity<ApiResponseBody<BillspaymentCommissionRespones>> getBillspaymentCommission(@PathVariable("userId") Long userId, @PathVariable("biller_id") String biller_id, @PathVariable("categoryCode") String categoryCode, @RequestHeader("Authorization") String token);
 
 
 }

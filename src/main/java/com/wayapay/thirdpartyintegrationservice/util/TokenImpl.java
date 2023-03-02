@@ -29,6 +29,7 @@ public class TokenImpl {
         Map<String, String> map = new HashMap<>();
         map.put("emailOrPhoneNumber",  environment.getProperty("waya.service.username"));
         map.put("password", environment.getProperty("waya.service.password"));
+        map.put("otp", "");
 
         TokenCheckResponse tokenData = authProxy.getToken(map);
 

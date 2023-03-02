@@ -19,7 +19,7 @@ public interface WalletFeignClient {
 
 
     @PostMapping(path="/api/v1/wallet/event/charge/payment")
-    ResponseEntity<String> transferFromUserToWaya(@RequestBody TransferFromWalletPojo transfer, @RequestHeader("Authorization") String token);
+    ResponseEntity<String> transferFromUserToWaya(@RequestBody TransferFromWalletPojo transfer, @RequestHeader("Authorization") String token, @RequestHeader("pin") String pin);
 
     @GetMapping("/api/v1/wallet/commission-accounts/{userId}")
     ResponseEntity<ApiResponseBody<NewWalletResponse>> getUserCommissionWallet(@PathVariable("userId") String userId, @RequestHeader("Authorization") String token);
@@ -29,20 +29,20 @@ public interface WalletFeignClient {
     ResponseEntity<InfoResponseList> getWayaOfficialWallet(@RequestHeader("Authorization") String token);
 
     @PostMapping("/api/v1/wallet/official/user/transfer")
-    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> refundFailedTransaction(@RequestBody TransferFromOfficialToMainWallet transfer, @RequestHeader("Authorization") String token);
+    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> refundFailedTransaction(@RequestBody TransferFromOfficialToMainWallet transfer, @RequestHeader("Authorization") String token, @RequestHeader("pin") String pin);
 
     @PostMapping("/api/v1/wallet/admin/commission/payment")
-    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialCommissionToUserCommission(@RequestBody TransferFromWalletPojo transfer, @RequestHeader("Authorization") String token);
+    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialCommissionToUserCommission(@RequestBody TransferFromWalletPojo transfer, @RequestHeader("Authorization") String token, @RequestHeader("pin") String pin);
     
     @GetMapping("/api/v1/wallet/offical-account/{eventID}")
     ResponseEntity<ApiResponseBody<?>> officialAccount(@PathVariable("eventID") String eventID, @RequestHeader("Authorization") String token);
  
     
     @PostMapping("/api/v1/wallet/official/user/transfer")
-    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialToUserCommission(@RequestBody OfficialToUserCommission transfer, @RequestHeader("Authorization") String token);
+    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialToUserCommission(@RequestBody OfficialToUserCommission transfer, @RequestHeader("Authorization") String token, @RequestHeader("pin") String pin);
     
 
     @PostMapping("/api/v1/wallet/official/transfer")
-    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialToOfficial(@RequestBody OfficalToOfficial transfer, @RequestHeader("Authorization") String token);
+    ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> officialToOfficial(@RequestBody OfficalToOfficial transfer, @RequestHeader("Authorization") String token, @RequestHeader("pin") String pin);
     
 }

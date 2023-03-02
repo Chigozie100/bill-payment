@@ -13,6 +13,7 @@ public class Constants {
     public static final String USERNAME = "username";
     public static final String ROLE = "role";
     public static final String TOKEN = "token";
+    public static final String PIN = "pin";
 
     public static final String NGN = "NGN";
     public static final String LOCAL ="LOCAL";

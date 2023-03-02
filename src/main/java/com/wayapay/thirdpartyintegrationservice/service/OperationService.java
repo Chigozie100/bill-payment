@@ -122,14 +122,14 @@ public class OperationService {
     }
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFundAdmin(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId) throws ThirdPartyIntegrationException {
+    public boolean secureFundAdmin(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String pin, String billType, String eventId) throws ThirdPartyIntegrationException {
         //Get user default wallet
-        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType, eventId, true);
+        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token, pin, billType, eventId, true);
         return true;
     }
 
 
-    private void processPayment(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId, Boolean isAdmin) throws ThirdPartyIntegrationException {
+    private void processPayment(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token,  String pin, String billType, String eventId, Boolean isAdmin) throws ThirdPartyIntegrationException {
         log.info(" inside processPayment ::  " + eventId);
         
         NewWalletResponse mainWalletResponse2 = getUserWallet(userAccountNumber, token, isAdmin);
@@ -148,7 +148,7 @@ public class OperationService {
         trans.setTranNarration(TransactionType.BILLS_PAYMENT.name());
         trans.setUserId(Long.parseLong(userName));
         try {
-            walletFeignClient.transferFromUserToWaya(trans,token);
+            walletFeignClient.transferFromUserToWaya(trans,token, pin);
 
         } catch (FeignException exception) {
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, getErrorMessage(exception.contentUTF8()));
@@ -157,9 +157,9 @@ public class OperationService {
 
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType, String eventId) throws ThirdPartyIntegrationException {
+    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String pin, String billType, String eventId) throws ThirdPartyIntegrationException {
         //Get user default wallet
-        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType, eventId, false);
+        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token, pin,  billType, eventId, false);
         return true;
     }
 
@@ -242,10 +242,10 @@ public class OperationService {
 
     }
 
-    public List<WalletTransactionPojo> refundFailedTransaction(TransferFromOfficialToMainWallet transfer, String token) throws ThirdPartyIntegrationException {
+    public List<WalletTransactionPojo> refundFailedTransaction(TransferFromOfficialToMainWallet transfer, String token,String pin) throws ThirdPartyIntegrationException {
         try {
             Optional<PaymentTransactionDetail> transactionDetail = paymentTransactionRepo.findByTransactionId2(transfer.getBillsPaymentTransactionId());
-            if (transactionDetail.isEmpty()){
+            if (!transactionDetail.isPresent()){
                 throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
             }
             if(transactionDetail.get().isResolved()){
@@ -253,7 +253,7 @@ public class OperationService {
             }
             transfer.setTransactionCategory("TRANSFER");
 
-                ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> responseEntity =  walletFeignClient.refundFailedTransaction(transfer,token);
+                ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> responseEntity =  walletFeignClient.refundFailedTransaction(transfer, token, pin);
 
                 ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
                 List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;

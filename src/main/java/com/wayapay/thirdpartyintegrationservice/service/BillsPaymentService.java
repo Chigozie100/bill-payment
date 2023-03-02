@@ -326,7 +326,7 @@ public class BillsPaymentService {
         map.put("module", "Bills Payment");
         return map;
     }
-    public PaymentResponse processPaymentOnBehalfOfUser(PaymentRequest paymentRequest, String userName,String token) throws ThirdPartyIntegrationException {
+    public PaymentResponse processPaymentOnBehalfOfUser(PaymentRequest paymentRequest, String userName, String token, String pin) throws ThirdPartyIntegrationException {
         UserProfileResponse userProfileResponse = getUserProfileResponse(userName,token);
         //secure Payment
         String transactionId = getTransactionID();
@@ -336,7 +336,7 @@ public class BillsPaymentService {
         String eventId = getThirdPartyEvent(thirdPartyName.name());
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFundAdmin(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType, eventId)){
+        if (operationService.secureFundAdmin(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, pin, billType, eventId)){
             try {
                 PaymentResponse paymentResponse = getPaymentResponse(paymentRequest,fee,transactionId,userName);
                 //store the transaction information
@@ -424,7 +424,7 @@ public class BillsPaymentService {
      }
 
 
-    public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token) throws ThirdPartyIntegrationException {
+    public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token, String pin) throws ThirdPartyIntegrationException {
         UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
         //secure Payment
         String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
@@ -442,7 +442,7 @@ public class BillsPaymentService {
  
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType, eventID)){
+        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, pin, billType, eventID)){
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
@@ -556,18 +556,18 @@ public class BillsPaymentService {
         return Objects.requireNonNull(phoneNumber).substring(1);
     }
 
-    public ResponseEntity<?> processBulkPayment(MultipartFile file,String token) throws ThirdPartyIntegrationException, IOException {
+    public ResponseEntity<?> processBulkPayment(MultipartFile file, String token, String pin) throws ThirdPartyIntegrationException, IOException {
         List<PaymentResponse> paymentResponse = null;
         if (ExcelHelper.hasExcelFormat(file)) {
             paymentResponse = buildBulkPayment(ExcelHelper.excelToPaymentRequest(file.getInputStream(),
-                    file.getOriginalFilename()), token);
+                    file.getOriginalFilename()), token, pin);
         }
 
         // build payment request
         return new ResponseEntity<>(new SuccessResponse(paymentResponse), HttpStatus.OK);
     }
 
-    List<PaymentResponse> buildBulkPayment(BulkBillsPaymentDTO bulkBillsPaymentDTO,String token) throws ThirdPartyIntegrationException {
+    List<PaymentResponse> buildBulkPayment(BulkBillsPaymentDTO bulkBillsPaymentDTO, String token, String pin) throws ThirdPartyIntegrationException {
         List<PaymentResponse> paymentResponseList = new ArrayList<>();
 
         PaymentRequest paymentRequest = new PaymentRequest();
@@ -589,14 +589,14 @@ public class BillsPaymentService {
 
             paymentRequest.setData(data);
 
-            PaymentResponse paymentResponse = processPayment(paymentRequest, mPayUser.getUserId(), token);
+            PaymentResponse paymentResponse = processPayment(paymentRequest, mPayUser.getUserId(), token, pin);
             paymentResponseList.add(paymentResponse);
         }
 
         return paymentResponseList;
     }
 
-    public ResponseEntity<?> processBulkPaymentForm(List<MultiplePaymentRequest>  multipleFormPaymentRequest, String token) throws ThirdPartyIntegrationException {
+    public ResponseEntity<?> processBulkPaymentForm(List<MultiplePaymentRequest>  multipleFormPaymentRequest, String token, String pin) throws ThirdPartyIntegrationException {
 
         PaymentResponse paymentResponse = null;
 
@@ -606,7 +606,7 @@ public class BillsPaymentService {
             paymentRequest.setCategoryId(request.getCategoryId());
             paymentRequest.setBillerId(request.getBillerId());
             paymentRequest.setData(request.getData());
-            paymentResponse = processPayment(paymentRequest, request.getUsername(), token);
+            paymentResponse = processPayment(paymentRequest, request.getUsername(), token, pin);
 
         }
         // build payment request

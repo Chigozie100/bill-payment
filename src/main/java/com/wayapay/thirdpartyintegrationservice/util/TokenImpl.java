@@ -36,4 +36,9 @@ public class TokenImpl {
         return tokenData.getData().getToken();
     }
 
+    public String getPin() throws ThirdPartyIntegrationException {
+
+       return environment.getProperty("waya.service.pin");
+    }
+
 }

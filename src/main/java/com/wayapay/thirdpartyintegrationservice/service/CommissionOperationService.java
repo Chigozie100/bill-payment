@@ -111,6 +111,7 @@ public class CommissionOperationService {
     public void payUserCommission(UserType userType,String userId, String token, BigDecimal amount, String eventId, String thirdParty, String billerId, String categoryId) throws ThirdPartyIntegrationException {
    
        String systemToken = tokenImpl.getToken();
+       String systemPin = tokenImpl.getPin();
        log.info("  systemToken " + systemToken); 
 
         // call offical account
@@ -129,7 +130,7 @@ public class CommissionOperationService {
 
         log.info("Billspyament::  Merchant Commission Amount for buying billspayment " + transfer);
 
-        ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialToOfficial(transfer,systemToken);
+        ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialToOfficial(transfer,systemToken, systemPin);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
 
         log.info("Billspyament::  Merchant Commission Amount for buying billspayment RESPONSE::" + infoResponse);
@@ -150,7 +151,7 @@ public class CommissionOperationService {
         Constants.NGN,Constants.LOCAL,Constants.COMMISSION_PAYMENT_TRANSACTION,Constants.COMMISSION);
         transfer2.setAmount(amountr);
         //WAYA (Mifos) Quickteller Bills Payment Commission Settlement Account Credited with N400
-        ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity2 = walletFeignClient.officialToUserCommission(transfer2,systemToken);
+        ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity2 = walletFeignClient.officialToUserCommission(transfer2, systemToken, systemPin);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse2 = responseEntity2.getBody();
         logRequest(infoResponse2, amount, transfer2.getCustomerCreditAccount(), eventId,  transfer2.getPaymentReference(),  transfer2.getTranCrncy(),  transfer2.getTranNarration(), transfer2.getTransactionCategory(), userId, userType, token);
 
@@ -169,6 +170,7 @@ public class CommissionOperationService {
     public void payOrganisationCommission(UserType userType,String billerId,String userId, String token, BigDecimal amount, String eventId, String categoryId) throws ThirdPartyIntegrationException {
         log.info("Billspyament:: in here start payOrganisationCommission after payment ::: ");
         String systemToken = tokenImpl.getToken();
+        String systemPin = tokenImpl.getPin();
         log.info("  systemToken " + systemToken); 
         log.info("  userId " + userId); 
         log.info("  billerId " + billerId); 
@@ -184,7 +186,7 @@ public class CommissionOperationService {
 
         
         log.info("Billspyament::  Merchant Commission Amount for selling billspayment " + transfer);
-        ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialToUserCommission(transfer,systemToken);
+        ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity = walletFeignClient.officialToUserCommission(transfer,systemToken,systemPin);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
 
         List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;

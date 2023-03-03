@@ -78,9 +78,9 @@ app:
     dispute:
       base-url: ${DISPUTE_BASE:https://services.staging.wayabank.ng/complaint-service/dispute}
     wallet:
-      base-url: ${CONFIG_BASEURL_TWALLET:https://services.staging.wayabank.ng/temporal-service}
+      base-url: ${CONFIG_BASEURL_TWALLET:http://localhost:8066/temporal-service}  #http://localhost:8066/temporal-service/api/v1/wallet/offical-account/QUICKTELLER_BILLS_PAYMENT_COMMISSION
     auth:
-      base-url: ${CONFIG_BASEURL_AUTH:http://localhost:8091/auth-service}
+      base-url: ${CONFIG_BASEURL_AUTH:https://services.staging.wayabank.ng/auth-service}
     notification:
       base-url: ${NOTIFICATION_BASE:https://services.staging.wayabank.ng/notification-service}
     log-service:

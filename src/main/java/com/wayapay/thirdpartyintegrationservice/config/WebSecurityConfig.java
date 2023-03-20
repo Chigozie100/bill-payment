@@ -3,14 +3,11 @@ package com.wayapay.thirdpartyintegrationservice.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 
 @Configuration
 @RequiredArgsConstructor
@@ -42,8 +39,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
 
-//        httpSecurity.cors().and().csrf().disable().authorizeRequests().antMatchers("/**").permitAll();
-
         // We don't need CSRF for this example
         httpSecurity.cors().and().csrf().disable().authorizeRequests()
                 .antMatchers("/","/actuator/**").permitAll()
@@ -51,10 +46,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/v1/commission/update-transactions-status/{id}").permitAll()
                 .antMatchers("/api/v1/config/biller/sync-commission-billers").permitAll()
                 .antMatchers(SWAGGER_WHITELIST).permitAll()
-//                .antMatchers(HttpMethod.GET, API_V1+"/config/fee/**").hasRole("APP_ADMIN")
-//                .antMatchers(HttpMethod.POST, API_V1+"/config/fee/**").hasRole("APP_ADMIN")
-//                .antMatchers(HttpMethod.PUT, API_V1+"/config/fee/**").hasRole("APP_ADMIN")
-//                .antMatchers(HttpMethod.GET, API_V1+"/config/**").hasRole("ADMIN")
                 .anyRequest().authenticated().and().exceptionHandling()
                 .authenticationEntryPoint(unauthorizedHandler).and().sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);

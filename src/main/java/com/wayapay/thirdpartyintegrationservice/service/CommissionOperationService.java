@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wayapay.thirdpartyintegrationservice.config.AppConfig;
 import com.wayapay.thirdpartyintegrationservice.dto.*;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
+import com.wayapay.thirdpartyintegrationservice.repo.BillerRepo;
 import com.wayapay.thirdpartyintegrationservice.service.commission.*;
 import com.wayapay.thirdpartyintegrationservice.service.wallet.WalletFeignClient;
 import com.wayapay.thirdpartyintegrationservice.util.*;
@@ -28,6 +29,8 @@ public class CommissionOperationService {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final AppConfig appConfig;
     private final TokenImpl tokenImpl;
+    @Autowired
+    private BillerRepo billerRepo;
 
     @Autowired
     public CommissionOperationService(CommissionFeignClient commissionFeignClient, WalletFeignClient walletFeignClient, NotificationService notificationService, KafkaTemplate<String, String> kafkaTemplate, AppConfig appConfig,TokenImpl tokenImpl) {
@@ -137,31 +140,39 @@ public class CommissionOperationService {
 
         // List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
         // List<WalletTransactionPojo> walletTransactionPojoList = new ArrayList<>(Objects.requireNonNull(mainWalletResponseList));
+        // WAYA (Mifos) Quickteller BILLS PAYMENT COMMISSION RECEIVABLE ACCOUNT Debited WITH 4% (N400)
+        log.info("### About to debit commission settlement account and credit user commission account ###");
+        NewWalletResponse userCommissionWallet = getUserCommissionWallet(userId,token); // get user commission wallet
 
-        logRequest(infoResponse, amount, transfer.getOfficeCreditAccount(), eventId,  transfer.getPaymentReference(),  transfer.getTranCrncy(),  transfer.getTranNarration(), Constants.COMMISSION, userId, userType, token);
+
+        logRequest(userCommissionWallet.getAcct_name(),categoryId,billerId,infoResponse, amount, transfer.getOfficeCreditAccount(), eventId,  transfer.getPaymentReference(),  transfer.getTranCrncy(),  transfer.getTranNarration(), Constants.COMMISSION, userId, userType, token);
 
         // TransferFromWalletPojo transfer2 = new TransferFromWalletPojo(amount, transfer.getCustomerCreditAccount(), null,  transfer.getPaymentReference(),  transfer.getTranCrncy(),  transfer.getTranNarration(), transfer.getTransactionCategory(), Long.valueOf(userId));
         // saveCommissionHistory(userId,transfer2, walletTransactionPojoList,userType,token);
         // inAppNotification(userId, transfer2, walletTransactionPojoList, token, infoResponse);
-
-        // WAYA (Mifos) Quickteller BILLS PAYMENT COMMISSION RECEIVABLE ACCOUNT Debited WITH 4% (N400) 
-        log.info("### About to debit commission settlement account and credit user commission account ###");
-        NewWalletResponse userCommissionWallet = getUserCommissionWallet(userId,token); // get user commission wallet
         OfficialToUserCommission transfer2 =  new OfficialToUserCommission(amountr,userCommissionWallet.getAccountNo(),commissionSettlement,String.valueOf(CommonUtils.generatePaymentTransactionId()),
         Constants.NGN,Constants.LOCAL,Constants.COMMISSION_PAYMENT_TRANSACTION,Constants.COMMISSION);
         transfer2.setAmount(amountr);
         //WAYA (Mifos) Quickteller Bills Payment Commission Settlement Account Credited with N400
         ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>>  responseEntity2 = walletFeignClient.officialToUserCommission(transfer2, systemToken, systemPin);
         ApiResponseBody<List<WalletTransactionPojo>> infoResponse2 = responseEntity2.getBody();
-        logRequest(infoResponse2, amount, transfer2.getCustomerCreditAccount(), eventId,  transfer2.getPaymentReference(),  transfer2.getTranCrncy(),  transfer2.getTranNarration(), transfer2.getTransactionCategory(), userId, userType, token);
+        logRequest(userCommissionWallet.getAcct_name(),categoryId,billerId,infoResponse2, amount, transfer2.getCustomerCreditAccount(), eventId,  transfer2.getPaymentReference(),  transfer2.getTranCrncy(),  transfer2.getTranNarration(), transfer2.getTransactionCategory(), userId, userType, token);
 
     }
 
-    private void logRequest(ApiResponseBody<List<WalletTransactionPojo>> infoResponse, BigDecimal amount, String  getCustomerCreditAccount, String eventId, String getPaymentReference,  String getTranCrncy,  String  getTranNarration, String getTransactionCategory, String userId, UserType userType, String token){
+    private void logRequest(String senderName,String categoryId,String billerId,ApiResponseBody<List<WalletTransactionPojo>> infoResponse, BigDecimal amount, String  getCustomerCreditAccount, String eventId, String getPaymentReference,  String getTranCrncy,  String  getTranNarration, String getTransactionCategory, String userId, UserType userType, String token){
         List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;
         List<WalletTransactionPojo> walletTransactionPojoList = new ArrayList<>(Objects.requireNonNull(mainWalletResponseList));
 
-        TransferFromWalletPojo transfer2 = new TransferFromWalletPojo(amount, getCustomerCreditAccount, null, getPaymentReference,  getTranCrncy, getTranNarration, getTransactionCategory, Long.valueOf(userId));
+        String receiverName;
+        BillerResponse billerResponse = billerName(categoryId,billerId);
+        if(Objects.isNull(billerResponse)){
+            receiverName = "UNKNOWN";
+        }else {
+            receiverName = billerResponse.getBillerName();
+        }
+
+        TransferFromWalletPojo transfer2 = new TransferFromWalletPojo(amount, getCustomerCreditAccount, null, getPaymentReference,  getTranCrncy, getTranNarration, getTransactionCategory, Long.valueOf(userId),senderName,receiverName);
         saveCommissionHistory(userId,transfer2, walletTransactionPojoList,userType,token);
         inAppNotification(userId, transfer2, walletTransactionPojoList, token, infoResponse);
 
@@ -322,6 +333,24 @@ public class CommissionOperationService {
 
     public void pushToCommissionService(Map<String, Object> map) throws JsonProcessingException {
         kafkaTemplate.send(appConfig.getKafka().getSellBillsTopic(),  CommonUtils.getObjectMapper().writeValueAsString(map));
+    }
+
+    private BillerResponse billerName(String categoryId, String billerId){
+        try {
+            List<BillerResponse> billerResponses = billerRepo.findAllActiveBiller(categoryId);
+            if(billerResponses == null)
+                return null;
+
+            Optional<BillerResponse> myBillerName = billerResponses.stream().filter(c -> c.getBillerId().equals(billerId) && c.getCategoryId().equals(categoryId)).findFirst();
+            if(myBillerName.isPresent()){
+                return myBillerName.get();
+            }else {
+                return null;
+            }
+        }catch (Exception ex){
+            log.info("An error billerName: {}",ex.getLocalizedMessage());
+            return null;
+        }
     }
 
 }

@@ -1,18 +1,15 @@
 package com.wayapay.thirdpartyintegrationservice.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
+@AllArgsConstructor @Data
 public class TransferFromWalletPojo {
-
 	private BigDecimal amount;
 	private String customerAccountNumber;
 	private String eventId;
@@ -21,7 +18,6 @@ public class TransferFromWalletPojo {
 	private String tranNarration;
 	private String transactionCategory;
 	private Long userId;
- 
-
-	
+	private String senderName;
+	private String receiverName;
 }

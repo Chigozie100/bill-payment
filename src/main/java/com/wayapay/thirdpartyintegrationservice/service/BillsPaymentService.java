@@ -429,7 +429,7 @@ public class BillsPaymentService {
         //secure Payment
         String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
 
-        String systemToken = tokenImpl.getToken();
+        String systemToken = token; //tokenImpl.getToken();
 
         String billType = getCategoryName(paymentRequest.getCategoryId(), paymentRequest.getBillerId());
 

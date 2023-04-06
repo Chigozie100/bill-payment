@@ -95,8 +95,7 @@
         <dependency>
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>
-            <version>2.3.5</version>
-            <type>jar</type>
+            <version>2.4.4</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>

@@ -226,7 +226,7 @@ public class BillsPaymentService {
              return TransactionCategory.CABLE.name();
          }
          else if (category.equalsIgnoreCase("3")){
-             return TransactionCategory.TRANSFER.name();
+             return TransactionCategory.AIRTIME_TOPUP.name();
          }
          else if (category.equalsIgnoreCase("4") && "120".equalsIgnoreCase(biller)){
             return TransactionCategory.DATA_TOPUP.name(); 
@@ -336,7 +336,7 @@ public class BillsPaymentService {
         String eventId = getThirdPartyEvent(thirdPartyName.name());
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFundAdmin(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, pin, billType, eventId)){
+        if (operationService.secureFundAdmin(paymentRequest.getCategoryId(),paymentRequest.getBillerId(),paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, pin, billType, eventId)){
             try {
                 PaymentResponse paymentResponse = getPaymentResponse(paymentRequest,fee,transactionId,userName);
                 //store the transaction information
@@ -439,10 +439,10 @@ public class BillsPaymentService {
         log.info("getThirdPartyEvent eventID -> :: " + eventID); 
         log.info("thirdPartyName processPayment -> :: " + thirdPartyName.name());
         log.info("billType processPayment -> :: " + billType);
- 
+
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFund(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, pin, billType, eventID)){
+        if (operationService.secureFund(paymentRequest.getCategoryId(),paymentRequest.getBillerId(),paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, pin, billType, eventID)){
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information

@@ -226,7 +226,7 @@ public class BillsPaymentService {
              return TransactionCategory.CABLE.name();
          }
          else if (category.equalsIgnoreCase("3")){
-             return TransactionCategory.TRANSFER.name();
+             return TransactionCategory.AIRTIME_TOPUP.name();
          }
          else if (category.equalsIgnoreCase("4") && "120".equalsIgnoreCase(biller)){
             return TransactionCategory.DATA_TOPUP.name(); 

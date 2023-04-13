@@ -31,6 +31,7 @@ public class TransactionDetail {
     private String username;
     private String email;
     private String userAccountNumber;
+    private String name;
 
     public TransactionDetail(Long id,String transactionId, ThirdPartyNames thirdPartyName, BigDecimal amount, Boolean successful,
                              String category, String biller, String paymentRequest, String paymentResponse, Date transactionDateTime) {

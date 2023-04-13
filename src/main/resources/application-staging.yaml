@@ -2,7 +2,7 @@ spring:
   application:
     name: bills-payment-service
   datasource:
-    url: jdbc:postgresql://postgresdb4:5432/billspayment-service?useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+    url: jdbc:postgresql://postgresdb:5432/billspayment-service?useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
     username: root
     password: pONvagaJf3BTbu9l
     initialization-mode: always

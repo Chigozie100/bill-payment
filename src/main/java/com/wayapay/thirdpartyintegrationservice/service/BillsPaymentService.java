@@ -10,12 +10,14 @@ import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.model.ThirdParty;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
+import com.wayapay.thirdpartyintegrationservice.service.auth.AuthFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.auth.UserDetail;
 import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
 import com.wayapay.thirdpartyintegrationservice.service.commission.MerchantCommissionTrackerDto;
 import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
 import com.wayapay.thirdpartyintegrationservice.service.itex.ItexService;
+import com.wayapay.thirdpartyintegrationservice.service.profile.Profile;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 import com.wayapay.thirdpartyintegrationservice.util.*;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
 
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.ERROR_MESSAGE;
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.SYNCED_SUCCESSFULLY;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -58,6 +61,9 @@ public class BillsPaymentService {
     private final BillerService billerService;
     private final ThirdPartyService thirdPartyService;
     private final ProfileDetailsService profileDetailsService;
+    
+    @Autowired
+    AuthFeignClient authProxy;
 
 
 
@@ -329,7 +335,7 @@ public class BillsPaymentService {
 
         String billType = getBillType(paymentRequest);
 
-        ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
+        ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorName(paymentRequest.getCategoryId());
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
         if (operationService.secureFundAdmin(paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, billType)){
@@ -661,8 +667,24 @@ public class BillsPaymentService {
     }
 
 
-    public Page<TransactionDetail> searchAndFilterTransactionStatus(boolean status, int pageNumber, int pageSize){
-        return paymentTransactionRepo.getAllTransactionBySuccessful(status,PageRequest.of(pageNumber, pageSize));
+    public ResponseEntity<?> searchAndFilterTransactionStatus(boolean status, int pageNumber, int pageSize){
+        Page<TransactionDetail> list = paymentTransactionRepo.getAllTransactionBySuccessful(status,PageRequest.of(pageNumber, pageSize));
+         List<TransactionDetail> details = list.getContent();
+         String token = "";
+         Map<String, Object> response = new HashMap<>();
+        for (TransactionDetail trans : details) {
+            ResponseEntity<ApiResponseBody<UserProfileResponsePojo>> user = authProxy.getUserByUserId(trans.getUsername(), token);
+            trans.setName(user == null ? "" : user.getBody().getData().getFirstName().concat(" ")
+            .concat(user.getBody().getData().getLastName()));
+            trans.setEmail(user == null ? "" : user.getBody().getData().getPhoneNumber());
+
+        }
+        response.put("history", details);
+        response.put("currentPage", list.getNumber());
+        response.put("totalItems", list.getTotalElements());
+        response.put("totalPages", list.getTotalPages());
+        return new ResponseEntity<>(new SuccessResponse("Result Fetched", response), HttpStatus.OK);
+    
     }
 
     public Page<TransactionDetail> searchByAccountType(String userAccountNumber, int pageNumber, int pageSize){

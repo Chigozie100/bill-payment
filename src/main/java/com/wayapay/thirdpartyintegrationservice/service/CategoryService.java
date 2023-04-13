@@ -47,6 +47,16 @@ public class CategoryService {
             return Optional.empty();
         }
     }
+    
+     public ThirdPartyNames findThirdPartyByCategoryAggregatorName(String categoryAggregatorCode){
+        try {
+           ThirdPartyNames category = categoryRepo.findThirdPartyNameByCategoryAggregatorCode(categoryAggregatorCode);
+           return category;
+        } catch (Exception exception) {
+            log.error("Unable to fetch AggregatorName by categoryAggregatorCode ", exception);
+            return null;
+        }
+    }
 
     //createCategory
     public ResponseHelper createCategory(CategoryManagementRequest request) throws ThirdPartyIntegrationException {

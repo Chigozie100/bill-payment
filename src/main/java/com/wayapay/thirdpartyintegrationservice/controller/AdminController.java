@@ -48,9 +48,9 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @GetMapping("/biller/report/filter/{transaction_status}")
-    public ResponseEntity<ResponseHelper> searchAndFilterTransactionStatus(@PathVariable("transaction_status") boolean transaction_status, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) {
+    public ResponseEntity<?> searchAndFilterTransactionStatus(@PathVariable("transaction_status") boolean transaction_status, @RequestParam(required = false, defaultValue = "0") String pageNumber, @RequestParam(required = false, defaultValue = "10") String pageSize ) {
 
-        Page<TransactionDetail> transactionDetailPage = billsPaymentService.searchAndFilterTransactionStatus(transaction_status,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
+        ResponseEntity<?> transactionDetailPage = billsPaymentService.searchAndFilterTransactionStatus(transaction_status,Integer.parseInt(pageNumber), Integer.parseInt(pageSize));
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 

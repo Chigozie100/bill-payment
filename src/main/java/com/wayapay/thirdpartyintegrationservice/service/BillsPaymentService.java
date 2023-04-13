@@ -667,10 +667,9 @@ public class BillsPaymentService {
     }
 
 
-    public ResponseEntity<?> searchAndFilterTransactionStatus(boolean status, int pageNumber, int pageSize){
+    public ResponseEntity<?> searchAndFilterTransactionStatus(boolean status, int pageNumber, int pageSize, String token){
         Page<TransactionDetail> list = paymentTransactionRepo.getAllTransactionBySuccessful(status,PageRequest.of(pageNumber, pageSize));
          List<TransactionDetail> details = list.getContent();
-         String token = "";
          Map<String, Object> response = new HashMap<>();
         for (TransactionDetail trans : details) {
             ResponseEntity<ApiResponseBody<UserProfileResponsePojo>> user = authProxy.getUserByUserId(trans.getUsername(), token);

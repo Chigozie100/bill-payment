@@ -105,10 +105,11 @@ public class BillsPaymentController {
             @ApiResponse(code = 401, message = "Unauthorized", response = SampleErrorResponse.class)
     })
     @PostMapping("/biller/pay")
-    public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token){
+    public ResponseEntity<ResponseHelper> customerPayment(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.USERNAME) String username, 
+                            @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, @ApiIgnore @RequestHeader(Constants.PIN) String pin){
         try {
 
-            PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, token);
+            PaymentResponse paymentResponse = billsPaymentService.processPayment(paymentRequest, username, token, pin);
             return ResponseEntity.ok(new SuccessResponse(paymentResponse));
         } catch (ThirdPartyIntegrationException e) {
             return ResponseEntity.status(e.getHttpStatus()).body(new ErrorResponse(e.getMessage()));

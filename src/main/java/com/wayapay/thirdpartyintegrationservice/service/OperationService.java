@@ -7,6 +7,7 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.model.BillsPaymentRefund;
 import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.model.TransactionTracker;
+import com.wayapay.thirdpartyintegrationservice.repo.BillerRepo;
 import com.wayapay.thirdpartyintegrationservice.repo.BillsPaymentRefundRepository;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.repo.TransactionTrackerRepository;
@@ -40,6 +41,7 @@ public class OperationService {
     private final LogFeignClient logFeignClient;
     private final BillsPaymentRefundRepository billsPaymentRefundRepository;
     private final TransactionTrackerRepository transactionTrackerRepository;
+    private final BillerRepo billerRepo;
 
     public UserProfileResponse getUserProfile(String userName, String token) throws ThirdPartyIntegrationException {
         UserProfileResponse userProfileResponse;
@@ -103,10 +105,17 @@ public class OperationService {
 
     }
 
-    private NewWalletResponse getUserWallet(String userAccountNumber, String token){
-        ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWallet(userAccountNumber, token);
-        InfoResponse infoResponse = responseEntity.getBody();
-        return Objects.requireNonNull(infoResponse).data;
+    private NewWalletResponse getUserWallet(String userAccountNumber, String token, Boolean isAdmin){
+        // if(isAdmin){
+        //     ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWallet(userAccountNumber, systemToken);
+        //     InfoResponse infoResponse = responseEntity.getBody();
+        //     return Objects.requireNonNull(infoResponse).data;
+        // }else{
+            ResponseEntity<InfoResponse> responseEntity = walletFeignClient.getUserWalletByUser(userAccountNumber, token);
+            InfoResponse infoResponse = responseEntity.getBody();
+            return Objects.requireNonNull(infoResponse).data;
+        // }
+
     }
 
     private void checkAccountBalance(NewWalletResponse mainWalletResponse, BigDecimal amount) throws ThirdPartyIntegrationException {
@@ -115,15 +124,17 @@ public class OperationService {
     }
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFundAdmin(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
+    public boolean secureFundAdmin(String categoryId,String billerId,BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String pin, String billType, String eventId) throws ThirdPartyIntegrationException {
         //Get user default wallet
-        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType);
+        processPayment(categoryId, billerId, amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token, pin, billType, eventId, true);
         return true;
     }
 
 
-    private void processPayment(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
-        NewWalletResponse mainWalletResponse2 = getUserWallet(userAccountNumber, token);
+    private void processPayment(String categoryId,String billerId, BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token,  String pin, String billType, String eventId, Boolean isAdmin) throws ThirdPartyIntegrationException {
+        log.info(" inside processPayment ::  " + eventId);
+
+        NewWalletResponse mainWalletResponse2 = getUserWallet(userAccountNumber, token, isAdmin);
 
         checkAccountBalance(mainWalletResponse2,amount);
 
@@ -132,25 +143,51 @@ public class OperationService {
         trans.setAmount(FeeBearer.CONSUMER.equals(feeBearer) ? amount.add(fee) : amount);
 
         trans.setCustomerAccountNumber(mainWalletResponse2.getAccountNo());
-        trans.setEventId(EventCharges.AITCOL.name());
+        trans.setEventId(eventId);
         trans.setPaymentReference(transactionId);
         trans.setTranCrncy("NGN");
         trans.setTransactionCategory(billType);
         trans.setTranNarration(TransactionType.BILLS_PAYMENT.name());
         trans.setUserId(Long.parseLong(userName));
+        trans.setSenderName(mainWalletResponse2.getAcct_name());
+
+        BillerResponse  billName = billerName( categoryId, billerId);
+        if(Objects.isNull(billName)){
+            trans.setReceiverName("UNKNOWN");
+        }else {
+            trans.setReceiverName(billName.getBillerName());
+        }
         try {
-            walletFeignClient.transferFromUserToWaya(trans,token);
+            walletFeignClient.transferFromUserToWaya(trans,token, pin);
 
         } catch (FeignException exception) {
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, getErrorMessage(exception.contentUTF8()));
         }
     }
 
+    private BillerResponse billerName(String categoryId, String billerId){
+        try {
+            List<BillerResponse> billerResponses = billerRepo.findAllActiveBiller(categoryId);
+            if(billerResponses == null)
+                return null;
+
+            Optional<BillerResponse> myBillerName = billerResponses.stream().filter(c -> c.getBillerId().equals(billerId) && c.getCategoryId().equals(categoryId)).findFirst();
+            if(myBillerName.isPresent()){
+                return myBillerName.get();
+            }else {
+                return null;
+            }
+        }catch (Exception ex){
+            log.info("An error billerName: {}",ex.getLocalizedMessage());
+            return null;
+        }
+    }
+
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFund(BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String billType) throws ThirdPartyIntegrationException {
+    public boolean secureFund(String categoryId,String billerId, BigDecimal amount, BigDecimal fee, String userName, String userAccountNumber, String transactionId, FeeBearer feeBearer, String token, String pin, String billType, String eventId) throws ThirdPartyIntegrationException {
         //Get user default wallet
-        processPayment( amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token,  billType);
+        processPayment( categoryId, billerId, amount,  fee,  userName,  userAccountNumber,  transactionId,  feeBearer,  token, pin,  billType, eventId, false);
         return true;
     }
 
@@ -233,10 +270,10 @@ public class OperationService {
 
     }
 
-    public List<WalletTransactionPojo> refundFailedTransaction(TransferFromOfficialToMainWallet transfer, String token) throws ThirdPartyIntegrationException {
+    public List<WalletTransactionPojo> refundFailedTransaction(TransferFromOfficialToMainWallet transfer, String token,String pin) throws ThirdPartyIntegrationException {
         try {
             Optional<PaymentTransactionDetail> transactionDetail = paymentTransactionRepo.findByTransactionId2(transfer.getBillsPaymentTransactionId());
-            if (transactionDetail.isEmpty()){
+            if (!transactionDetail.isPresent()){
                 throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
             }
             if(transactionDetail.get().isResolved()){
@@ -244,7 +281,7 @@ public class OperationService {
             }
             transfer.setTransactionCategory("TRANSFER");
 
-                ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> responseEntity =  walletFeignClient.refundFailedTransaction(transfer,token);
+                ResponseEntity<ApiResponseBody<List<WalletTransactionPojo>>> responseEntity =  walletFeignClient.refundFailedTransaction(transfer, token, pin);
 
                 ApiResponseBody<List<WalletTransactionPojo>> infoResponse = responseEntity.getBody();
                 List<WalletTransactionPojo> mainWalletResponseList = infoResponse != null ? infoResponse.getData() : null;

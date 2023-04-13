@@ -194,7 +194,7 @@ public class ExcelHelper {
     private static String validateAndPassStringValue(Cell cell, int cellNumber, int rowNumber) throws ThirdPartyIntegrationException {
         String cellValue =  dataFormatter.formatCellValue(cell).trim();
         boolean val = alphabetsPattern.matcher(cellValue).find();
-        if(!cellValue.isBlank() && val && cellValue.length() >= 2){
+        if(!cellValue.isEmpty() && val && cellValue.length() >= 2){
             return cellValue;
         }
         String errorMessage = String.format("Invalid Cell Value Passed in row %s, cell %s", rowNumber + 1, cellNumber + 1);

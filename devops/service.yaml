@@ -23,6 +23,12 @@ spec:
   selector:
     matchLabels:
       app: bill-payment-service
+  minReadySeconds: 240
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -34,6 +40,10 @@ spec:
         resources:
           requests:
             memory: "200Mi"
+            cpu: "49m"
+          limits:
+            memory: "500Mi"
+            cpu: "100m"
         envFrom:
         - configMapRef:
             name: common-services-config
@@ -46,8 +56,16 @@ spec:
           subPath: application.yml
         - name: tz-lagos
           mountPath: /etc/localtime
-      nodeSelector:
-        node.kubernetes.io/description: wayabank-cfgprofile  
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node.kubernetes.io/description
+                operator: In
+                values:
+                - cfgprofile
+                - wayabank-cfgprofile
       volumes:
         - name: config-file
           secret:

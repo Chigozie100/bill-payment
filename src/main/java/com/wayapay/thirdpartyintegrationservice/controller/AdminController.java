@@ -5,9 +5,10 @@ import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyInte
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseHelper;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.BillsPaymentService;
+import com.wayapay.thirdpartyintegrationservice.service.CommissionOperationService;
 import com.wayapay.thirdpartyintegrationservice.service.OperationService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
-import com.wayapay.thirdpartyintegrationservice.util.Constants;
+import com.wayapay.thirdpartyintegrationservice.util.Constants; 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -18,6 +19,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
@@ -35,13 +37,14 @@ import static com.wayapay.thirdpartyintegrationservice.util.Constants.API_V1;
 @RestController
 @Api(tags = "Admin Bills Payment API", description = "This is the main controller containing all the api to process admin billspayment")
 @RequestMapping(API_V1)
+@PreAuthorize("hasAnyRole('ROLE_ADMIN_OWNER', 'ROLE_ADMIN_SUPER', 'ROLE_ADMIN_APP')")
 public class AdminController {
 
     private final BillsPaymentService billsPaymentService;
     private final OperationService operationService;
     private final QuickTellerService iThirdPartyService;
     private final ModelMapper modelMapper;
-
+    private final CommissionOperationService commissionOperationService;
 
     @ApiOperation(value = "Get Transaction Status Report : This API is used to get all transaction report failed or successful")
     @ApiResponses(value = {
@@ -97,9 +100,10 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @PostMapping("/admin/make-payment/{userId}")
-    public ResponseEntity<ResponseHelper> adminMakeBillsPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, @PathVariable String userId) throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseHelper> adminMakeBillsPaymentToUser(@Valid @RequestBody PaymentRequest paymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token,
+                                     @ApiIgnore @RequestHeader(Constants.PIN) String pin, @PathVariable String userId) throws ThirdPartyIntegrationException {
 
-        PaymentResponse transactionDetailPage = billsPaymentService.processPayment(paymentRequest, userId, token);
+        PaymentResponse transactionDetailPage = billsPaymentService.processPayment(paymentRequest, userId, token, pin);
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
@@ -108,11 +112,12 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @PostMapping("/admin/make-payment-for-user")
-    public ResponseEntity<ResponseHelper> adminMakeBillsPaymentOnBehalfOfUser(@Valid @RequestBody PaymentRequestOnbhalfOfUser payment, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, @RequestParam("userId") String userId) throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseHelper> adminMakeBillsPaymentOnBehalfOfUser(@Valid @RequestBody PaymentRequestOnbhalfOfUser payment, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, 
+                    @ApiIgnore @RequestHeader(Constants.PIN) String pin, @RequestParam("userId") String userId) throws ThirdPartyIntegrationException {
 
         PaymentRequest paymentRequest = modelMapper.map(payment,PaymentRequest.class);
 
-        PaymentResponse transactionDetailPage = billsPaymentService.processPaymentOnBehalfOfUser(paymentRequest, userId, token);
+        PaymentResponse transactionDetailPage = billsPaymentService.processPaymentOnBehalfOfUser(paymentRequest, userId, token, pin);
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
@@ -121,16 +126,18 @@ public class AdminController {
     @ApiOperation(value = "Bulk Bills Payment: This API is used to by the admin to pay bills on behalf of users using web form", tags = {"ADMIN"})
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Response Headers")})
     @PostMapping(path = "/admin/bulk-user-bills-payment")
-    public ResponseEntity<?> makeBulkBillsPaymentToUsersWithWebForm(@Valid @RequestBody List<MultiplePaymentRequest> multipleFormPaymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
-        return billsPaymentService.processBulkPaymentForm(multipleFormPaymentRequest, token);
+    public ResponseEntity<?> makeBulkBillsPaymentToUsersWithWebForm(@Valid @RequestBody List<MultiplePaymentRequest> multipleFormPaymentRequest, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, 
+                    @ApiIgnore @RequestHeader(Constants.PIN) String pin) throws ThirdPartyIntegrationException {
+        return billsPaymentService.processBulkPaymentForm(multipleFormPaymentRequest, token, pin);
     }
 
     @ApiOperation(value = "Bulk Bills Payment", tags = {"ADMIN"})
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Response Headers")})
     @PostMapping(path = "/admin/bulk-user-excel", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}, produces = {
             MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<?> makeBulkBillsPaymentToUsers(@RequestParam("file") MultipartFile file, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException, IOException {
-        return billsPaymentService.processBulkPayment(file, token);
+    public ResponseEntity<?> makeBulkBillsPaymentToUsers(@RequestParam("file") MultipartFile file, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token, 
+                @ApiIgnore @RequestHeader(Constants.PIN) String pin) throws ThirdPartyIntegrationException, IOException {
+        return billsPaymentService.processBulkPayment(file, token, pin);
     }
 
     @ApiOperation(value = "Admin Get Users Transaction Count : This API is used to get all transaction report by user")
@@ -150,9 +157,10 @@ public class AdminController {
             @ApiResponse(code = 200, message = "Successful")
     })
     @PostMapping("/admin/refund-failed-transaction")
-    public ResponseEntity<ResponseHelper> refundFailedTransaction(@Valid @RequestBody TransferFromOfficialToMainWallet transfer, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) throws ThirdPartyIntegrationException {
+    public ResponseEntity<ResponseHelper> refundFailedTransaction(@Valid @RequestBody TransferFromOfficialToMainWallet transfer, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token,
+                     @ApiIgnore @RequestHeader(Constants.PIN) String pin) throws ThirdPartyIntegrationException {
 
-        List<WalletTransactionPojo> transactionDetailPage = operationService.refundFailedTransaction(transfer, token);
+        List<WalletTransactionPojo> transactionDetailPage = operationService.refundFailedTransaction(transfer, token, pin);
         return ResponseEntity.ok(new SuccessResponse(transactionDetailPage));
     }
 
@@ -189,13 +197,18 @@ public class AdminController {
 
 
 
+    @GetMapping("/offical-account/{eventId}")
+    public String offical(@PathVariable("eventId") String eventId, @ApiIgnore @RequestAttribute(Constants.TOKEN) String token) {
 
-
-
-
-
-
-
+        try {
+            return commissionOperationService.getOfficialAccount(eventId, token);
+        } catch (ThirdPartyIntegrationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
+ 
 
 
 }

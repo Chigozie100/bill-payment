@@ -61,7 +61,7 @@ public class BillsPaymentService {
     private final BillerService billerService;
     private final ThirdPartyService thirdPartyService;
     private final ProfileDetailsService profileDetailsService;
-    
+
     @Autowired
     AuthFeignClient authProxy;
 

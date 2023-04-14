@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/billspayment-service
     username: postgres
-    password: flints11
+    password: postgres
     initialization-mode: always
     continue-on-error: true
     driverClassName: org.postgresql.Driver
@@ -96,8 +96,7 @@ feign:
   client:
     config:
       default:
-        connect-timeout: 50000
-        read-timeout: 50000
+        connect-timeout: 50000   
         logger-level: full
 
 

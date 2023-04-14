@@ -10,12 +10,14 @@ import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.model.ThirdParty;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
+import com.wayapay.thirdpartyintegrationservice.service.auth.AuthFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.auth.UserDetail;
 import com.wayapay.thirdpartyintegrationservice.service.baxi.BaxiService;
 import com.wayapay.thirdpartyintegrationservice.service.commission.MerchantCommissionTrackerDto;
 import com.wayapay.thirdpartyintegrationservice.service.dispute.DisputeService;
 import com.wayapay.thirdpartyintegrationservice.service.interswitch.QuickTellerService;
 import com.wayapay.thirdpartyintegrationservice.service.itex.ItexService;
+import com.wayapay.thirdpartyintegrationservice.service.profile.Profile;
 import com.wayapay.thirdpartyintegrationservice.service.profile.UserProfileResponse;
 import com.wayapay.thirdpartyintegrationservice.util.*;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
 
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.ERROR_MESSAGE;
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.SYNCED_SUCCESSFULLY;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -60,6 +63,7 @@ public class BillsPaymentService {
     private final ThirdPartyService thirdPartyService;
     private final ProfileDetailsService profileDetailsService;
     private final AuthFeignClient authFeignClient;
+
 
 
 
@@ -729,8 +733,24 @@ public class BillsPaymentService {
     }
 
 
-    public Page<TransactionDetail> searchAndFilterTransactionStatus(boolean status, int pageNumber, int pageSize){
-        return paymentTransactionRepo.getAllTransactionBySuccessful(status,PageRequest.of(pageNumber, pageSize));
+    public ResponseEntity<?> searchAndFilterTransactionStatus(boolean status, int pageNumber, int pageSize,String token){
+        Page<TransactionDetail> list = paymentTransactionRepo.getAllTransactionBySuccessful(status,PageRequest.of(pageNumber, pageSize));
+        List<TransactionDetail> history = list.getContent();
+
+        Map<String, Object> response = new HashMap<>();
+        for (TransactionDetail details : history) {
+            ResponseEntity<ApiResponseBody<UserProfileResponsePojo>> user = authFeignClient.getUserByUserId(details.getUsername(), token);
+            details.setName(user == null ? "" : user.getBody().getData().getFirstName()
+                            .concat(" ").concat(user.getBody().getData().getLastName()));
+            details.setEmail(user == null ? "" : user.getBody().getData().getEmail());          
+
+        }
+        response.put("history", history);
+        response.put("currentPage", list.getNumber());
+        response.put("totalItems", list.getTotalElements());
+        response.put("totalPages", list.getTotalPages());
+
+        return new ResponseEntity<>(new SuccessResponse("Result Fetched", response), HttpStatus.OK);
     }
 
     public Page<TransactionDetail> searchByAccountType(String userAccountNumber, int pageNumber, int pageSize){

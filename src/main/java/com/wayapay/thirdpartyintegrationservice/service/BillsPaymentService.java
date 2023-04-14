@@ -64,8 +64,6 @@ public class BillsPaymentService {
     private final ProfileDetailsService profileDetailsService;
     private final AuthFeignClient authFeignClient;
 
-    @Autowired
-    AuthFeignClient authProxy;
 
 
 
@@ -735,8 +733,24 @@ public class BillsPaymentService {
     }
 
 
-    public Page<TransactionDetail> searchAndFilterTransactionStatus(boolean status, int pageNumber, int pageSize){
-        return paymentTransactionRepo.getAllTransactionBySuccessful(status,PageRequest.of(pageNumber, pageSize));
+    public ResponseEntity<?> searchAndFilterTransactionStatus(boolean status, int pageNumber, int pageSize,String token){
+        Page<TransactionDetail> list = paymentTransactionRepo.getAllTransactionBySuccessful(status,PageRequest.of(pageNumber, pageSize));
+        List<TransactionDetail> history = list.getContent();
+
+        Map<String, Object> response = new HashMap<>();
+        for (TransactionDetail details : history) {
+            ResponseEntity<ApiResponseBody<UserProfileResponsePojo>> user = authFeignClient.getUserByUserId(details.getUsername(), token);
+            details.setName(user == null ? "" : user.getBody().getData().getFirstName()
+                            .concat(" ").concat(user.getBody().getData().getLastName()));
+            details.setEmail(user == null ? "" : user.getBody().getData().getEmail());          
+
+        }
+        response.put("history", history);
+        response.put("currentPage", list.getNumber());
+        response.put("totalItems", list.getTotalElements());
+        response.put("totalPages", list.getTotalPages());
+
+        return new ResponseEntity<>(new SuccessResponse("Result Fetched", response), HttpStatus.OK);
     }
 
     public Page<TransactionDetail> searchByAccountType(String userAccountNumber, int pageNumber, int pageSize){

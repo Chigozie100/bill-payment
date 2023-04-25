@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice;
 
+import com.waya.security.auth.annotation.EnableWayaAuthAuditApi;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,7 +15,7 @@ import com.wayapay.thirdpartyintegrationservice.interceptors.SwaggerFilter;
 
 @EnableJpaAuditing
 @EnableAsync
-@SpringBootApplication
+@SpringBootApplication @EnableWayaAuthAuditApi
 public class ThirdpartyintegrationserviceApplication {
 
     public static void main(String[] args) {

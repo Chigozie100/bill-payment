@@ -9,6 +9,7 @@ import com.wayapay.thirdpartyintegrationservice.model.Category;
 import com.wayapay.thirdpartyintegrationservice.model.PaymentTransactionDetail;
 import com.wayapay.thirdpartyintegrationservice.model.ThirdParty;
 import com.wayapay.thirdpartyintegrationservice.repo.PaymentTransactionRepo;
+import com.wayapay.thirdpartyintegrationservice.responsehelper.ErrorResponse;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.SuccessResponse;
 import com.wayapay.thirdpartyintegrationservice.service.auth.AuthFeignClient;
 import com.wayapay.thirdpartyintegrationservice.service.auth.UserDetail;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
 
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.ERROR_MESSAGE;
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.SYNCED_SUCCESSFULLY;
+import java.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
@@ -64,9 +66,6 @@ public class BillsPaymentService {
     private final ProfileDetailsService profileDetailsService;
     private final AuthFeignClient authFeignClient;
 
-
-
-
     //getAllCategories
     public List<CategoryResponse> getAllCategories() throws ThirdPartyIntegrationException {
         return categoryService.getAllActiveCategories();
@@ -83,7 +82,7 @@ public class BillsPaymentService {
 
     public IThirdPartyService getBillsPaymentService(ThirdPartyNames thirdPartyName) {
 
-        switch (thirdPartyName){
+        switch (thirdPartyName) {
             case ITEX:
                 return itexService;
             case BAXI:
@@ -120,7 +119,7 @@ public class BillsPaymentService {
                     continue;
                 }
 
-                if (categoryResponseListFromApi.isEmpty()){
+                if (categoryResponseListFromApi.isEmpty()) {
                     log.error("No category returned from aggregator => {}", thirdParty.getThirdPartyNames());
                     continue;
                 }
@@ -150,7 +149,6 @@ public class BillsPaymentService {
         //get all billers by category from its Aggregator >> listFromAPI
         //deleteAll billers from ListFromDB but not in ListFromAPI
         //InsertAll billers from ListFromAPI but not in ListFromDB
-
         try {
             List<Category> categoryList = categoryService.findAll();
             for (Category category : categoryList) {
@@ -179,7 +177,7 @@ public class BillsPaymentService {
     }
 
     static boolean extractCheckBillerList(Category category, List<Biller> billerListFromDB, List<BillerResponse> billerResponseListFromApi, BillerService billerService) {
-        if (billerResponseListFromApi.isEmpty()){
+        if (billerResponseListFromApi.isEmpty()) {
             log.error("No biller returned by category => {} from aggregator => {}", category.getCategoryAggregatorCode(), category.getThirdParty().getThirdPartyNames());
             return true;
         }
@@ -194,111 +192,96 @@ public class BillsPaymentService {
         return false;
     }
 
-
-    private String getCategoryName(String category, String biller){
-         if (category.equalsIgnoreCase("Airtime")){
-             return TransactionCategory.AIRTIME_TOPUP.name();
-         }else if (category.equalsIgnoreCase("insurance")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("Electricity")){
-             return TransactionCategory.UTILITY.name();
-         }
-         else if (category.equalsIgnoreCase("Data")){
-             return TransactionCategory.DATA_TOPUP.name();
-         }else if (category.equalsIgnoreCase("CableTv")){
-             return TransactionCategory.CABLE.name();
-         }else if (category.equalsIgnoreCase("Internet")){
-             return TransactionCategory.DATA_TOPUP.name();
-         }else if (category.equalsIgnoreCase("Remita")){
-             return TransactionCategory.TRANSFER.name();
-         }else if (category.equalsIgnoreCase("LCC")){
-             return TransactionCategory.AIRTIME_TOPUP.name();
-         }else if (category.equalsIgnoreCase("databundle")){
-             return TransactionCategory.DATA_TOPUP.name();
-         }else if (category.equalsIgnoreCase("cabletv")){
-             return TransactionCategory.CABLE.name();
-         }else if (category.equalsIgnoreCase("vehiclepaper")){
-             return TransactionCategory.TRANSFER.name();
-         }else if (category.equalsIgnoreCase("epin")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("1")){
-             return TransactionCategory.UTILITY.name();
-         }
-         else if (category.equalsIgnoreCase("2")){
-             return TransactionCategory.CABLE.name();
-         }
-         else if (category.equalsIgnoreCase("3")){
-             return TransactionCategory.AIRTIME_TOPUP.name();
-         }
-         else if (category.equalsIgnoreCase("4") && "120".equalsIgnoreCase(biller)){
-            return TransactionCategory.DATA_TOPUP.name(); 
-         }else if(category.equalsIgnoreCase("4")){
+    private String getCategoryName(String category, String biller) {
+        if (category.equalsIgnoreCase("Airtime")) {
             return TransactionCategory.AIRTIME_TOPUP.name();
-         }
-         else if (category.equalsIgnoreCase("7")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("8")){
-             return TransactionCategory.AIRTIME_TOPUP.name();
-         }
-         else if (category.equalsIgnoreCase("9")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("10")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("11")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("12")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("13")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("14")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("15")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("16")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("17")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("18")){
-             return TransactionCategory.TRANSFER.name();
-         }else if (category.equalsIgnoreCase("19")){
-             return TransactionCategory.TRANSFER.name();
-         }else if (category.equalsIgnoreCase("20")){
-             return TransactionCategory.TRANSFER.name();
-         }else if (category.equalsIgnoreCase("21")){
-             return TransactionCategory.TRANSFER.name();
-         }
-         else if (category.equalsIgnoreCase("22")){
-             return TransactionCategory.TRANSFER.name();
-         }else if (category.equalsIgnoreCase("23")){
-             return TransactionCategory.TRANSFER.name();
-         }else if (category.equalsIgnoreCase("24")){
-             return TransactionCategory.TRANSFER.name();
-         }else if (category.equalsIgnoreCase("25")){
-             return TransactionCategory.TRANSFER.name();
-         }else if (category.equalsIgnoreCase("26")){
-             return TransactionCategory.TRANSFER.name();
-         }else{ return TransactionCategory.TRANSFER.name();}
+        } else if (category.equalsIgnoreCase("insurance")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("Electricity")) {
+            return TransactionCategory.UTILITY.name();
+        } else if (category.equalsIgnoreCase("Data")) {
+            return TransactionCategory.DATA_TOPUP.name();
+        } else if (category.equalsIgnoreCase("CableTv")) {
+            return TransactionCategory.CABLE.name();
+        } else if (category.equalsIgnoreCase("Internet")) {
+            return TransactionCategory.DATA_TOPUP.name();
+        } else if (category.equalsIgnoreCase("Remita")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("LCC")) {
+            return TransactionCategory.AIRTIME_TOPUP.name();
+        } else if (category.equalsIgnoreCase("databundle")) {
+            return TransactionCategory.DATA_TOPUP.name();
+        } else if (category.equalsIgnoreCase("cabletv")) {
+            return TransactionCategory.CABLE.name();
+        } else if (category.equalsIgnoreCase("vehiclepaper")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("epin")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("1")) {
+            return TransactionCategory.UTILITY.name();
+        } else if (category.equalsIgnoreCase("2")) {
+            return TransactionCategory.CABLE.name();
+        } else if (category.equalsIgnoreCase("3")) {
+            return TransactionCategory.AIRTIME_TOPUP.name();
+        } else if (category.equalsIgnoreCase("4") && "120".equalsIgnoreCase(biller)) {
+            return TransactionCategory.DATA_TOPUP.name();
+        } else if (category.equalsIgnoreCase("4")) {
+            return TransactionCategory.AIRTIME_TOPUP.name();
+        } else if (category.equalsIgnoreCase("7")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("8")) {
+            return TransactionCategory.AIRTIME_TOPUP.name();
+        } else if (category.equalsIgnoreCase("9")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("10")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("11")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("12")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("13")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("14")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("15")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("16")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("17")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("18")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("19")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("20")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("21")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("22")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("23")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("24")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("25")) {
+            return TransactionCategory.TRANSFER.name();
+        } else if (category.equalsIgnoreCase("26")) {
+            return TransactionCategory.TRANSFER.name();
+        } else {
+            return TransactionCategory.TRANSFER.name();
+        }
 
     }
+
     private UserProfileResponse getUserProfileResponse(String userName, String token) throws ThirdPartyIntegrationException {
-       return operationService.getUserProfile(userName,token);
+        return operationService.getUserProfile(userName, token);
     }
-    private String getTransactionID(){
-          return String.valueOf(CommonUtils.generatePaymentTransactionId());
+
+    private String getTransactionID() {
+        return String.valueOf(CommonUtils.generatePaymentTransactionId());
     }
-    private String getBillType(PaymentRequest paymentRequest){
+
+    private String getBillType(PaymentRequest paymentRequest) {
         return getCategoryName(paymentRequest.getCategoryId(), paymentRequest.getBillerId());
     }
 
@@ -308,10 +291,10 @@ public class BillsPaymentService {
 
     private PaymentTransactionDetail getPaymentTransactionDetail(UserProfileResponse userProfileResponse, PaymentRequest paymentRequest, BigDecimal fee, PaymentResponse paymentResponse, String userName, String transactionId) throws ThirdPartyIntegrationException {
 
-        return operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
+        return operationService.saveTransactionDetail(userProfileResponse, paymentRequest, fee, paymentResponse, userName, transactionId);
     }
 
-    private void sendSMS(PaymentRequest paymentRequest, PaymentTransactionDetail paymentTransactionDetail, String token,  PaymentResponse paymentResponse, UserProfileResponse userProfileResponse){
+    private void sendSMS(PaymentRequest paymentRequest, PaymentTransactionDetail paymentTransactionDetail, String token, PaymentResponse paymentResponse, UserProfileResponse userProfileResponse) {
         CompletableFuture.runAsync(() -> {
             try {
                 String phoneNumber = extractPhone(paymentRequest);
@@ -319,19 +302,21 @@ public class BillsPaymentService {
                 notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
             } catch (ThirdPartyIntegrationException e) {
-                log.info("error"+e.getMessage());
+                log.info("error" + e.getMessage());
             }
         });
     }
-    private Map<String, String> buildMap(String userName){
-        Map<String,String> map = new HashMap<>();
+
+    private Map<String, String> buildMap(String userName) {
+        Map<String, String> map = new HashMap<>();
         map.put("message", "Making Bills Payment");
         map.put("userId", userName);
         map.put("module", "Bills Payment");
         return map;
     }
+
     public PaymentResponse processPaymentOnBehalfOfUser(PaymentRequest paymentRequest, String userName, String token, String pin) throws ThirdPartyIntegrationException {
-        UserProfileResponse userProfileResponse = getUserProfileResponse(userName,token);
+        UserProfileResponse userProfileResponse = getUserProfileResponse(userName, token);
         //secure Payment
         String transactionId = getTransactionID();
         String billType = getBillType(paymentRequest);
@@ -340,22 +325,22 @@ public class BillsPaymentService {
         String eventId = getThirdPartyEvent(thirdPartyName.name());
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFundAdmin(paymentRequest.getCategoryId(),paymentRequest.getBillerId(),paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, pin, billType, eventId)){
+        if (operationService.secureFundAdmin(paymentRequest.getCategoryId(), paymentRequest.getBillerId(), paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, pin, billType, eventId)) {
             try {
-                PaymentResponse paymentResponse = getPaymentResponse(paymentRequest,fee,transactionId,userName);
+                PaymentResponse paymentResponse = getPaymentResponse(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
-                PaymentTransactionDetail paymentTransactionDetail = getPaymentTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
+                PaymentTransactionDetail paymentTransactionDetail = getPaymentTransactionDetail(userProfileResponse, paymentRequest, fee, paymentResponse, userName, transactionId);
 
                 sendSMS(paymentRequest, paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
                 UserDetail userDetail = profileDetailsService.getUser(token);
-                if (userDetail.isCorporate()){
+                if (userDetail.isCorporate()) {
                     String settelmentEvent = getThirdPartyCommissionSettlementEvent(eventId);
-                    CompletableFuture.runAsync(() -> { 
+                    CompletableFuture.runAsync(() -> {
                         try {
-                            getCommissionForMakingBillsPayment(userDetail, userName,token, paymentRequest.getAmount(),eventId, settelmentEvent, paymentRequest.getBillerId(), paymentRequest.getCategoryId());
+                            getCommissionForMakingBillsPayment(userDetail, userName, token, paymentRequest.getAmount(), eventId, settelmentEvent, paymentRequest.getBillerId(), paymentRequest.getCategoryId());
                         } catch (ThirdPartyIntegrationException e) {
-                            log.info("error"+e.getMessage());
+                            log.info("error" + e.getMessage());
                         }
                     });
 
@@ -368,19 +353,18 @@ public class BillsPaymentService {
                     // });
                 }
 
-
                 CompletableFuture.runAsync(() -> {
                     try {
                         operationService.logUserActivity(paymentRequest, buildMap(userName), token);
                     } catch (ThirdPartyIntegrationException e) {
-                        log.info("error"+e.getMessage());
+                        log.info("error" + e.getMessage());
                     }
                 });
 
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
-                log.info("Error in billspayment :: " +e.getMessage());
-                operationService.saveFailedTransactionDetail(userProfileResponse,paymentRequest, fee, null, userName, transactionId);
+                log.info("Error in billspayment :: " + e.getMessage());
+                operationService.saveFailedTransactionDetail(userProfileResponse, paymentRequest, fee, null, userName, transactionId);
 
                 disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
                 throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
@@ -391,14 +375,13 @@ public class BillsPaymentService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
-
-    private String getThirdPartyEvent(String thirdPartyName){
-       String eventId = "";
-        if(thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())){
+    private String getThirdPartyEvent(String thirdPartyName) {
+        String eventId = "";
+        if (thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())) {
             // VAT_QUICKTELLER_VAS_FEE_ACCOUNT
             // COMMISSION_QUICKTELLER_RECEIVABLE_ACCOUNT
             eventId = Constants.QUICKTELLER__INTRANSIT;
-        }else if(thirdPartyName.equals(ThirdPartyNames.BAXI.name())){
+        } else if (thirdPartyName.equals(ThirdPartyNames.BAXI.name())) {
             // VAT_BAXI_VAS_FEE_ACCOUNT
             // COMMISSION_BAXI_VAS_INTRANSIT_ACCOUNT
             eventId = Constants.BAXI_INTRANSIT;
@@ -407,29 +390,28 @@ public class BillsPaymentService {
         return eventId;
     }
 
-    private String getThirdPartyCommissionSettlementEvent(String thirdPartyName){
+    private String getThirdPartyCommissionSettlementEvent(String thirdPartyName) {
         String eventId = "";
-         if(thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())){
-             eventId = Constants.QUICKTELLER_SETTLEMENT_ACCOUNT;
-         }else if(thirdPartyName.equals(ThirdPartyNames.BAXI.name())){
-             eventId = Constants.BAXI_SETTLEMENT_ACCOUNT;
-         }
-         return eventId;
-     }
+        if (thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())) {
+            eventId = Constants.QUICKTELLER_SETTLEMENT_ACCOUNT;
+        } else if (thirdPartyName.equals(ThirdPartyNames.BAXI.name())) {
+            eventId = Constants.BAXI_SETTLEMENT_ACCOUNT;
+        }
+        return eventId;
+    }
 
-     private String getThirdPartyCommissionEvent2(String thirdPartyName){
+    private String getThirdPartyCommissionEvent2(String thirdPartyName) {
         String eventId = "";
-         if(thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())){
-             eventId = Constants.QUICKTELLER_BILLS_PAYMENT_COMMISSION;
-         }else if(thirdPartyName.equals(ThirdPartyNames.BAXI.name())){
-             eventId = Constants.BAXI_BILLS_PAYMENT_COMMISSION;
-         }
-         return eventId;
-     }
-
+        if (thirdPartyName.equals(ThirdPartyNames.QUICKTELLER.name())) {
+            eventId = Constants.QUICKTELLER_BILLS_PAYMENT_COMMISSION;
+        } else if (thirdPartyName.equals(ThirdPartyNames.BAXI.name())) {
+            eventId = Constants.BAXI_BILLS_PAYMENT_COMMISSION;
+        }
+        return eventId;
+    }
 
     public PaymentResponse processPayment(PaymentRequest paymentRequest, String userName, String token, String pin) throws ThirdPartyIntegrationException {
-        UserProfileResponse userProfileResponse = operationService.getUserProfile(userName,token);
+        UserProfileResponse userProfileResponse = operationService.getUserProfile(userName, token);
         //secure Payment
         String transactionId = String.valueOf(CommonUtils.generatePaymentTransactionId());
 
@@ -440,17 +422,17 @@ public class BillsPaymentService {
         ThirdPartyNames thirdPartyName = categoryService.findThirdPartyByCategoryAggregatorCode(paymentRequest.getCategoryId()).orElseThrow(() -> new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE));
 
         String eventID = getThirdPartyEvent(thirdPartyName.name());
-        log.info("getThirdPartyEvent eventID -> :: " + eventID); 
+        log.info("getThirdPartyEvent eventID -> :: " + eventID);
         log.info("thirdPartyName processPayment -> :: " + thirdPartyName.name());
         log.info("billType processPayment -> :: " + billType);
 
         BigDecimal fee = billerConsumerFeeService.getFee(paymentRequest.getAmount(), thirdPartyName, paymentRequest.getBillerId());
         FeeBearer feeBearer = billerConsumerFeeService.getFeeBearer(thirdPartyName, paymentRequest.getBillerId());
-        if (operationService.secureFund(paymentRequest.getCategoryId(),paymentRequest.getBillerId(),paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, pin, billType, eventID)){
+        if (operationService.secureFund(paymentRequest.getCategoryId(), paymentRequest.getBillerId(), paymentRequest.getAmount(), fee, userName, paymentRequest.getSourceWalletAccountNumber(), transactionId, feeBearer, token, pin, billType, eventID)) {
             try {
                 PaymentResponse paymentResponse = getBillsPaymentService(paymentRequest.getCategoryId()).processPayment(paymentRequest, fee, transactionId, userName);
                 //store the transaction information
-                PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse,paymentRequest, fee, paymentResponse, userName, transactionId);
+                PaymentTransactionDetail paymentTransactionDetail = operationService.saveTransactionDetail(userProfileResponse, paymentRequest, fee, paymentResponse, userName, transactionId);
 
                 CompletableFuture.runAsync(() -> {
                     try {
@@ -459,23 +441,23 @@ public class BillsPaymentService {
                         notificationService.pushSMS(paymentTransactionDetail, token, paymentResponse, userProfileResponse);
 
                     } catch (ThirdPartyIntegrationException e) {
-                        log.info("error"+e.getMessage());
+                        log.info("error" + e.getMessage());
                     }
                 });
 
                 UserDetail userDetail = profileDetailsService.getUser(token);
                 log.info(" userDetail -> :: " + userDetail);
-                if (userDetail.isCorporate()){
+                if (userDetail.isCorporate()) {
                     String commEventId = getThirdPartyCommissionEvent2(eventID);
                     String settelmentEvent = getThirdPartyCommissionSettlementEvent(eventID);
                     log.info(" commEventId -> :: " + commEventId);
                     CompletableFuture.runAsync(() -> {
                         try {
-                            log.info("###### getCommissionForMakingBillsPayment ######" );
-                            getCommissionForMakingBillsPayment(userDetail, userName,systemToken, paymentRequest.getAmount(), commEventId, settelmentEvent, paymentRequest.getBillerId(), paymentRequest.getCategoryId());
+                            log.info("###### getCommissionForMakingBillsPayment ######");
+                            getCommissionForMakingBillsPayment(userDetail, userName, systemToken, paymentRequest.getAmount(), commEventId, settelmentEvent, paymentRequest.getBillerId(), paymentRequest.getCategoryId());
 
                         } catch (ThirdPartyIntegrationException e) {
-                            log.info("error"+e.getMessage());
+                            log.info("error" + e.getMessage());
                         }
                     });
                     Map<String, Object> map = new HashMap<>();
@@ -490,29 +472,28 @@ public class BillsPaymentService {
                         try {
                             commissionOperationService.pushToCommissionService(map);
                         } catch (JsonProcessingException e) {
-                            log.info("error"+e.getMessage());
+                            log.info("error" + e.getMessage());
                         }
                     });
 
-                                    
-                    if(userDetail.getReferenceCode() !=null){
+                    if (userDetail.getReferenceCode() != null) {
                         // find user by referenceCode
                         ReferralCodePojo referral = getUser(userDetail.getReferenceCode(), token);
-                        log.info("###### AGGREGATOR COMMISSION SECTION ######" + referral );
-                    // get user referrence code
+                        log.info("###### AGGREGATOR COMMISSION SECTION ######" + referral);
+                        // get user referrence code
                         CompletableFuture.runAsync(() -> {
                             try {
-                                calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, systemToken,paymentRequest.getAmount(), commEventId,paymentRequest.getCategoryId());
+                                calculateMerchantPercentage(userDetail, paymentRequest.getBillerId(), userName, systemToken, paymentRequest.getAmount(), commEventId, paymentRequest.getCategoryId());
                                 //UserDetail userDetail, String billerId, String userName, String token, BigDecimal amount, String eventId, String categoryId
                             } catch (ThirdPartyIntegrationException e) {
-                                log.info("error"+e.getMessage());
+                                log.info("error" + e.getMessage());
                             }
                         });
 
                     }
                 }
 
-                Map<String,String> mapp = new HashMap<>();
+                Map<String, String> mapp = new HashMap<>();
                 mapp.put("message", "Making Bills Payment");
                 mapp.put("userId", userName);
                 mapp.put("module", "Bills Payment");
@@ -520,14 +501,14 @@ public class BillsPaymentService {
                     try {
                         operationService.logUserActivity(paymentRequest, mapp, token);
                     } catch (ThirdPartyIntegrationException e) {
-                        log.info("error"+e.getMessage());
+                        log.info("error" + e.getMessage());
                     }
                 });
 
                 return paymentResponse;
             } catch (ThirdPartyIntegrationException e) {
-                log.info("Error in billspayment :: " +e.getMessage());
-                operationService.saveFailedTransactionDetail(userProfileResponse,paymentRequest, fee, null, userName, transactionId);
+                log.info("Error in billspayment :: " + e.getMessage());
+                operationService.saveFailedTransactionDetail(userProfileResponse, paymentRequest, fee, null, userName, transactionId);
 
                 disputeService.logTransactionAsDispute(userName, paymentRequest, thirdPartyName, paymentRequest.getBillerId(), paymentRequest.getCategoryId(), paymentRequest.getAmount(), fee, transactionId);
                 throw new ThirdPartyIntegrationException(e.getHttpStatus(), e.getMessage());
@@ -538,15 +519,15 @@ public class BillsPaymentService {
         throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
     }
 
-    private ReferralCodePojo getUser(String referralCode, String token)throws ThirdPartyIntegrationException{
-    
-    ResponseEntity<ApiResponseBody<ReferralCodePojo>> responseEntity = authFeignClient.getUserByReferralCode(referralCode, token);
-    ApiResponseBody<ReferralCodePojo> infoResponse = responseEntity.getBody();
-   
-    return infoResponse.getData();
+    private ReferralCodePojo getUser(String referralCode, String token) throws ThirdPartyIntegrationException {
+
+        ResponseEntity<ApiResponseBody<ReferralCodePojo>> responseEntity = authFeignClient.getUserByReferralCode(referralCode, token);
+        ApiResponseBody<ReferralCodePojo> infoResponse = responseEntity.getBody();
+
+        return infoResponse.getData();
     }
 
-    private String extractPhone(PaymentRequest paymentRequest){
+    private String extractPhone(PaymentRequest paymentRequest) {
         List<ParamNameValue> listValue = paymentRequest.getData();
         String phoneNumber = null;
         for (ParamNameValue paramNameValue : listValue) {
@@ -585,11 +566,11 @@ public class BillsPaymentService {
 
             List<ParamNameValue> data = new ArrayList<>();
 
-            data.add(new ParamNameValue("phone",mPayUser.getPhone()));
-            data.add(new ParamNameValue("amount",mPayUser.getAmount().toString()));
-            data.add(new ParamNameValue("paymentMethod",mPayUser.getPaymentMethod()));
-            data.add(new ParamNameValue("channel",mPayUser.getChannel()));
-            data.add(new ParamNameValue("plan",mPayUser.getPlan()));
+            data.add(new ParamNameValue("phone", mPayUser.getPhone()));
+            data.add(new ParamNameValue("amount", mPayUser.getAmount().toString()));
+            data.add(new ParamNameValue("paymentMethod", mPayUser.getPaymentMethod()));
+            data.add(new ParamNameValue("channel", mPayUser.getChannel()));
+            data.add(new ParamNameValue("plan", mPayUser.getPlan()));
 
             paymentRequest.setData(data);
 
@@ -600,7 +581,7 @@ public class BillsPaymentService {
         return paymentResponseList;
     }
 
-    public ResponseEntity<?> processBulkPaymentForm(List<MultiplePaymentRequest>  multipleFormPaymentRequest, String token, String pin) throws ThirdPartyIntegrationException {
+    public ResponseEntity<?> processBulkPaymentForm(List<MultiplePaymentRequest> multipleFormPaymentRequest, String token, String pin) throws ThirdPartyIntegrationException {
 
         PaymentResponse paymentResponse = null;
 
@@ -617,59 +598,56 @@ public class BillsPaymentService {
         return new ResponseEntity<>(new SuccessResponse(paymentResponse), HttpStatus.OK);
     }
 
-
     public Object requeryTransaction(String categry) throws ThirdPartyIntegrationException {
-        Object obj =  getBillsPaymentService(categry).reQueryTransaction(categry);
+        Object obj = getBillsPaymentService(categry).reQueryTransaction(categry);
         return obj;
 
     }
 
-
-
-    public Map<String, Object> search(String username, int pageNumber, int pageSize){
+    public Map<String, Object> search(String username, int pageNumber, int pageSize) {
 
         Page<TransactionDetail> transactionDetailPage;
         List<TransactionDetail> transactionDetailList;
 
-        if (CommonUtils.isEmpty(username)){
+        if (CommonUtils.isEmpty(username)) {
             transactionDetailPage = paymentTransactionRepo.getAllTransaction(getPageable(pageNumber, pageSize));
             transactionDetailList = transactionDetailPage.getContent();
-            return getTransactionMap(transactionDetailList,transactionDetailPage);
+            return getTransactionMap(transactionDetailList, transactionDetailPage);
         }
 
-        Map<String, Object> mm = getPager( null,  pageNumber,  pageSize);
-        Pageable paging = (Pageable)  mm.get("paging");
+        Map<String, Object> mm = getPager(null, pageNumber, pageSize);
+        Pageable paging = (Pageable) mm.get("paging");
 
         transactionDetailPage = paymentTransactionRepo.getAllTransactionByUsername(username, paging);
 
         transactionDetailList = transactionDetailPage.getContent();
 
-        return getTransactionMap(transactionDetailList,transactionDetailPage);
+        return getTransactionMap(transactionDetailList, transactionDetailPage);
     }
 
-    public Map<String, Object> totalSuccessful(){
-        long count =  paymentTransactionRepo.totalSuccessful(true);
+    public Map<String, Object> totalSuccessful() {
+        long count = paymentTransactionRepo.totalSuccessful(true);
         Map<String, Object> response = new HashMap<>();
         response.put("data", count);
-        return  response;
+        return response;
     }
 
-    public Map<String, Object> totalFailed(){
+    public Map<String, Object> totalFailed() {
         long count = paymentTransactionRepo.totalFailed(false);
         Map<String, Object> response = new HashMap<>();
         response.put("data", count);
-        return  response;
+        return response;
     }
 
-    private Map<String, Object> getPager(String referralCode, int page, int size){
+    private Map<String, Object> getPager(String referralCode, int page, int size) {
         Pageable paging = getPageable(page, size);
         Page<TransactionDetail> transactionDetailPage;
         List<TransactionDetail> transactionDetailList;
 
-        if (CommonUtils.isEmpty(referralCode)){
+        if (CommonUtils.isEmpty(referralCode)) {
             transactionDetailPage = paymentTransactionRepo.getAllTransaction(paging);
             transactionDetailList = transactionDetailPage.getContent();
-            return getTransactionMap(transactionDetailList,transactionDetailPage);
+            return getTransactionMap(transactionDetailList, transactionDetailPage);
         }
         Map<String, Object> mm = new HashMap<>();
         mm.put("paging", paging);
@@ -677,43 +655,37 @@ public class BillsPaymentService {
 
     }
 
-    public Map<String, Object> searchByReferralCode(String referralCode, int page, int size){
+    public Map<String, Object> searchByReferralCode(String referralCode, int page, int size) {
 
-        Map<String, Object> mm = getPager( referralCode,  page,  size);
-        Pageable paging = (Pageable)  mm.get("paging");
+        Map<String, Object> mm = getPager(referralCode, page, size);
+        Pageable paging = (Pageable) mm.get("paging");
         Page<TransactionDetail> transactionDetailPage;
-        List<TransactionDetail>  transactionDetailList;
-        transactionDetailPage = paymentTransactionRepo.getAllTransactionByReferralCode(referralCode,paging);
+        List<TransactionDetail> transactionDetailList;
+        transactionDetailPage = paymentTransactionRepo.getAllTransactionByReferralCode(referralCode, paging);
 
         transactionDetailList = transactionDetailPage.getContent();
 
         List<TransactionDetail> transactionDetailPage2 = paymentTransactionRepo.getAllTransactionByReferralCodeGroupedBy(referralCode);
 
-        for (int i = 0; i < transactionDetailPage2.size()-1; i++)
-        {
+        for (int i = 0; i < transactionDetailPage2.size() - 1; i++) {
 
-            for (int j = i+1; j < transactionDetailPage2.size(); j++)
-            {
+            for (int j = i + 1; j < transactionDetailPage2.size(); j++) {
 
-                if (transactionDetailPage2.get(i).getUsername().equalsIgnoreCase(transactionDetailPage2.get(j).getUsername()) && (i != j))
-                {
+                if (transactionDetailPage2.get(i).getUsername().equalsIgnoreCase(transactionDetailPage2.get(j).getUsername()) && (i != j)) {
 
-
-                    System.out.println("Duplicate Element transactionDetailPage2.get(i) : "+transactionDetailPage2.get(j));
+                    System.out.println("Duplicate Element transactionDetailPage2.get(i) : " + transactionDetailPage2.get(j));
                 }
             }
         }
 
-
-
-        return getTransactionMap(transactionDetailList,transactionDetailPage);
+        return getTransactionMap(transactionDetailList, transactionDetailPage);
     }
 
     private Pageable getPageable(int page, int size) {
         return PageRequest.of(page, size);
     }
 
-    private Map<String, Object> getTransactionMap(List<TransactionDetail> transactionDetailList, Page<TransactionDetail> transactionDetailPage){
+    private Map<String, Object> getTransactionMap(List<TransactionDetail> transactionDetailList, Page<TransactionDetail> transactionDetailPage) {
         Map<String, Object> response = new HashMap<>();
 
         response.put("transactionList", transactionDetailList);
@@ -723,26 +695,24 @@ public class BillsPaymentService {
         return response;
     }
 
-
     // findByUsername
     public long findByUsername(String username) throws ThirdPartyIntegrationException {
-        if (CommonUtils.isEmpty(username)){
+        if (CommonUtils.isEmpty(username)) {
             throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, "NOT Found");
         }
         return paymentTransactionRepo.findByUsername(username);
     }
 
-
-    public ResponseEntity<?> searchAndFilterTransactionStatus(boolean status, int pageNumber, int pageSize,String token){
-        Page<TransactionDetail> list = paymentTransactionRepo.getAllTransactionBySuccessful(status,PageRequest.of(pageNumber, pageSize));
+    public ResponseEntity<?> searchAndFilterTransactionStatus(boolean status, int pageNumber, int pageSize, String token) {
+        Page<TransactionDetail> list = paymentTransactionRepo.getAllTransactionBySuccessful(status, PageRequest.of(pageNumber, pageSize));
         List<TransactionDetail> history = list.getContent();
 
         Map<String, Object> response = new HashMap<>();
         for (TransactionDetail details : history) {
             ResponseEntity<ApiResponseBody<UserProfileResponsePojo>> user = authFeignClient.getUserByUserId(details.getUsername(), token);
             details.setName(user == null ? "" : user.getBody().getData().getFirstName()
-                            .concat(" ").concat(user.getBody().getData().getLastName()));
-            details.setEmail(user == null ? "" : user.getBody().getData().getEmail());          
+                    .concat(" ").concat(user.getBody().getData().getLastName()));
+            details.setEmail(user == null ? "" : user.getBody().getData().getEmail());
 
         }
         response.put("history", history);
@@ -753,72 +723,85 @@ public class BillsPaymentService {
         return new ResponseEntity<>(new SuccessResponse("Result Fetched", response), HttpStatus.OK);
     }
 
-    public Page<TransactionDetail> searchByAccountType(String userAccountNumber, int pageNumber, int pageSize){
-        if (CommonUtils.isEmpty(userAccountNumber)){
+    public Page<TransactionDetail> searchByAccountType(String userAccountNumber, int pageNumber, int pageSize) {
+        if (CommonUtils.isEmpty(userAccountNumber)) {
             return paymentTransactionRepo.getAllTransaction(PageRequest.of(pageNumber, pageSize));
         }
-        return paymentTransactionRepo.getAllTransactionByUserAccountNumber(userAccountNumber,PageRequest.of(pageNumber, pageSize));
+        return paymentTransactionRepo.getAllTransactionByUserAccountNumber(userAccountNumber, PageRequest.of(pageNumber, pageSize));
     }
 
     // as a merchant user i should be able to receive certain % amount commission anytime i use my waya app to make bilspayment
-    public void getCommissionForMakingBillsPayment(UserDetail userDetail, String userId, String token, BigDecimal amount,String eventId, String thridParty,String billerId, String categoryId) throws ThirdPartyIntegrationException {
+    public void getCommissionForMakingBillsPayment(UserDetail userDetail, String userId, String token, BigDecimal amount, String eventId, String thridParty, String billerId, String categoryId) throws ThirdPartyIntegrationException {
 
         String userType = getUserType(userDetail);
 
-        if (userType !=null){
-            MerchantCommissionTrackerDto trackerDto= new MerchantCommissionTrackerDto();
+        if (userType != null) {
+            MerchantCommissionTrackerDto trackerDto = new MerchantCommissionTrackerDto();
             trackerDto.setUserId(userId);
             trackerDto.setUserType(UserType.valueOf(userType));
             trackerDto.setCommissionType(CommissionType.PERCENTAGE);
             trackerDto.setCommissionValue(BigDecimal.ONE.doubleValue());
             trackerDto.setTransactionType(TransactionType.BILLS_PAYMENT);
-            commissionOperationService.saveMerchantCommission(trackerDto,token);
-            log.info("###### after saving ######" );
-            payCommissionToMerchant(UserType.valueOf(userType),userId,token, amount, eventId, thridParty, billerId, categoryId);  // pay user commission
+            commissionOperationService.saveMerchantCommission(trackerDto, token);
+            log.info("###### after saving ######");
+            payCommissionToMerchant(UserType.valueOf(userType), userId, token, amount, eventId, thridParty, billerId, categoryId);  // pay user commission
 
         }
 
     }
 
-
     private String getUserType(UserDetail userDetail) {
 
-        for(String role : userDetail.getRoles()) {
-            if(UserType.ROLE_CORP_ADMIN.name().equalsIgnoreCase(role)
+        for (String role : userDetail.getRoles()) {
+            if (UserType.ROLE_CORP_ADMIN.name().equalsIgnoreCase(role)
                     || UserType.ROLE_USER_AGGREGATOR.name().equalsIgnoreCase(role)
-                    || UserType.ROLE_USER_MERCHANT.name().equalsIgnoreCase(role)){
+                    || UserType.ROLE_USER_MERCHANT.name().equalsIgnoreCase(role)) {
                 return role;
             }
         }
         return null;
 
     }
- 
-    public void payCommissionToMerchant(UserType userType,String userName, String token, BigDecimal amount, String eventId, String thirdParty, String billerId, String categoryId) throws ThirdPartyIntegrationException {
-        commissionOperationService.payUserCommission(userType,userName,token, amount, eventId, thirdParty, billerId, categoryId); // log commission
+
+    public void payCommissionToMerchant(UserType userType, String userName, String token, BigDecimal amount, String eventId, String thirdParty, String billerId, String categoryId) throws ThirdPartyIntegrationException {
+        commissionOperationService.payUserCommission(userType, userName, token, amount, eventId, thirdParty, billerId, categoryId); // log commission
         //                                              payUserCommission(userType, userId, token,  amount,  eventId, settleEventId, biller, categoryId )
     }
 
     //as a merchant user anytime i sell billspayment a certain % amount of the item sold amount is transferred on real time to my commission wallet from WAYA
     private void calculateMerchantPercentage(UserDetail userDetail, String billerId, String userName, String token, BigDecimal amount, String eventId, String categoryId) throws ThirdPartyIntegrationException {
         String userType = getUserType(userDetail);
-        commissionOperationService.payOrganisationCommission(UserType.valueOf(userType),billerId,userName,token, amount, eventId, categoryId); // log commission
+        commissionOperationService.payOrganisationCommission(UserType.valueOf(userType), billerId, userName, token, amount, eventId, categoryId); // log commission
         //UserType userType,String billerId,String userId, String token, BigDecimal amount, String eventId, String categoryId
-       // 1. get the biller  2. find the biller commission 3. find the corporate user Id 4. compute the Percetage 5. credit the commission wallet
+        // 1. get the biller  2. find the biller commission 3. find the corporate user Id 4. compute the Percetage 5. credit the commission wallet
     }
-
 
     //check for the userType who's Item has been purchased
 //    public ThirdParty checkCustomerWhosItemIsBeanPurchased(){
 //        ThirdParty thirdParty = new ThirdParty();
 //        return thirdParty;
 //    }
-
     //ABILITY for waya admin with the right access and permission to select which of the waya official account to make the billspayment from
     public List<NewWalletResponse> adminSelectWayaOfficialAccount(String token) throws ThirdPartyIntegrationException {
         return operationService.getWayaOfficialWallet(token);
     }
 
+    public ResponseEntity<?> getAllTransactions(int page, int size, LocalDate fromdate, LocalDate todate) {
+        try {
+            Pageable pagable = PageRequest.of(page, size);
+            Map<String, Object> response = new HashMap<>();
+            Page<TransactionDetail> billTrans = paymentTransactionRepo.findByAllTransactionsWithDateRange(pagable, fromdate, todate);
+            List<TransactionDetail> history = billTrans.getContent();
 
+            response.put("history", history);
+            response.put("currentPage", billTrans.getNumber());
+            response.put("totalItems", billTrans.getTotalElements());
+            response.put("totalPages", billTrans.getTotalPages());
+            return new ResponseEntity<>(new SuccessResponse("Result Fetched", response), HttpStatus.OK);
+        } catch (Exception ex) {
+            log.error("Exception:: {}", ex.getMessage());
+            return new ResponseEntity<>(new ErrorResponse("Error occured"), HttpStatus.OK);
+        }
+    }
 
 }

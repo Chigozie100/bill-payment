@@ -157,7 +157,6 @@ public class OperationService {
         }else {
             trans.setReceiverName(billName.getBillerName());
         }
-        trans.setReceiverBankName(null);
         try {
             walletFeignClient.transferFromUserToWaya(trans,token, pin);
 

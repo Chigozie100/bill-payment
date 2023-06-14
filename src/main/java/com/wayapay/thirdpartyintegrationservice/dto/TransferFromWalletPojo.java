@@ -20,5 +20,4 @@ public class TransferFromWalletPojo {
 	private Long userId;
 	private String senderName;
 	private String receiverName;
-	private String receiverBankName;
 }

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: bills-payment-service
+    name: bill-payment-service
   datasource:
     url: jdbc:postgresql://postgresdb:5432/billspayment-service?useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
     username: root

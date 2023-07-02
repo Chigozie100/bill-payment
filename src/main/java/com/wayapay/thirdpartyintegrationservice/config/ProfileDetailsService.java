@@ -1,6 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.config;
 
-import com.wayapay.thirdpartyintegrationservice.service.auth.UserDetail;
+import com.wayapay.thirdpartyintegrationservice.v2.dto.request.UserDetail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;

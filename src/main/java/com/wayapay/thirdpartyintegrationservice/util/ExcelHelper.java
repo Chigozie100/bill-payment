@@ -1,7 +1,5 @@
 package com.wayapay.thirdpartyintegrationservice.util;
 
-import com.wayapay.thirdpartyintegrationservice.dto.BulkBillsPaymentDTO;
-import com.wayapay.thirdpartyintegrationservice.dto.PaymentRequestExcel;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,13 +11,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 @Slf4j
@@ -46,95 +42,6 @@ public class ExcelHelper {
         return true;
     }
 
-    public static BulkBillsPaymentDTO excelToPaymentRequest(InputStream is, String fileName) throws ThirdPartyIntegrationException {
-
-        try(Workbook workbook = getWorkBook(is, fileName)) {
-            if(workbook == null){
-                throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Invalid Excel File Check Extension");
-            }
-            List<PaymentRequestExcel> models = new ArrayList<>();
-
-            Sheet sheet = workbook.getSheet(SHEET);
-            if(sheet == null) throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, "Invalid Excel File Format Passed, Check Sheet Name");
-            Iterator<Row> rows = sheet.iterator();
-
-            int rowNumber = 0;
-            while (rows.hasNext()){
-                Row currentRow = rows.next();
-                Iterator<Cell> cellsInRow = currentRow.iterator();
-                PaymentRequestExcel pojo = new PaymentRequestExcel();
-
-                // If First Cell is empty break from loop
-                if (currentRow == null || isCellEmpty(currentRow.getCell(0))) {
-                    break;
-                }
-
-                // Skip header After Check of Header Formats
-                if (rowNumber == 0) {
-                    List<String> excelColNames = new ArrayList<>();
-                    int i = 0;
-                    while (cellsInRow.hasNext()) {
-                        Cell cell = cellsInRow.next();
-                        String cellValue = dataFormatter.formatCellValue(cell).trim().toUpperCase();
-                        excelColNames.add(cellValue);
-                        i++;
-                        if (i == PAYMENT_HEADER.size()) {
-                            break;
-                        }
-                    }
-                    boolean value = checkExcelFileValidity(PAYMENT_HEADER, excelColNames);
-                    if (!value) {
-                        String errorMessage = "Failure, Incorrect File Format";
-                        throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST,errorMessage);
-                    }
-                    rowNumber++;
-                    continue;
-                }
-
-                int cellIdx = 0;
-                while (cellsInRow.hasNext()){
-                    Cell cell = cellsInRow.next();
-                    String colName = CellReference.convertNumToColString(cell.getColumnIndex()).toUpperCase();
-                    switch (colName) {
-                        case "A":
-                            pojo.setBillerId(defaultStringCell(cell));
-                            break;
-                        case "B":
-                            pojo.setCategoryId(defaultStringCell(cell));
-                            break;
-                        case "C":
-                            pojo.setPhone(defaultStringCell(cell));
-                            break;
-                        case "D":
-                            pojo.setAmount(Integer.parseInt(validateStringNumericOnly(cell, cellIdx, rowNumber)));
-                            break;
-                        case "E":
-                            pojo.setPaymentMethod(defaultStringCell(cell));
-                            break;
-                        case "F":
-                            pojo.setChannel(defaultStringCell(cell));
-                            break;
-                        case "G":
-                            pojo.setSourceWalletAccountNumber(defaultStringCell(cell));
-                            break;
-                        case "H":
-                            pojo.setPlan(defaultStringCell(cell));
-                        case "I":
-                            pojo.setUserId(defaultStringCell(cell));
-                            break;
-                        default:
-                            break;
-                    }
-                    cellIdx++;
-                }
-                models.add(pojo);
-                rowNumber++;
-            }
-            return new BulkBillsPaymentDTO(models);
-        }catch (Exception ex){
-            throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getMessage());
-        }
-    }
 
 
     public static ByteArrayInputStream createExcelSheet(List<String> HEADERS) throws ThirdPartyIntegrationException {

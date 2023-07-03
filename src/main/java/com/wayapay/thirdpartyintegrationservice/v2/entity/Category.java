@@ -19,6 +19,8 @@ import java.time.LocalDateTime;
 @Table(name = "category")
 @AllArgsConstructor @NoArgsConstructor @ToString
 public class Category implements Serializable {
+    @Version
+    private Long version;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)

@@ -23,6 +23,8 @@ import java.time.LocalDateTime;
 @ToString
 public class BillProviderCharge implements Serializable {
 
+    @Version
+    private Long version;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)

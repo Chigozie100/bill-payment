@@ -24,6 +24,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString
 public class TransactionHistory implements Serializable {
+    @Version
+    private Long version;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)

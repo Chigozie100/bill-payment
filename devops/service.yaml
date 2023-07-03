@@ -1,28 +1,28 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: bill-payment-service
+  name: bill-payment-service-v2
   labels:
-    app: bill-payment-service
+    app: bill-payment-service-v2
 spec:
   ports:
   - name: http
     port: 80
     targetPort: 80
   selector:
-    app: bill-payment-service
+    app: bill-payment-service-v2
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bill-payment-service
+  name: bill-payment-service-v2
   labels:
-    app: bill-payment-service
+    app: bill-payment-service-v2
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: bill-payment-service
+      app: bill-payment-service-v2
   minReadySeconds: 240
   strategy:
     type: RollingUpdate
@@ -32,11 +32,11 @@ spec:
   template:
     metadata:
       labels:
-        app: bill-payment-service
+        app: bill-payment-service-v2
     spec:
       containers:
-      - name: bill-payment-service
-        image: 863852973330.dkr.ecr.eu-west-2.amazonaws.com/bill-payment-service:imgtag
+      - name: bill-payment-service-v2
+        image: 863852973330.dkr.ecr.eu-west-2.amazonaws.com/bill-payment-service:imgtag-v2
         resources:
           requests:
             memory: "200Mi"
@@ -69,7 +69,7 @@ spec:
       volumes:
         - name: config-file
           secret:
-            secretName: bill-payment-service-config-file # name of the Secret
+            secretName: bill-payment-servicev2-config-file # name of the Secret
         - name: tz-lagos
           hostPath:
             path: /usr/share/zoneinfo/Africa/Lagos    

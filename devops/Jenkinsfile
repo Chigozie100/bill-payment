@@ -37,7 +37,7 @@ pipeline {
         stage('Image Build') {
             steps {
                 script {
-                    dockerImage = docker.build "${REGISTRY}/${SERVICE_NAME}:${VERSION}"
+                    dockerImage = docker.build "${REGISTRY}/${SERVICE_NAME}:${VERSION}-v2"
                 }
             }
         }
@@ -53,12 +53,18 @@ pipeline {
         stage('pushing to ECR') {
             steps {
                 script {
-                    sh "docker push ${REGISTRY}/${SERVICE_NAME}:${VERSION}"
+                    sh "docker push ${REGISTRY}/${SERVICE_NAME}:${VERSION}-v2"
                 }
             }
         }
 
         stage('Deploy') {
+            environment {
+                NAMESPACE = "staging"
+            }
+            when {
+                branch 'stagingV2'
+            }
             steps {
                 script {
                     dir('devops') {

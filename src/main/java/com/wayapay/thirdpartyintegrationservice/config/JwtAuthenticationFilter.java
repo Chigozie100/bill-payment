@@ -1,6 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.config;
 
-import com.wayapay.thirdpartyintegrationservice.service.auth.UserDetail;
+import com.wayapay.thirdpartyintegrationservice.v2.dto.request.UserDetail;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;

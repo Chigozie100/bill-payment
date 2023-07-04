@@ -1,109 +1,109 @@
-spring:
-  application:
-    name: bills-payment-service
-  datasource:
-    url: jdbc:postgresql://localhost:5432/billspayment-service
-    username: postgres
-    password: postgres
-    initialization-mode: always
-    continue-on-error: true
-    driverClassName: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        show-sql: true
-        jdbc:
-          time_zone: UTC
-    open-in-view: false #this config disables database queries which  may be performed during view rendering
-
-  kafka:
-    producer:
-      bootstrap-servers: http://localhost:9092
-      key-serializer: ${KEY_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
-      value-serializer: ${VALUE_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
-      groupId: waya
-
-
-server:
-  port: ${SERVER_PORT:8071}
-  error:
-    include-message: always
-  servlet:
-    context-path: /billspayment-service
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: ${EUREKA_SERVER_URL:https://services.staging.wayabank.ng/eureka}
-    service-url:
-      default-zone: ${EUREKA_SERVER_URL:https://services.staging.wayabank.ng/eureka}
-  register-with-eureka: false
-  fetch-registry: false
-  instance:
-    preferIpAddress: true
-
-app:
-  config:
-    quickteller:
-      base-url: ${QUICK_TELLER_BASE:https://sandbox.interswitchng.com}
-      client-id: ${QUICK_TELLER_CLIENT_ID:IKIA9614B82064D632E9B6418DF358A6A4AEA84D7218}
-      secret: ${QUICK_TELLER_SECRET:XCTiBtLy1G9chAnyg0z3BcaFK4cVpwDg/GTw2EmjTZ8=}
-      account-number: ${QUICK_TELLER_ACCOUNT_NUMBER:0000000001}
-      biller-category-url: ${QUICK_TELLER_BILLER_CATEGORY_URL:/api/v2/quickteller/categorys}
-      billers-url: ${QUICK_TELLER_BILLERS_URL:/api/v2/quickteller/billers}
-      biller-payment-item-url: ${QUICK_TELLER_BILLER_PAYMENT_ITEM_URL:/api/v2/quickteller/billers/{billerId}/paymentitems}
-      customer-validation-url: ${QUICK_TELLER_CUSTOMER_VALIDATION_URL:/api/v2/quickteller/customers/validations}
-      send-payment-advice-url: ${QUICK_TELLER_SEND_PAYMENT_ADVICE_URL:/api/v2/quickteller/payments/advices}
-      query-transaction-url: ${QUICK_TELLER_QUERY_TRANSACTION_URL:/api/v2/quickteller/transactions}
-      transaction-ref-code: ${QUICK_TELLER_TRANSACTION_REF_CODE:1453}
-      terminal-id: ${QUICK_TELLER_TERMIAL_ID:3DMO0001}
-    baxi:
-      base-url: ${BAXI_BASE:https://api.staging.baxibap.com}  #https://payments.baxipay.com.ng/api/baxipay
-      x-api-key: ${BAXI_X_API_KEY:YGODc+V3e1LB6vgf6Z1y1JFGa2XcHscouuzLdcgPhLY=}  #  5adea9-044a85-708016-7ae662-646d59
-      agent-code: ${BAXI_AGENT_CODE:69}
-      account-number: ${BAXI_ACCOUNT_NUMBER:0000000001}s
-    itex:
-      base-url: ${ITEX_BASE:http://197.253.19.78:1880/api}
-      wallet-id: ${ITEX_WALLET_ID:35738987}
-      username: ${ITEX_USERNAME:payvice.waya@wayapaychat.com}
-      password: ${ITEX_PASSWORD:Waya203040!!}
-      account-number: ${ITEX_ACCOUNT_NUMBER:0000000001}
-      pay-vice-pin: ${ITEX_PAY_VIA_PIN:4444}
-      unique-api-identifier: ${ITEX_UNIQUE_API_IDENTIFIER:wayapaychat}
-      hmacsha256key: ${ITEX_HMACSHA256KEY:3de02eaf333f7cefde86677d60e5e47f}
-
-    dispute:
-      base-url: ${DISPUTE_BASE:https://services.staging.wayabank.ng/complaint-service/dispute}
-    wallet:
-      base-url: ${CONFIG_BASEURL_TWALLET:http://localhost:8066/temporal-service}  #http://localhost:8066/temporal-service/api/v1/wallet/offical-account/QUICKTELLER_BILLS_PAYMENT_COMMISSION
-    auth:
-      base-url: ${CONFIG_BASEURL_AUTH:https://services.staging.wayabank.ng/auth-service}
-    notification:
-      base-url: ${NOTIFICATION_BASE:https://services.staging.wayabank.ng/notification-service}
-    log-service:
-      base-url: ${CONFIG_BASEURL_LOGAUDIT:https://services.staging.wayabank.ng/logs-service}
-    commission:
-      base-url: ${COMMISSION_BASE:http://localhost:8090/commission-service}
-    kafka:
-      transaction-topic: ${TRANSACTION_TOPIC:transaction}
-      sell-bills-topic: ${SELL_BILLSPAYMENT_TOPIC:comm-for-selling-billspayment}
-    referral:
-      base-url: ${REFERRAL_SERVICE:https://services.staging.wayabank.ng/referral-service}
-feign:
-  client:
-    config:
-      default:
-        connect-timeout: 50000   
-        logger-level: full
-
-
-waya:
-  service:
-    username: admin@wayapaychat.com
-    password: kKo0a9@=&?*#
-
-jwt:
-  secret: ${JWT_SECRET:test}
+#spring:
+#  application:
+#    name: bills-payment-service
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/billspayment-service
+#    username: postgres
+#    password: postgres
+#    initialization-mode: always
+#    continue-on-error: true
+#    driverClassName: org.postgresql.Driver
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.PostgreSQLDialect
+#        show-sql: true
+#        jdbc:
+#          time_zone: UTC
+#    open-in-view: false #this config disables database queries which  may be performed during view rendering
+#
+#  kafka:
+#    producer:
+#      bootstrap-servers: http://localhost:9092
+#      key-serializer: ${KEY_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
+#      value-serializer: ${VALUE_SERIALIZER:org.apache.kafka.common.serialization.StringSerializer}
+#      groupId: waya
+#
+#
+#server:
+#  port: ${SERVER_PORT:8071}
+#  error:
+#    include-message: always
+#  servlet:
+#    context-path: /billspayment-service
+#
+#eureka:
+#  client:
+#    serviceUrl:
+#      defaultZone: ${EUREKA_SERVER_URL:https://services.staging.wayabank.ng/eureka}
+#    service-url:
+#      default-zone: ${EUREKA_SERVER_URL:https://services.staging.wayabank.ng/eureka}
+#  register-with-eureka: false
+#  fetch-registry: false
+#  instance:
+#    preferIpAddress: true
+#
+#app:
+#  config:
+#    quickteller:
+#      base-url: ${QUICK_TELLER_BASE:https://sandbox.interswitchng.com}
+#      client-id: ${QUICK_TELLER_CLIENT_ID:IKIA9614B82064D632E9B6418DF358A6A4AEA84D7218}
+#      secret: ${QUICK_TELLER_SECRET:XCTiBtLy1G9chAnyg0z3BcaFK4cVpwDg/GTw2EmjTZ8=}
+#      account-number: ${QUICK_TELLER_ACCOUNT_NUMBER:0000000001}
+#      biller-category-url: ${QUICK_TELLER_BILLER_CATEGORY_URL:/api/v2/quickteller/categorys}
+#      billers-url: ${QUICK_TELLER_BILLERS_URL:/api/v2/quickteller/billers}
+#      biller-payment-item-url: ${QUICK_TELLER_BILLER_PAYMENT_ITEM_URL:/api/v2/quickteller/billers/{billerId}/paymentitems}
+#      customer-validation-url: ${QUICK_TELLER_CUSTOMER_VALIDATION_URL:/api/v2/quickteller/customers/validations}
+#      send-payment-advice-url: ${QUICK_TELLER_SEND_PAYMENT_ADVICE_URL:/api/v2/quickteller/payments/advices}
+#      query-transaction-url: ${QUICK_TELLER_QUERY_TRANSACTION_URL:/api/v2/quickteller/transactions}
+#      transaction-ref-code: ${QUICK_TELLER_TRANSACTION_REF_CODE:1453}
+#      terminal-id: ${QUICK_TELLER_TERMIAL_ID:3DMO0001}
+#    baxi:
+#      base-url: ${BAXI_BASE:https://api.staging.baxibap.com}  #https://payments.baxipay.com.ng/api/baxipay
+#      x-api-key: ${BAXI_X_API_KEY:YGODc+V3e1LB6vgf6Z1y1JFGa2XcHscouuzLdcgPhLY=}  #  5adea9-044a85-708016-7ae662-646d59
+#      agent-code: ${BAXI_AGENT_CODE:69}
+#      account-number: ${BAXI_ACCOUNT_NUMBER:0000000001}s
+#    itex:
+#      base-url: ${ITEX_BASE:http://197.253.19.78:1880/api}
+#      wallet-id: ${ITEX_WALLET_ID:35738987}
+#      username: ${ITEX_USERNAME:payvice.waya@wayapaychat.com}
+#      password: ${ITEX_PASSWORD:Waya203040!!}
+#      account-number: ${ITEX_ACCOUNT_NUMBER:0000000001}
+#      pay-vice-pin: ${ITEX_PAY_VIA_PIN:4444}
+#      unique-api-identifier: ${ITEX_UNIQUE_API_IDENTIFIER:wayapaychat}
+#      hmacsha256key: ${ITEX_HMACSHA256KEY:3de02eaf333f7cefde86677d60e5e47f}
+#
+#    dispute:
+#      base-url: ${DISPUTE_BASE:https://services.staging.wayabank.ng/complaint-service/dispute}
+#    wallet:
+#      base-url: ${CONFIG_BASEURL_TWALLET:http://localhost:8066/temporal-service}  #http://localhost:8066/temporal-service/api/v1/wallet/offical-account/QUICKTELLER_BILLS_PAYMENT_COMMISSION
+#    auth:
+#      base-url: ${CONFIG_BASEURL_AUTH:https://services.staging.wayabank.ng/auth-service}
+#    notification:
+#      base-url: ${NOTIFICATION_BASE:https://services.staging.wayabank.ng/notification-service}
+#    log-service:
+#      base-url: ${CONFIG_BASEURL_LOGAUDIT:https://services.staging.wayabank.ng/logs-service}
+#    commission:
+#      base-url: ${COMMISSION_BASE:http://localhost:8090/commission-service}
+#    kafka:
+#      transaction-topic: ${TRANSACTION_TOPIC:transaction}
+#      sell-bills-topic: ${SELL_BILLSPAYMENT_TOPIC:comm-for-selling-billspayment}
+#    referral:
+#      base-url: ${REFERRAL_SERVICE:https://services.staging.wayabank.ng/referral-service}
+#feign:
+#  client:
+#    config:
+#      default:
+#        connect-timeout: 50000
+#        logger-level: full
+#
+#
+#waya:
+#  service:
+#    username: admin@wayapaychat.com
+#    password: kKo0a9@=&?*#
+#
+#jwt:
+#  secret: ${JWT_SECRET:test}

@@ -1,4 +1,5 @@
 package com.wayapay.thirdpartyintegrationservice.util;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,10 +11,7 @@ import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.wayapay.thirdpartyintegrationservice.dto.MainWalletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.*;

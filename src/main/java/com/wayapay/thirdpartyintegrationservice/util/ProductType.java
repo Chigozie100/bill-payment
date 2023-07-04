@@ -1,6 +1,8 @@
 package com.wayapay.thirdpartyintegrationservice.util;
 
 
+import com.wayapay.thirdpartyintegrationservice.v2.dto.EventCategory;
+
 import java.util.Optional;
 
 public enum ProductType {

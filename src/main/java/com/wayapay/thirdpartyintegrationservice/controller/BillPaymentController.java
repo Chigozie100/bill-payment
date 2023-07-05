@@ -124,9 +124,10 @@ public class BillPaymentController {
                                                 @RequestHeader("pin") String pin,
                                                 @RequestParam String userAccountNumber,
                                                 @RequestParam Long serviceProviderId,
-                                                @RequestParam Long serviceProviderBundleId){
+                                                @RequestParam(name = "serviceProviderBundleId",required = false) Long serviceProviderBundleId,
+                                                   @RequestParam(name = "serviceProviderBillerId",required = false) Long serviceProviderBillerId){
         ApiResponse<?> response =  billPaymentService.makeDataBundlePayment(request.getHeader(HEADER_STRING),
-                serviceProviderBundleId,serviceProviderId,dataBundlePaymentDto,userAccountNumber,pin);
+                serviceProviderBundleId,serviceProviderId,dataBundlePaymentDto,userAccountNumber,pin,serviceProviderBillerId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -140,9 +141,10 @@ public class BillPaymentController {
                                                    @RequestHeader("pin") String pin,
                                                    @RequestParam String userAccountNumber,
                                                    @RequestParam Long serviceProviderId,
-                                                   @RequestParam Long serviceProviderBundleId){
+                                                   @RequestParam(name = "serviceProviderBundleId",required = false) Long serviceProviderBundleId,
+                                                   @RequestParam(name = "serviceProviderBillerId",required = false) Long serviceProviderBillerId){
         ApiResponse<?> response =  billPaymentService.makeCableTvPayment(request.getHeader(HEADER_STRING),
-                serviceProviderBundleId,serviceProviderId,cableTvPaymentDto,userAccountNumber,pin);
+                serviceProviderBundleId,serviceProviderId,cableTvPaymentDto,userAccountNumber,pin,serviceProviderBillerId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -156,9 +158,10 @@ public class BillPaymentController {
                                                 @RequestHeader("pin") String pin,
                                                 @RequestParam String userAccountNumber,
                                                 @RequestParam Long serviceProviderId,
-                                                @RequestParam Long serviceProviderBundleId){
+                                                @RequestParam(name = "serviceProviderBundleId",required = false) Long serviceProviderBundleId,
+                                                @RequestParam(name = "serviceProviderBillerId",required = false) Long serviceProviderBillerId){
         ApiResponse<?> response =  billPaymentService.makeEpinPayment(request.getHeader(HEADER_STRING),
-                serviceProviderBundleId,serviceProviderId,epinPaymentDto,userAccountNumber,pin);
+                serviceProviderBundleId,serviceProviderId,epinPaymentDto,userAccountNumber,pin,serviceProviderBillerId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 

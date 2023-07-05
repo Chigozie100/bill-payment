@@ -3,7 +3,7 @@ package com.wayapay.thirdpartyintegrationservice.v2.dto;
 import java.util.Optional;
 
 public enum BillCategoryName {
-    airtime , databundle , cabletv , epin , betting ,electricity,education,vehicle,insurance;
+    airtime , databundle , cabletv , epin , betting ,electricity,education,vehicle,insurance,donation,airline, transport,tax,embassy,subscription;
 
     public static Optional<BillCategoryName> find(String value){
         if (isNonEmpty(value)){

@@ -18,12 +18,3 @@ public class CategoryResponse {
 
 }
 
-@Getter
-@Setter
-@NoArgsConstructor
-@ToString
-class CategoryDetail{
-    private String categoryid;
-    private String categoryname;
-    private String categorydescription;
-}

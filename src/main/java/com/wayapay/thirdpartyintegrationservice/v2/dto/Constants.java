@@ -10,7 +10,8 @@ public class Constants {
     public static final String TIMESTAMP = "Timestamp";
     public static final String SIGNATURE_METHOD = "SignatureMethod";
     public static final String TERMINAL_ID = "TerminalId";
-    public static final String SUCCESSFUL = "90000";
+    public static final String QUICK_TELLER_SUCCESSFUL = "90000";
+    public static final String QUCIK_TELLER_INVALID_TOKEN = "70013";
     public static final String INI_SUCCESSFUL = "900A0";
     public static final String INIT_RESPONSE = "10001";
     public static final String QUICKTELLER = "QUICKTELLER";

@@ -9,7 +9,7 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @ToString
-class ValidationResponse {
+public class ValidationResponse {
     private String paymentCode;
     private String customerId;
     private String responseCode;

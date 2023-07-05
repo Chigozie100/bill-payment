@@ -74,57 +74,31 @@ public class BaxiServiceImpl implements BaxiService {
                 return new ApiResponse<>(false, HttpStatus.valueOf(status).value(),msg,null);
             }
 
-            List<ServiceProviderCategory> serviceProviderCategoryList = serviceProviderCategoryRepository.findAllByServiceProviderAndIsActiveAndIsDeleted(serviceProvider.get(),true,false);
-            if(serviceProviderCategoryList.size() < 1){
-                List<ServiceProviderCategory> newCategoryList = new ArrayList<>();
-                for (ServiceCategoryListDto category: baxiCategoryList.getData()){
+            List<ServiceProviderCategory> categoryList = new ArrayList<>();
+            for (ServiceCategoryListDto category: baxiCategoryList.getData()){
 
-                    if(category.getServiceType().equalsIgnoreCase("payment") ||
-                            category.getServiceType().equalsIgnoreCase("transfer") ||
-                            category.getServiceType().equalsIgnoreCase("gaming")||
-                            category.getServiceType().equalsIgnoreCase("mobile-money")||
-                            category.getServiceType().equalsIgnoreCase("collections")){
-                        continue;
-                    }
-
-                    ServiceProviderCategory providerCategory = new ServiceProviderCategory();
-                    providerCategory.setServiceProvider(serviceProvider.get());
-                    providerCategory.setName(category.getName());
-                    providerCategory.setType(category.getServiceType());
-                    providerCategory.setDescription(category.getName());
-                    providerCategory.setCreatedBy(response.getData().getEmail());
-                    providerCategory.setModifiedBy(response.getData().getEmail());
-                    newCategoryList.add(providerCategory);
+                if(category.getServiceType().equalsIgnoreCase("payment") ||
+                        category.getServiceType().equalsIgnoreCase("transfer") ||
+                        category.getServiceType().equalsIgnoreCase("gaming")||
+                        category.getServiceType().equalsIgnoreCase("mobile-money")||
+                        category.getServiceType().equalsIgnoreCase("collections")){
+                    continue;
                 }
-                serviceProviderCategoryRepository.saveAll(newCategoryList);
-                return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Successfully created provider category",newCategoryList);
-            }else {
-                List<ServiceProviderCategory> categoryList = new ArrayList<>();
-                for (ServiceCategoryListDto category: baxiCategoryList.getData()){
+                Optional<ServiceProviderCategory> exist = serviceProviderCategoryRepository.findByServiceProviderAndTypeAndIsActiveAndIsDeleted(serviceProvider.get(),category.getServiceType(),true,false);
+                if(exist.isPresent())
+                    continue;
 
-                    if(category.getServiceType().equalsIgnoreCase("payment") ||
-                            category.getServiceType().equalsIgnoreCase("transfer") ||
-                            category.getServiceType().equalsIgnoreCase("gaming")||
-                            category.getServiceType().equalsIgnoreCase("mobile-money")||
-                            category.getServiceType().equalsIgnoreCase("collections")){
-                        continue;
-                    }
-                    Optional<ServiceProviderCategory> exist = serviceProviderCategoryRepository.findByServiceProviderAndTypeAndIsActiveAndIsDeleted(serviceProvider.get(),category.getServiceType(),true,false);
-                    if(exist.isPresent())
-                        continue;
-
-                    ServiceProviderCategory providerCategory = new ServiceProviderCategory();
-                    providerCategory.setServiceProvider(serviceProvider.get());
-                    providerCategory.setName(category.getName());
-                    providerCategory.setType(category.getServiceType());
-                    providerCategory.setDescription(category.getName());
-                    providerCategory.setCreatedBy(response.getData().getEmail());
-                    providerCategory.setModifiedBy(response.getData().getEmail());
-                    categoryList.add(providerCategory);
-                }
-                serviceProviderCategoryRepository.saveAll(categoryList);
-                return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Successfully updated provider category",categoryList);
+                ServiceProviderCategory providerCategory = new ServiceProviderCategory();
+                providerCategory.setServiceProvider(serviceProvider.get());
+                providerCategory.setName(category.getName());
+                providerCategory.setType(category.getServiceType());
+                providerCategory.setDescription(category.getName());
+                providerCategory.setCreatedBy(response.getData().getEmail());
+                providerCategory.setModifiedBy(response.getData().getEmail());
+                categoryList.add(providerCategory);
             }
+            serviceProviderCategoryRepository.saveAll(categoryList);
+            return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Successfully updated provider category",categoryList);
         }catch (Exception ex){
             log.error("::Error createBaxiServiceProviderCategory {}",ex.getLocalizedMessage());
             ex.printStackTrace();
@@ -581,7 +555,7 @@ public class BaxiServiceImpl implements BaxiService {
         }catch (Exception ex){
             log.error("::Error verifyCustomerAccountNumberOrSmartCardOrMeterNumber {}",ex.getLocalizedMessage());
             ex.printStackTrace();
-            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Something went wrong, can not process your request",null);
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to validate your token id, can not process your request",null);
         }
     }
 

@@ -21,6 +21,7 @@ import com.wayapay.thirdpartyintegrationservice.v2.repository.*;
 import com.wayapay.thirdpartyintegrationservice.v2.service.BillPaymentService;
 import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.BaxiProxy;
 import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.BaxiService;
+import com.wayapay.thirdpartyintegrationservice.v2.service.quickteller.QuickTellerService;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +57,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
     private final BaxiProxy baxiProxy;
     private final BaxiService baxiService;
     private final WalletProxy walletProxy;
+    private final QuickTellerService quickTellerService;
 
     @Value("${app.config.baxi.agent-code}")
     private String baxiAgentCode;
@@ -101,7 +103,8 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                 ApiResponse<?> baxiResp = baxiService.verifyCustomerAccountNumberOrSmartCardOrMeterNumber(customerToken.getType(), customerToken.getAccount(), category.get().getType());
                 return baxiResp;
             }else if(serviceProvider.get().getName().toLowerCase().startsWith("quick")){
-                return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Service Not Supported",null);
+                ApiResponse<?> quickTellerResp =  quickTellerService.verifyCustomerAccountNumberOrSmartCardOrMeterNumber(customerToken.getType(), customerToken.getAccount(), category.get().getType());
+                return quickTellerResp;
             }else {
                 return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to verify your customer token due to service provider unavailable",null);
             }
@@ -111,6 +114,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Something went wrong, try again later",null);
         }
     }
+
 
     @Override
     public ApiResponse<?> fetchBillersByCategory(String token, Long categoryId) {
@@ -285,7 +289,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override @Transactional
-    public ApiResponse<?> makeDataBundlePayment(String token,Long serviceProviderBundleId, Long serviceProviderId, DataBundlePaymentDto dataBundlePaymentDto,String userAccountNumber,String pin) {
+    public ApiResponse<?> makeDataBundlePayment(String token,Long serviceProviderBundleId, Long serviceProviderId, DataBundlePaymentDto dataBundlePaymentDto,String userAccountNumber,String pin,Long serviceProviderBillerId) {
         try {
             AuthResponse response = authProxy.validateUserToken(token);
             if(!response.getStatus().equals(Boolean.TRUE))
@@ -298,11 +302,32 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             if(!serviceProvider.isPresent())
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider not available",null);
 
-            Optional<ServiceProviderProductBundle> serviceProviderProductBundle = serviceProviderProductBundleRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderBundleId,true,false);
-            if(!serviceProviderProductBundle.isPresent())
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider product bundle not available",null);
+            Optional<ServiceProviderBiller> serviceProviderBiller = null;
+            if(serviceProviderBillerId != null){
+                serviceProviderBiller = serviceProviderBillerRepository.findByIdAndServiceProviderIdAndIsActiveAndIsDeleted(serviceProviderBillerId,serviceProvider.get().getId(), true,false);
+                if(!serviceProviderBiller.isPresent())
+                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider biller not available",null);
 
-            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderProductBundle.get().getServiceProviderProduct().getServiceProviderBiller().getServiceProviderCategory(),serviceProvider.get(),true,false);
+            }
+
+            Optional<ServiceProviderProductBundle> serviceProviderProductBundle = null;
+            if(serviceProviderBundleId != null){
+                serviceProviderProductBundle = serviceProviderProductBundleRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderBundleId,true,false);
+                if(!serviceProviderProductBundle.isPresent())
+                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider product bundle not available",null);
+
+            }
+
+            ServiceProviderCategory serviceProviderCategory;
+            if(serviceProviderBiller.isPresent()){
+                serviceProviderCategory = serviceProviderBiller.get().getServiceProviderCategory();
+            }else if(serviceProviderProductBundle.isPresent()){
+                serviceProviderCategory = serviceProviderProductBundle.get().getServiceProviderProduct().getServiceProviderBiller().getServiceProviderCategory();
+            }else {
+                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider biller/bundle not found",null);
+            }
+
+            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderCategory,serviceProvider.get(),true,false);
             if(!providerCharge.isPresent())
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Bill charges not found",null);
 
@@ -461,7 +486,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override @Transactional
-    public ApiResponse<?> makeEpinPayment(String token,Long serviceProviderBundleId, Long serviceProviderId, EpinPaymentDto epinPaymentDto,String userAccountNumber, String pin) {
+    public ApiResponse<?> makeEpinPayment(String token,Long serviceProviderBundleId, Long serviceProviderId, EpinPaymentDto epinPaymentDto,String userAccountNumber, String pin,Long serviceProviderBillerId) {
         try {
             AuthResponse response = authProxy.validateUserToken(token);
             if(!response.getStatus().equals(Boolean.TRUE))
@@ -474,11 +499,32 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             if(!serviceProvider.isPresent())
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider not available",null);
 
-            Optional<ServiceProviderProductBundle> serviceProviderProductBundle = serviceProviderProductBundleRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderBundleId,true,false);
-            if(!serviceProviderProductBundle.isPresent())
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider product bundle not available",null);
+            Optional<ServiceProviderBiller> serviceProviderBiller = null;
+            if(serviceProviderBillerId != null){
+                serviceProviderBiller = serviceProviderBillerRepository.findByIdAndServiceProviderIdAndIsActiveAndIsDeleted(serviceProviderBillerId,serviceProvider.get().getId(), true,false);
+                if(!serviceProviderBiller.isPresent())
+                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider biller not available",null);
 
-            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderProductBundle.get().getServiceProviderProduct().getServiceProviderBiller().getServiceProviderCategory(),serviceProvider.get(),true,false);
+            }
+
+            Optional<ServiceProviderProductBundle> serviceProviderProductBundle = null;
+            if(serviceProviderBundleId != null){
+                serviceProviderProductBundle = serviceProviderProductBundleRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderBundleId,true,false);
+                if(!serviceProviderProductBundle.isPresent())
+                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider product bundle not available",null);
+
+            }
+
+            ServiceProviderCategory serviceProviderCategory;
+            if(serviceProviderBiller.isPresent()){
+                serviceProviderCategory = serviceProviderBiller.get().getServiceProviderCategory();
+            }else if(serviceProviderProductBundle.isPresent()){
+                serviceProviderCategory = serviceProviderProductBundle.get().getServiceProviderProduct().getServiceProviderBiller().getServiceProviderCategory();
+            }else {
+                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider biller/bundle not found",null);
+            }
+
+            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderCategory,serviceProvider.get(),true,false);
             if(!providerCharge.isPresent())
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Bill charges not found",null);
 
@@ -548,7 +594,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override @Transactional
-    public ApiResponse<?> makeCableTvPayment(String token, Long serviceProviderBundleId,Long serviceProviderId, CableTvPaymentDto cableTvPaymentDto,String userAccountNumber, String pin) {
+    public ApiResponse<?> makeCableTvPayment(String token, Long serviceProviderBundleId,Long serviceProviderId, CableTvPaymentDto cableTvPaymentDto,String userAccountNumber, String pin,Long serviceProviderBillerId) {
         try {
             AuthResponse response = authProxy.validateUserToken(token);
             if(!response.getStatus().equals(Boolean.TRUE))
@@ -561,11 +607,32 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             if(!serviceProvider.isPresent())
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider not available",null);
 
-            Optional<ServiceProviderProductBundle> serviceProviderProductBundle = serviceProviderProductBundleRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderBundleId,true,false);
-            if(!serviceProviderProductBundle.isPresent())
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider product bundle not available",null);
+            Optional<ServiceProviderBiller> serviceProviderBiller = null;
+            if(serviceProviderBillerId != null){
+                serviceProviderBiller = serviceProviderBillerRepository.findByIdAndServiceProviderIdAndIsActiveAndIsDeleted(serviceProviderBillerId,serviceProvider.get().getId(), true,false);
+                if(!serviceProviderBiller.isPresent())
+                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider biller not available",null);
 
-            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderProductBundle.get().getServiceProviderProduct().getServiceProviderBiller().getServiceProviderCategory(),serviceProvider.get(),true,false);
+            }
+
+            Optional<ServiceProviderProductBundle> serviceProviderProductBundle = null;
+            if(serviceProviderBundleId != null){
+                serviceProviderProductBundle = serviceProviderProductBundleRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderBundleId,true,false);
+                if(!serviceProviderProductBundle.isPresent())
+                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider product bundle not available",null);
+
+            }
+
+            ServiceProviderCategory serviceProviderCategory;
+            if(serviceProviderBiller.isPresent()){
+                serviceProviderCategory = serviceProviderBiller.get().getServiceProviderCategory();
+            }else if(serviceProviderProductBundle.isPresent()){
+                serviceProviderCategory = serviceProviderProductBundle.get().getServiceProviderProduct().getServiceProviderBiller().getServiceProviderCategory();
+            }else {
+                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider biller/bundle not found",null);
+            }
+
+            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderCategory,serviceProvider.get(),true,false);
             if(!providerCharge.isPresent())
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Bill charges not found",null);
 

@@ -13,12 +13,3 @@ public class QuickTellerCustomerValidationRequest {
     private List<ValidationRequest> customers = new ArrayList<>();
 }
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@ToString
-class ValidationRequest {
-    private String customerId;
-    private String paymentCode;
-}

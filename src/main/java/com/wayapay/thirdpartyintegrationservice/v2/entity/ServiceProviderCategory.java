@@ -31,6 +31,8 @@ public class ServiceProviderCategory implements Serializable {
     private String description;
     private String type;
     private String imageLogo;
+    @Column(name = "service_category_id")
+    private String serviceCategoryId;
     @ManyToOne
     private ServiceProvider serviceProvider;
     @Column(name = "is_active")

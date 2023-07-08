@@ -53,6 +53,8 @@ public class TransactionHistory implements Serializable {
     private ServiceProviderBiller serviceProviderBiller;
     @ManyToOne
     private ServiceProviderProductBundle serviceProviderProductBundle;
+    @ManyToOne
+    private ServiceProviderProduct serviceProviderProduct;
     @Column(name = "is_active")
     private Boolean isActive = Boolean.TRUE;
     @Column(name = "is_deleted")

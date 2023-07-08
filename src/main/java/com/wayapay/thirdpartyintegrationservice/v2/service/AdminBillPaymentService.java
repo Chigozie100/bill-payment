@@ -16,17 +16,14 @@ public interface AdminBillPaymentService {
     ApiResponse<?> createServiceProvider(String token, CategoryDto request);
     ApiResponse<?> updateServiceProvider(String token, UpdateServiceProvider request,Long serviceProviderId);
     ApiResponse<?> fetchAllServiceProvider(String token);
-//    ApiResponse<?> createBillerCategory(String token, String name, String description, Long categoryId,boolean isActive);
-//    ApiResponse<?> createBillerProduct(String token, BillerProductDto billerProductDto);
-//    ApiResponse<?> createBillerProductBundle(String token, BigDecimal amount, String name, Long billerProductId, boolean isActive);
-//    ApiResponse<?> fetchAllBillerCategory(String token);
-//    ApiResponse<?> fetchAllBillerProduct(String token);
-//    ApiResponse<?> fetchAllBillerProductBundle(String token,Long billerProductId);
-    ApiResponse<?> createTransactionHistory(TransactionDto transactionDto,String email);
 
-//    ApiResponse<?> filterAllBillerCategory(String token,Long categoryId, int pageNo, int pageSize);
-//    ApiResponse<?> filterAllBillerProduct(String token,Long billerCategoryId, int pageNo, int pageSize);
-//    ApiResponse<?> filterAllBillerProductBundle(String token,Long billerProductId, int pageNo, int pageSize);
+    ApiResponse<?> updateBiller(String token, Long id,boolean isActive);
+    ApiResponse<?> updateBillerProduct(String token, Long id,BigDecimal amount, boolean isActive);
+    ApiResponse<?> updateBillerProductBundle(String token, Long id, BigDecimal amount, boolean isActive);
+    ApiResponse<?> updateBillerCategory(String token,Long id, boolean isActive);
+    ApiResponse<?> updateCategory(String token, Long id, boolean isActive);
+
+    ApiResponse<?> createTransactionHistory(TransactionDto transactionDto,String email);
 
     ApiResponse<?> filterAllCategory(String token, int pageNo, int pageSize);
     ApiResponse<?> filterAllServiceProvider(String token, int pageNo, int pageSize);

@@ -28,4 +28,6 @@ public interface ServiceProviderBillerRepository extends JpaRepository<ServicePr
     Optional<ServiceProviderBiller> findByPrepaidNameOrPostpaidNameAndServiceProviderCategoryAndIsActiveAndIsDeleted(String prepaidService, String postpaidService, ServiceProviderCategory serviceProviderCategory,boolean isActive, boolean isDeleted);
 
     Optional<ServiceProviderBiller> findByIdAndServiceProviderIdAndIsActiveAndIsDeleted(Long id, Long serviceProviderId, boolean isActive, boolean isDeleted);
+
+    Optional<ServiceProviderBiller> findByIdAndIsDeleted(Long id, boolean isDeleted);
 }

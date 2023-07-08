@@ -2,7 +2,6 @@ package com.wayapay.thirdpartyintegrationservice.v2.dto.request;
 
 import lombok.Data;
 
-import javax.persistence.Column;
 import javax.validation.constraints.NotBlank;
 
 @Data
@@ -25,5 +24,23 @@ public class CategoryDto {
     private Boolean processTaxesLevies = Boolean.FALSE;
     private Boolean processInternetSubscription = Boolean.FALSE;
     private Boolean processTithesDonation = Boolean.FALSE;
+    private Boolean processEducation = Boolean.FALSE;
+    private Boolean processVehicle = Boolean.FALSE;
+    private Boolean processTransport = Boolean.FALSE;
+    private Boolean processEmbassy = Boolean.FALSE;
+    private Boolean processSchoolBoard = Boolean.FALSE;
+    private Boolean processShopping = Boolean.FALSE;
+    private Boolean processEventTicket = Boolean.FALSE;
+    private Boolean processOnlineShopping = Boolean.FALSE;
+    private Boolean processInsuranceInvestment = Boolean.FALSE;
+    private Boolean processInternationalAirtime = Boolean.FALSE;
+    private Boolean processLagosStateCBS = Boolean.FALSE;
+    private Boolean processCreditLoanRepayment = Boolean.FALSE;
+    private Boolean processPayTvSubscription = Boolean.FALSE;
+    private Boolean processReligiousInstitutions = Boolean.FALSE;
+    private Boolean processNestleDistributors = Boolean.FALSE;
+    private Boolean processBlackFriday = Boolean.FALSE;
+    private Boolean processApmTerminals = Boolean.FALSE;
+    private Boolean processDealerPayments = Boolean.FALSE;
     private Boolean isActive = Boolean.FALSE;
 }

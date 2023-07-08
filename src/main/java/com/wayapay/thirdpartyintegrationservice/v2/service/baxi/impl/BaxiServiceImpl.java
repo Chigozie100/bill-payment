@@ -220,6 +220,50 @@ public class BaxiServiceImpl implements BaxiService {
                     serviceProviderBillerList.addAll(serviceBillerElectricAndBettings);
                     serviceProviderBillerRepository.saveAll(serviceBillerElectricAndBettings);
 
+                }else if(category.getType().equalsIgnoreCase(BillCategoryName.vehicle.name()) ||
+                        category.getType().equalsIgnoreCase(BillCategoryName.insurance.name())){
+
+                    ServiceBillerLogoResponse serviceBillerResponse;
+                    try {
+                        ServiceCategoryName serviceCategoryName = new ServiceCategoryName();
+                        serviceCategoryName.setService_type(category.getType());
+                        serviceBillerResponse  = baxiProxy.fetchServiceProviderLogoByCategoryName(baxiApiKey,serviceCategoryName);
+                        log.info("::ServiceBillerLogoResponse {0}, {1}",category.getType(), serviceBillerResponse);
+                    }catch (FeignException ex){
+                        log.error("::Error billerProvidersElect List {}",ex.getLocalizedMessage());
+                        String msg = ex.contentUTF8();
+                        int status = ex.status();
+                        log.error(":: Message {0}, {1}",msg,status);
+                        continue;
+                    }
+
+                    if(serviceBillerResponse.getData().size() > 0){
+                        List<ServiceProviderBiller> billerList = new ArrayList<>();
+                        for (ServiceBillerLogoDto billerDetail: serviceBillerResponse.getData()){
+
+                            Optional<ServiceProviderBiller> betting = serviceProviderBillerRepository
+                                    .findByNameAndServiceProviderCategoryAndIsActiveAndIsDeleted(billerDetail.getServiceName(),category,true,false);
+                            if(betting.isPresent())
+                                continue;
+
+                            ServiceProviderBiller eBiller = new ServiceProviderBiller();
+                            eBiller.setServiceProviderCategory(category);
+                            eBiller.setCreatedBy(response.getData().getEmail());
+                            eBiller.setModifiedBy(response.getData().getEmail());
+                            eBiller.setProductId(String.valueOf(billerDetail.getBiller_id()));
+                            eBiller.setBillerId(String.valueOf(billerDetail.getBiller_id()));
+                            eBiller.setName(billerDetail.getServiceName());
+                            eBiller.setType(billerDetail.getServiceType());
+                            eBiller.setDescription(billerDetail.getServiceName());
+                            eBiller.setImageLogo(billerDetail.getServiceLogo());
+                            eBiller.setIsRequiredIdVerification(Boolean.TRUE);
+                            eBiller.setServiceProviderId(serviceProviderId);
+                            eBiller.setHasProduct(Boolean.TRUE);
+                            billerList.add(eBiller);
+                        }
+                        serviceProviderBillerList.addAll(billerList);
+                        serviceProviderBillerRepository.saveAll(billerList);
+                    }
                 }else {
 
                     GetAllBillersByCategoryResponse billerProviders;
@@ -816,6 +860,25 @@ public class BaxiServiceImpl implements BaxiService {
             log.error("::Error requestBettingPayment {}",ex.getLocalizedMessage());
             ex.printStackTrace();
             return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process game betting payment, try again later",null);
+        }
+    }
+
+    @Override
+    public ApiResponse<?> fetchTransactionQuery(String token, String reference) {
+        try {
+            AuthResponse response = authProxy.validateUserToken(token);
+            if(!response.getStatus().equals(Boolean.TRUE))
+                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+
+            if(!response.getData().isAdmin())
+                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+
+            Object queryTxn = baxiProxy.reQueryTransaction(baxiApiKey,reference);
+            return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Transaction fetched",queryTxn);
+        }catch (Exception ex){
+            log.error("::Error fetchTransactionQuery {}",ex.getLocalizedMessage());
+            ex.printStackTrace();
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to fetch transaction query, try again later",null);
         }
     }
 

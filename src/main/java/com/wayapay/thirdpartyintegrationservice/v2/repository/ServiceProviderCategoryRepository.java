@@ -20,4 +20,6 @@ public interface ServiceProviderCategoryRepository extends JpaRepository<Service
     Optional<ServiceProviderCategory> findByServiceProviderAndTypeAndIsActiveAndIsDeleted(ServiceProvider serviceProvider,String type, boolean isActive, boolean isDeleted);
     Optional<ServiceProviderCategory> findByIdAndServiceProviderAndIsActiveAndIsDeleted(Long id, ServiceProvider serviceProvider, boolean isActive, boolean isDeleted);
     Optional<ServiceProviderCategory> findByTypeAndServiceProviderAndIsActiveAndIsDeleted(String type, ServiceProvider serviceProvider, boolean isActive, boolean isDeleted);
+
+    Optional<ServiceProviderCategory> findByIdAndIsDeleted(Long id, boolean isDeleted);
 }

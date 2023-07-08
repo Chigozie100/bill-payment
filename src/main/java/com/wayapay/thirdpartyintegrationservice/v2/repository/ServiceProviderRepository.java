@@ -11,6 +11,7 @@ import java.util.Optional;
 
 @Repository
 public interface ServiceProviderRepository extends JpaRepository<ServiceProvider, Long> {
+    Optional<List<ServiceProvider>> findByNameStartsWith(String prefix);
     Optional<ServiceProvider> findByNameAndIsActiveAndIsDeleted(String name, boolean isActive, boolean isDeleted);
     Optional<ServiceProvider> findByNameAndIsDeleted(String name, boolean isDeleted);
     Optional<ServiceProvider> findByIdAndIsActiveAndIsDeleted(Long id, boolean isActive, boolean isDeleted);
@@ -61,6 +62,24 @@ public interface ServiceProviderRepository extends JpaRepository<ServiceProvider
     Optional<ServiceProvider> findFirstByPrecedenceAndProcessTaxesLeviesAndIsActiveAndIsDeleted(int precedence,boolean processTaxesLevies,boolean isActive, boolean isDeleted);
     Optional<ServiceProvider> findFirstByPrecedenceAndProcessInternetSubscriptionAndIsActiveAndIsDeleted(int precedence,boolean processInternetSubscription,boolean isActive, boolean isDeleted);
     Optional<ServiceProvider> findFirstByPrecedenceAndProcessTithesDonationAndIsActiveAndIsDeleted(int precedence,boolean processTithesDonation,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessEducationAndIsActiveAndIsDeleted(int precedence,boolean processEducation,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessVehicleAndIsActiveAndIsDeleted(int precedence,boolean processVehicle,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessTransportAndIsActiveAndIsDeleted(int precedence,boolean processTransport,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessEmbassyAndIsActiveAndIsDeleted(int precedence,boolean processEmbassy,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessSchoolBoardAndIsActiveAndIsDeleted(int precedence,boolean processSchoolBoard,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessShoppingAndIsActiveAndIsDeleted(int precedence,boolean processShopping,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessEventTicketAndIsActiveAndIsDeleted(int precedence,boolean processEventTicket,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessOnlineShoppingAndIsActiveAndIsDeleted(int precedence,boolean processOnlineShopping,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessInsuranceInvestmentAndIsActiveAndIsDeleted(int precedence,boolean processInsuranceInvestment,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessInternationalAirtimeAndIsActiveAndIsDeleted(int precedence,boolean processInternationalAirtime,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessLagosStateCBSAndIsActiveAndIsDeleted(int precedence,boolean processLagosStateCBS,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessCreditLoanRepaymentAndIsActiveAndIsDeleted(int precedence,boolean processCreditLoanRepayment,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessPayTvSubscriptionAndIsActiveAndIsDeleted(int precedence,boolean processPayTvSubscription,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessReligiousInstitutionsAndIsActiveAndIsDeleted(int precedence,boolean processReligiousInstitutions,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessNestleDistributorsAndIsActiveAndIsDeleted(int precedence,boolean processNestleDistributors,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessBlackFridayAndIsActiveAndIsDeleted(int precedence,boolean processBlackFriday,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessApmTerminalsAndIsActiveAndIsDeleted(int precedence,boolean processApmTerminals,boolean isActive, boolean isDeleted);
+    Optional<ServiceProvider> findFirstByPrecedenceAndProcessDealerPaymentsAndIsActiveAndIsDeleted(int precedence,boolean processDealerPayments,boolean isActive, boolean isDeleted);
 
 
 }

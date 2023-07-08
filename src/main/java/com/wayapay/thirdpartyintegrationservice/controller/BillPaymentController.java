@@ -185,6 +185,22 @@ public class BillPaymentController {
 
     @ApiImplicitParams({
             @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Make other bills payment", notes = "Make other bills payment")
+    @PostMapping(path = "/other/payment")
+    public ResponseEntity<?> makeOtherPayment(HttpServletRequest request,
+                                                  @Valid @RequestBody OthersPaymentDto othersPaymentDto,
+                                                  @RequestHeader("pin") String pin,
+                                                  @RequestParam String userAccountNumber,
+                                                  @RequestParam Long serviceProviderId,
+                                                  @RequestParam Long serviceProviderBillerId){
+        ApiResponse<?> response =  billPaymentService.makeOtherPayment(request.getHeader(HEADER_STRING),
+                serviceProviderBillerId,serviceProviderId,othersPaymentDto,userAccountNumber,pin);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
+
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
     @ApiOperation(value = "Fetch transaction by reference number", notes = "Get transaction by reference number")
     @GetMapping(path = "/fetchTransactionByReference/{reference}")
     public ResponseEntity<?> fetchTransactionByReference(HttpServletRequest request,

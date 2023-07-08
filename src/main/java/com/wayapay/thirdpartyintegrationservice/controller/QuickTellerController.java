@@ -3,6 +3,7 @@ package com.wayapay.thirdpartyintegrationservice.controller;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.ApiResponse;
 import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.BaxiService;
 import com.wayapay.thirdpartyintegrationservice.v2.service.quickteller.QuickTellerService;
+import com.wayapay.thirdpartyintegrationservice.v2.service.quickteller.dto.SendPaymentAdviceRequest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -57,6 +58,18 @@ public class QuickTellerController {
 
     @ApiImplicitParams({
             @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Create quickteller service provider product by biller by admin", notes = "Create quickteller bill service provider product by biller")
+    @PostMapping(path = "/createProductByBiller/{serviceProviderId}")
+    public ResponseEntity<?> createQtServiceProviderProductByBiller(HttpServletRequest request,
+                                                                     @PathVariable Long serviceProviderId,
+                                                                     @RequestParam Long serviceProviderCategoryId){
+        ApiResponse<?> response =  quickTellerService.createQuickTellerServiceProviderProductByBiller(request.getHeader(HEADER_STRING),serviceProviderId,serviceProviderCategoryId);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
+
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
     @ApiOperation(value = "Fetch auth credential by admin", notes = "Fetch auth credential ")
     @PostMapping(path = "/getAuth")
     public ResponseEntity<?> fetchQtAuthCredentials(HttpServletRequest request,
@@ -83,6 +96,36 @@ public class QuickTellerController {
         ApiResponse<?> response =  quickTellerService.fetchCategories(request.getHeader(HEADER_STRING));
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
+
+
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Get pay item by billerId", notes = "Get pay item by billerId")
+    @GetMapping(path = "/getPayItem/{billerId}")
+    public ResponseEntity<?> getQtPayItem(HttpServletRequest request, @PathVariable String billerId){
+        ApiResponse<?> response =  quickTellerService.getPayItem(request.getHeader(HEADER_STRING),billerId);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Get transactionQuery", notes = "Get transactionQuery")
+    @GetMapping(path = "/transactionQuery")
+    public ResponseEntity<?> getQuickTellerTransactionQuery(HttpServletRequest request, @RequestParam String reference){
+        ApiResponse<?> response =  quickTellerService.verifyQuickTellerTransactionRefAdmin(request.getHeader(HEADER_STRING),reference);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
+//    @ApiImplicitParams({
+//            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+//    @ApiOperation(value = "make payment by admin", notes = "Make payment biller")
+//    @PostMapping(path = "/payment/{categoryType}")
+//    public ResponseEntity<?> makePayment(HttpServletRequest request,
+//                                         @RequestBody SendPaymentAdviceRequest paymentAdviceRequest,
+//                                         @PathVariable String categoryType){
+//        ApiResponse<?> response =  quickTellerService.makeBillsPaymentRequest(paymentAdviceRequest,categoryType);
+//        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+//    }
 
 
 }

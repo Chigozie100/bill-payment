@@ -11,5 +11,5 @@ public class ElectricityPaymentDto {
     private String type;
     private String phone;
     private String account;
-//    private String reference;
+    private String email;
 }

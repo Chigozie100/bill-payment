@@ -19,6 +19,7 @@ public interface BaxiService {
     ApiResponse<?> requestEpinPayment(int numberOfPins, int amount, int fixAmount, String type,String reference);
     ApiResponse<?> requestCableTvPayment(String type,String phone,String amount,String reference,String productCode,String smartCardNumber,String monthPaidFor);
     ApiResponse<?> requestBettingPayment(BigDecimal amount, String type,String reference,String accountNumber);
+    ApiResponse<?> fetchTransactionQuery(String token, String reference);
 
 
 }

@@ -8,7 +8,7 @@ public class CableTvPaymentDto {
     private String type;
     private String phone;
     private String amount;
-//    private String reference;
+    private String email;
     private String productCode;
     private String smartCardNumber;
     private String monthPaidFor;

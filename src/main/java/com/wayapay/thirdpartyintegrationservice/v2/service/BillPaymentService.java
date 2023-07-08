@@ -17,4 +17,5 @@ public interface BillPaymentService {
     ApiResponse<?> makeCableTvPayment(String token,Long serviceProviderBundleId, Long serviceProviderId, CableTvPaymentDto cableTvPaymentDto,String userAccountNumber,String pin,Long serviceProviderBillerId);
     ApiResponse<?> makeBettingPayment(String token,Long serviceProviderBillerId, Long serviceProviderId, BettingPaymentDto bettingPaymentDto,String userAccountNumber,String pin);
     ApiResponse<?> fetchBillTransactionByReference(String token, String reference);
+    ApiResponse<?> makeOtherPayment(String token,Long serviceProviderBillerId, Long serviceProviderId, OthersPaymentDto othersPaymentDto,String userAccountNumber, String pin);
 }

@@ -1032,7 +1032,35 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
         }
     }
 
+    @Override
+    public ApiResponse<?> fetchBillChargesForProviders(String token, Long serviceProviderId, int pageNo, int pageSize) {
+        try {
+            AuthResponse response = authProxy.validateUserToken(token);
+            if(!response.getStatus().equals(Boolean.TRUE))
+                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
+            if(!response.getData().isAdmin())
+                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+
+            int page = pageNo - 1;
+            Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC,"createdAt"));
+            Page<BillProviderCharge> billProviderCharges;
+            if(serviceProviderId != null){
+                Optional<ServiceProvider> serviceProvider = serviceProviderRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderId,true,false);
+                if(!serviceProvider.isPresent())
+                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider not found",null);
+
+                billProviderCharges = billProviderChargeRepository.findAllByServiceProviderAndIsActiveAndIsDeleted(serviceProvider.get(),true,false,pageable);
+                return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Service provider bundle fetched..",billProviderCharges);
+            }
+            billProviderCharges = billProviderChargeRepository.findAllByIsActiveAndIsDeleted(true,false,pageable);
+            return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Bill charges fetched..",billProviderCharges);
+        }catch (Exception ex){
+            log.error("::Error fetchBillChargesForProviders {}",ex.getLocalizedMessage());
+            ex.printStackTrace();
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Something went wrong, can not process your request",null);
+        }
+    }
 
 
 }

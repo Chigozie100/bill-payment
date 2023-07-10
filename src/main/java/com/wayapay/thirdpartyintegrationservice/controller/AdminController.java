@@ -136,6 +136,19 @@ public class AdminController {
 
     @ApiImplicitParams({
             @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Filter/Search all bill charges by admin", notes = "Filter/Search bill charges")
+    @GetMapping(path = "/filterBillCharges")
+    public ResponseEntity<?> filterAllBillCharges(HttpServletRequest request,
+                                                              @RequestParam(name = "pageNo",defaultValue = "1") int pageNo,
+                                                              @RequestParam(name = "pageSize",defaultValue = "5") int pageSize,
+                                                              @RequestParam(name = "serviceProviderId",required = false) Long serviceProviderId){
+        ApiResponse<?> response =  adminBillPaymentService.fetchBillChargesForProviders(request.getHeader("authorization"),serviceProviderId,pageNo,pageSize);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
+
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
     @ApiOperation(value = "Filter/Search all bill service provider biller by admin", notes = "Filter/Search all bill service provider category")
     @GetMapping(path = "/filterAllServiceProviderBiller")
     public ResponseEntity<?> filterAllServiceProviderBiller(HttpServletRequest request,

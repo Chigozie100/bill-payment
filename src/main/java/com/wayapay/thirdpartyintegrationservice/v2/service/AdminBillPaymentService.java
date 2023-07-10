@@ -38,4 +38,7 @@ public interface AdminBillPaymentService {
     ApiResponse<?> fetchServiceProviderProduct(String token, Long serviceProviderBillerId, int pageNo, int pageSize);
     ApiResponse<?> fetchServiceProviderProductBundle(String token, Long serviceProviderProductId, int pageNo, int pageSize);
 
+    ApiResponse<?> fetchBillChargesForProviders(String token, Long serviceProviderId, int pageNo, int pageSize);
+
+
 }

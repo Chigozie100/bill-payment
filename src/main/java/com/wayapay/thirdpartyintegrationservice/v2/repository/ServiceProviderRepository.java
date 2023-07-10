@@ -82,4 +82,7 @@ public interface ServiceProviderRepository extends JpaRepository<ServiceProvider
     Optional<ServiceProvider> findFirstByPrecedenceAndProcessDealerPaymentsAndIsActiveAndIsDeleted(int precedence,boolean processDealerPayments,boolean isActive, boolean isDeleted);
 
 
+    List<ServiceProvider> findAllByIsDeleted(boolean isDeleted);
+
+    Optional<ServiceProvider> findFirstByNameStartingWithIgnoreCase(String name);
 }

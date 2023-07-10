@@ -59,7 +59,7 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
             if(!response.getData().isAdmin())
                 return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
 
-            Optional<List<ServiceProvider>> exist = serviceProviderRepository.findByNameStartsWith(request.getName());
+            Optional<ServiceProvider> exist = serviceProviderRepository.findFirstByNameStartingWithIgnoreCase(request.getName());
             if(exist.isPresent())
                 return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Bill service provider already exist, you can choose to activate it",null);
 
@@ -121,7 +121,7 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
             if(!response.getData().isAdmin())
                 return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
 
-            List<ServiceProvider> serviceProviderList = serviceProviderRepository.findAllByIsActiveAndIsDeleted(true,false);
+            List<ServiceProvider> serviceProviderList = serviceProviderRepository.findAllByIsDeleted(false);
             return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Providers fetched....",serviceProviderList);
         }catch (Exception ex){
             log.error("::Error fetchAllServiceProvider {}",ex.getLocalizedMessage());
@@ -431,7 +431,7 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
             if(!response.getData().isAdmin())
                 return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
 
-            List<Category> categoryList = categoryRepository.findAllByIsActiveAndIsDeleted(true, false);
+            List<Category> categoryList = categoryRepository.findAllByIsDeleted( false);
             return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Category fetched...",categoryList);
         }catch (Exception ex){
             log.error("::Error fetchAllBillCategory {}",ex.getLocalizedMessage());

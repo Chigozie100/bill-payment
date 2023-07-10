@@ -9,5 +9,6 @@ public class EpinPaymentDto {
     private int amount;
     private int fixAmount;
     private String type;
-//    private String reference;
+    private String email;
+    private String phone;
 }

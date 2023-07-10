@@ -77,4 +77,14 @@ public class BaxiController {
     }
 
 
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Fetch bill transaction reference by admin", notes = "etch bill transaction reference")
+    @GetMapping(path = "/queryTransaction/{reference}")
+    public ResponseEntity<?> fetchBaxiTransactionQuery(HttpServletRequest request,
+                                                             @RequestParam String reference){
+        ApiResponse<?> response =  baxiService.fetchTransactionQuery(request.getHeader(HEADER_STRING),reference);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
 }

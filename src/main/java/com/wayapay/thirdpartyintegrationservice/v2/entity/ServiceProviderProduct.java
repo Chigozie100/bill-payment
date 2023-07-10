@@ -12,6 +12,7 @@ import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -30,6 +31,7 @@ public class ServiceProviderProduct implements Serializable {
     private String name;
     private String description;
     private String type;
+    private BigDecimal amount = BigDecimal.ZERO;
     @Column(name = "product_code")
     private String productCode;
     @Column(name = "has_bundle")

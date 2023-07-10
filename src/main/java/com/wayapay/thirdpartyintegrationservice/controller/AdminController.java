@@ -262,4 +262,49 @@ public class AdminController {
     }
 
 
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Update biller by admin", notes = "Update biller by admin")
+    @PatchMapping(path = "/disableOrEnableBiller/{id}")
+    public ResponseEntity<?> updateServiceProviderBiller(HttpServletRequest request, @PathVariable Long id,@RequestParam boolean isActive){
+        ApiResponse<?> response =  adminBillPaymentService.updateBiller(request.getHeader("authorization"),id,isActive);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Update biller product by admin", notes = "Update biller product")
+    @PatchMapping(path = "/disableOrEnableBillerProduct/{id}")
+    public ResponseEntity<?> updateServiceProviderBillerProduct(HttpServletRequest request, @PathVariable Long id,@RequestParam(name = "amount",required = false) BigDecimal amount,@RequestParam boolean isActive){
+        ApiResponse<?> response =  adminBillPaymentService.updateBillerProduct(request.getHeader("authorization"),id,amount,isActive);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Update biller product bundle by admin", notes = "Update biller product bundle")
+    @PatchMapping(path = "/disableOrEnableBillerProductBundle/{id}")
+    public ResponseEntity<?> updateServiceProviderBillerProductBundle(HttpServletRequest request, @PathVariable Long id,@RequestParam(name = "amount",required = false) BigDecimal amount,@RequestParam boolean isActive){
+        ApiResponse<?> response =  adminBillPaymentService.updateBillerProductBundle(request.getHeader("authorization"),id,amount,isActive);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Update biller category by admin", notes = "Update biller category")
+    @PatchMapping(path = "/disableOrEnableBillerCategory/{id}")
+    public ResponseEntity<?> updateServiceProviderBillerCategory(HttpServletRequest request, @PathVariable Long id,@RequestParam boolean isActive){
+        ApiResponse<?> response =  adminBillPaymentService.updateBillerCategory(request.getHeader("authorization"),id,isActive);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Update biller category by admin", notes = "Update biller category")
+    @PatchMapping(path = "/disableOrEnableCategory/{id}")
+    public ResponseEntity<?> disableOrEnableCategory(HttpServletRequest request, @PathVariable Long id,@RequestParam boolean isActive){
+        ApiResponse<?> response =  adminBillPaymentService.updateCategory(request.getHeader("authorization"),id,isActive);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
 }

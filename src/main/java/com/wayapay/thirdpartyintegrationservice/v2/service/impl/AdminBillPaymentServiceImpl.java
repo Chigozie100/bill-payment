@@ -59,6 +59,10 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
             if(!response.getData().isAdmin())
                 return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
 
+            Optional<List<ServiceProvider>> exist = serviceProviderRepository.findByNameStartsWith(request.getName());
+            if(exist.isPresent())
+                return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Bill service provider already exist, you can choose to activate it",null);
+
             Optional<ServiceProvider> serviceProvider = serviceProviderRepository.findByNameAndIsDeleted(request.getName(), false);
             if(serviceProvider.isPresent())
                 return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Bill service provider already exist, you can choose to activate it",null);
@@ -121,6 +125,147 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
             return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Providers fetched....",serviceProviderList);
         }catch (Exception ex){
             log.error("::Error fetchAllServiceProvider {}",ex.getLocalizedMessage());
+            ex.printStackTrace();
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Something went wrong, can not process your request",null);
+        }
+    }
+
+    @Override
+    public ApiResponse<?> updateBiller(String token, Long id, boolean isActive) {
+        try {
+            AuthResponse response = authProxy.validateUserToken(token);
+            if(!response.getStatus().equals(Boolean.TRUE))
+                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+
+            if(!response.getData().isAdmin())
+                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+
+            Optional<ServiceProviderBiller> biller = serviceProviderBillerRepository.findByIdAndIsDeleted(id,false);
+            if(!biller.isPresent())
+                return new ApiResponse<>(true,ApiResponse.Code.NOT_FOUND,"Biller not found....",null);
+
+            biller.get().setIsActive(isActive);
+            biller.get().setModifiedBy(response.getData().getEmail());
+            biller.get().setModifiedAt(LocalDateTime.now());
+            serviceProviderBillerRepository.saveAndFlush(biller.get());
+            return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Biller updated successful....",null);
+        }catch (Exception ex){
+            log.error("::Error updateBiller {}",ex.getLocalizedMessage());
+            ex.printStackTrace();
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Something went wrong, can not process your request",null);
+        }
+    }
+
+    @Override
+    public ApiResponse<?> updateBillerProduct(String token, Long id, BigDecimal amount, boolean isActive) {
+        try {
+            AuthResponse response = authProxy.validateUserToken(token);
+            if(!response.getStatus().equals(Boolean.TRUE))
+                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+
+            if(!response.getData().isAdmin())
+                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+
+            Optional<ServiceProviderProduct> product = serviceProviderProductRepository.findByIdAndIsDeleted(id,false);
+            if(!product.isPresent())
+                return new ApiResponse<>(true,ApiResponse.Code.NOT_FOUND,"Product not found....",null);
+
+            product.get().setIsActive(isActive);
+            product.get().setModifiedBy(response.getData().getEmail());
+            product.get().setModifiedAt(LocalDateTime.now());
+            if(amount != null){
+                if(!amount.equals(BigDecimal.ZERO))
+                    product.get().setAmount(amount);
+            }
+
+            serviceProviderProductRepository.saveAndFlush(product.get());
+            return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Product updated successful....",null);
+        }catch (Exception ex){
+            log.error("::Error updateBillerProduct {}",ex.getLocalizedMessage());
+            ex.printStackTrace();
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Something went wrong, can not process your request",null);
+        }
+    }
+
+    @Override
+    public ApiResponse<?> updateBillerProductBundle(String token, Long id, BigDecimal amount, boolean isActive) {
+        try {
+            AuthResponse response = authProxy.validateUserToken(token);
+            if(!response.getStatus().equals(Boolean.TRUE))
+                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+
+            if(!response.getData().isAdmin())
+                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+
+            Optional<ServiceProviderProductBundle> bundle = serviceProviderProductBundleRepository.findByIdAndIsDeleted(id,false);
+            if(!bundle.isPresent())
+                return new ApiResponse<>(true,ApiResponse.Code.NOT_FOUND,"Product not found....",null);
+
+            bundle.get().setIsActive(isActive);
+            bundle.get().setModifiedBy(response.getData().getEmail());
+            bundle.get().setModifiedAt(LocalDateTime.now());
+            if(amount != null){
+                if(!amount.equals(BigDecimal.ZERO))
+                    bundle.get().setAmount(amount);
+            }
+            serviceProviderProductBundleRepository.saveAndFlush(bundle.get());
+            return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Bundle updated successful....",null);
+        }catch (Exception ex){
+            log.error("::Error updateBillerProductBundle {}",ex.getLocalizedMessage());
+            ex.printStackTrace();
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Something went wrong, can not process your request",null);
+        }
+    }
+
+    @Override
+    public ApiResponse<?> updateBillerCategory(String token, Long id, boolean isActive) {
+        try {
+            AuthResponse response = authProxy.validateUserToken(token);
+            if(!response.getStatus().equals(Boolean.TRUE))
+                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+
+            if(!response.getData().isAdmin())
+                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+
+            Optional<ServiceProviderCategory> category = serviceProviderCategoryRepository.findByIdAndIsDeleted(id,false);
+            if(!category.isPresent())
+                return new ApiResponse<>(true,ApiResponse.Code.NOT_FOUND,"Product not found....",null);
+
+            category.get().setIsActive(isActive);
+            category.get().setModifiedBy(response.getData().getEmail());
+            category.get().setModifiedAt(LocalDateTime.now());
+            serviceProviderCategoryRepository.saveAndFlush(category.get());
+
+            return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Provider category updated successful....",null);
+        }catch (Exception ex){
+            log.error("::Error updateBillerCategory {}",ex.getLocalizedMessage());
+            ex.printStackTrace();
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Something went wrong, can not process your request",null);
+        }
+    }
+
+    @Override
+    public ApiResponse<?> updateCategory(String token, Long id, boolean isActive) {
+        try {
+            AuthResponse response = authProxy.validateUserToken(token);
+            if(!response.getStatus().equals(Boolean.TRUE))
+                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+
+            if(!response.getData().isAdmin())
+                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+
+            Optional<Category> category = categoryRepository.findByIdAndIsDeleted(id,false);
+            if(!category.isPresent())
+                return new ApiResponse<>(true,ApiResponse.Code.NOT_FOUND,"Category not found....",null);
+
+            category.get().setIsActive(isActive);
+            category.get().setModifiedBy(response.getData().getEmail());
+            category.get().setModifiedAt(LocalDateTime.now());
+            categoryRepository.saveAndFlush(category.get());
+
+            return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Category updated successful....",null);
+        }catch (Exception ex){
+            log.error("::Error updateCategory {}",ex.getLocalizedMessage());
             ex.printStackTrace();
             return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Something went wrong, can not process your request",null);
         }

@@ -9,5 +9,5 @@ public class DataBundlePaymentDto {
     private String type;
     private String amount;
     private String phone;
-//    private String reference;
+    private String email;
 }

@@ -21,4 +21,5 @@ public class TransactionDto {
     private String serviceProviderReferenceNumber;
     private ServiceProviderBiller serviceProviderBiller;
     private ServiceProviderProductBundle serviceProviderProductBundle;
+    private ServiceProviderProduct serviceProviderProduct;
 }

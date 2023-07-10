@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 public class BettingPaymentDto {
     private BigDecimal amount;
     private String type;
-//    private String reference;
+    private String email;
+    private String phone;
     private String accountNumber;
 }

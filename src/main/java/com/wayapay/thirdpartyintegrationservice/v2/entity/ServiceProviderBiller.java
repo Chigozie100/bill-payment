@@ -30,6 +30,8 @@ public class ServiceProviderBiller implements Serializable {
     private String name;
     private String description;
     private String type;
+    @Column(name = "short_name")
+    private String shortName;
     @Column(name = "image_logo")
     private String imageLogo;
     @Column(name = "biller_id")

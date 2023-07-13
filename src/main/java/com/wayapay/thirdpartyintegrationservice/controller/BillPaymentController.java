@@ -72,6 +72,18 @@ public class BillPaymentController {
     }
 
 
+//    @ApiImplicitParams({
+//            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+//    @ApiOperation(value = "Fetch all product ADDONS by productCode, planName", notes = "Get ADDONs by product")
+//    @GetMapping(path = "/fetchAddOnsByProduct")
+//    public ResponseEntity<?> fetchAddOnsByProduct(HttpServletRequest request,
+//                                                     @RequestParam Long serviceProviderProductId,
+//                                                  @RequestParam(name = "productCode", required = false) String productCode){
+//        ApiResponse<?> response =  billPaymentService.fetchAllAddOnsByProduct(request.getHeader(HEADER_STRING),serviceProviderProductId,productCode);
+//        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+//    }
+
+
     @ApiImplicitParams({
             @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
     @ApiOperation(value = "Verify customer smartCard,meterNumber,betting account, etc", notes = "Verify customer smartCard,meterNumber,betting account, etc")

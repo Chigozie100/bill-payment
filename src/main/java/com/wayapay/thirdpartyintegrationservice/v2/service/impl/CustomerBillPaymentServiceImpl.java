@@ -207,6 +207,30 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
     }
 
 
+//    @Override
+//    public ApiResponse<?> fetchAllAddOnsByProduct(String token, Long serviceProviderProductId, String productCode) {
+//        try {
+//            AuthResponse response = authProxy.validateUserToken(token);
+//            if(!response.getStatus().equals(Boolean.TRUE))
+//                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+//
+//            if(response.getData().isAdmin())
+//                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+//
+//            Optional<ServiceProviderProduct> serviceProviderProduct = serviceProviderProductRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderProductId,true,false);
+//            if(!serviceProviderProduct.isPresent())
+//                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Oops!\n Product not available, can not process your request",null);
+//
+//            List<ServiceProviderProductBundle> bundleList = serviceProviderProductBundleRepository.findAllByServiceProviderProductAndBundleCodeAndIsActiveAndIsDeleted(serviceProviderProduct.get(),productCode,true,false);
+//            return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Success",bundleList);
+//        }catch (Exception ex){
+//            log.error("::Error fetchAllBundleByProduct {}",ex.getLocalizedMessage());
+//            ex.printStackTrace();
+//            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process your bill payment request, try again later",null);
+//        }
+//    }
+
+
     @Override @Transactional
     public ApiResponse<?> makeElectricityPayment(String token,Long serviceProviderBillerId, Long serviceProviderId, ElectricityPaymentDto electricityPaymentDto,String userAccountNumber,String pin) {
         try {

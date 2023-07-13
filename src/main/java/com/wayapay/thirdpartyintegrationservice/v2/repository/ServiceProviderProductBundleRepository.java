@@ -20,7 +20,7 @@ public interface ServiceProviderProductBundleRepository extends JpaRepository<Se
     Page<ServiceProviderProductBundle> findAllByIsActiveAndIsDeleted(boolean isActive, boolean isDeleted, Pageable pageable);
     List<ServiceProviderProductBundle> findAllByServiceProviderProductAndIsActiveAndIsDeleted(ServiceProviderProduct providerProduct,boolean isActive, boolean isDeleted);
     Page<ServiceProviderProductBundle> findAllByServiceProviderProductAndIsActiveAndIsDeleted(ServiceProviderProduct providerProduct,boolean isActive, boolean isDeleted,Pageable pageable);
-
+    List<ServiceProviderProductBundle> findAllByServiceProviderProductAndBundleCodeAndIsActiveAndIsDeleted(ServiceProviderProduct providerProduct,String bundleCode,boolean isActive, boolean isDeleted);
 
     Optional<ServiceProviderProductBundle> findByIdAndIsActiveAndIsDeleted(Long id, boolean isActive, boolean isDeleted);
 

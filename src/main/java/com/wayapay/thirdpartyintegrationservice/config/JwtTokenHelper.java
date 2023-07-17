@@ -1,8 +1,8 @@
 package com.wayapay.thirdpartyintegrationservice.config;
 
-import com.wayapay.thirdpartyintegrationservice.service.auth.AuthFeignClient;
-import com.wayapay.thirdpartyintegrationservice.service.auth.AuthResponse;
-import com.wayapay.thirdpartyintegrationservice.service.auth.UserDetail;
+import com.wayapay.thirdpartyintegrationservice.v2.dto.request.AuthResponse;
+import com.wayapay.thirdpartyintegrationservice.v2.dto.request.UserDetail;
+import com.wayapay.thirdpartyintegrationservice.v2.proxyclient.AuthProxy;
 import feign.FeignException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -28,7 +28,7 @@ public class JwtTokenHelper implements Serializable {
 
     private static final long serialVersionUID = -2550185165626007488L;
 
-    private final AuthFeignClient authFeignClient;
+    private final AuthProxy authFeignClient;
 
     @Value("${jwt.secret}")
     private String secret;
@@ -49,7 +49,7 @@ public class JwtTokenHelper implements Serializable {
         }
         Optional<AuthResponse> authResponseOptional = Optional.empty();
         try {
-            authResponseOptional = Optional.of(authFeignClient.userTokenValidation(token));
+            authResponseOptional = Optional.of(authFeignClient.validateUserToken(token));
         } catch (FeignException exception) {
             log.error("Unable to validate token : ", exception);
             return Optional.empty();

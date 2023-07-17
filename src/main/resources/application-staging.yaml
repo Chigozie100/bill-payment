@@ -1,8 +1,8 @@
 spring:
   application:
-    name: bills-payment-service
+    name: bill-payment-service
   datasource:
-    url: jdbc:postgresql://postgresdb4:5432/billspayment-service?useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+    url: jdbc:postgresql://postgresdb:5432/billspayment-service?useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
     username: root
     password: pONvagaJf3BTbu9l
     initialization-mode: always
@@ -58,6 +58,7 @@ app:
       customer-validation-url: ${QUICK_TELLER_CUSTOMER_VALIDATION_URL:/api/v2/quickteller/customers/validations}
       send-payment-advice-url: ${QUICK_TELLER_SEND_PAYMENT_ADVICE_URL:/api/v2/quickteller/payments/advices}
       query-transaction-url: ${QUICK_TELLER_QUERY_TRANSACTION_URL:/api/v2/quickteller/transactions}
+      query-transaction: ${QUICK_TELLER_QUERY_TRANSACTION:/api/v2/quickteller/transactions}
       transaction-ref-code: ${QUICK_TELLER_TRANSACTION_REF_CODE:1453}
       terminal-id: ${QUICK_TELLER_TERMIAL_ID:3DMO0001}
     baxi:

@@ -36,6 +36,8 @@ public class TransactionHistory implements Serializable {
     private String accountNumber;
     @Column(name = "sender_name")
     private String senderName;
+    @Column(name = "sender_email")
+    private String senderEmail;
     @Column(name = "sender_user_id")
     private String senderUserId;
     private String narration;

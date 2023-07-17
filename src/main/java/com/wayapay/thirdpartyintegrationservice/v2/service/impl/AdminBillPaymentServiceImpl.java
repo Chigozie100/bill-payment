@@ -1,9 +1,11 @@
 package com.wayapay.thirdpartyintegrationservice.v2.service.impl;
 
+import com.wayapay.thirdpartyintegrationservice.v2.dto.PaymentStatus;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.AuthResponse;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.BillCategoryName;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.*;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.ApiResponse;
+import com.wayapay.thirdpartyintegrationservice.v2.dto.response.CustomObject;
 import com.wayapay.thirdpartyintegrationservice.v2.entity.*;
 import com.wayapay.thirdpartyintegrationservice.v2.proxyclient.AuthProxy;
 import com.wayapay.thirdpartyintegrationservice.v2.repository.*;
@@ -19,8 +21,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -1062,5 +1069,127 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
         }
     }
 
+    @Override
+    public ApiResponse<?> adminAnalysis(String token) {
+        try {
+            AuthResponse response = authProxy.validateUserToken(token);
+            if(!response.getStatus().equals(Boolean.TRUE))
+                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+
+            if(!response.getData().isAdmin())
+                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+
+            HashMap<String, BigDecimal> map = new HashMap<>();
+            map.put("successCount", BigDecimal.valueOf(transactionHistoryRepository.countByStatus(PaymentStatus.SUCCESSFUL)));
+            map.put("failCount", BigDecimal.valueOf(transactionHistoryRepository.countByStatus(PaymentStatus.FAILED)));
+            map.put("errorCount", BigDecimal.valueOf(transactionHistoryRepository.countByStatus(PaymentStatus.ERROR)));
+            map.put("totalSuccessAmount", transactionHistoryRepository.sumAmount(PaymentStatus.SUCCESSFUL));
+            map.put("totalFailAmount", transactionHistoryRepository.sumAmount(PaymentStatus.FAILED));
+            map.put("totalErrorAmount", transactionHistoryRepository.sumAmount(PaymentStatus.ERROR));
+
+
+            List<ServiceProvider> serviceProviderList = serviceProviderRepository.findAllByIsDeleted(false);
+            if(serviceProviderList.size() > 0){
+                for (ServiceProvider provider: serviceProviderList){
+                    String name = provider.getName();
+                    String providerName =  formatNameToCamelCase(name);
+                    if(providerName == null)
+                        continue;
+
+                    BigDecimal providerAmount = transactionHistoryRepository.sumAmountByProviders(PaymentStatus.SUCCESSFUL,provider.getId());
+                    map.put("success"+providerName.trim(),providerAmount);
+                    BigDecimal providerAmount2 = transactionHistoryRepository.sumAmountByProviders(PaymentStatus.FAILED,provider.getId());
+                    map.put("fail"+providerName.trim(),providerAmount2);
+                    BigDecimal providerAmount3 = transactionHistoryRepository.sumAmountByProviders(PaymentStatus.ERROR,provider.getId());
+                    map.put("error"+providerName.trim(),providerAmount3);
+                }
+            }
+            CustomObject customObject = new CustomObject();
+            customObject.setMap(map);
+            return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Analysis fetched...",customObject);
+        }catch (Exception ex){
+            log.error("::Error adminAnalysis {}",ex.getLocalizedMessage());
+            ex.printStackTrace();
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Something went wrong, can not process your request",null);
+        }
+    }
+
+    @Override
+    public ApiResponse<?> fetchOrFilterTransactionHistory(String token,String endDate, String field, String value, int pageNo, int pageSize) {
+        try {
+            AuthResponse response = authProxy.validateUserToken(token);
+            if(!response.getStatus().equals(Boolean.TRUE))
+                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+
+            if(!response.getData().isAdmin())
+                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+
+            int page = pageNo - 1;
+            Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC,"createdAt"));
+            Page<TransactionHistory> transactionHistories;
+            if(field.equalsIgnoreCase("reference")){
+                transactionHistories = transactionHistoryRepository.findAllByPaymentReferenceNumber(value,pageable);
+            }else if(field.equalsIgnoreCase("status")){
+                transactionHistories = transactionHistoryRepository.findAllByStatus(PaymentStatus.valueOf(value.toUpperCase()),pageable);
+            }else if(field.equalsIgnoreCase("email")){
+                transactionHistories = transactionHistoryRepository.findAllBySenderEmail(value,pageable);
+            }else if(field.equalsIgnoreCase("accountNumber")){
+                transactionHistories = transactionHistoryRepository.findAllByAccountNumber(value,pageable);
+            }else if(field.equalsIgnoreCase("category")){
+                transactionHistories = transactionHistoryRepository.findAllByCategoryName(BillCategoryName.valueOf(value.toLowerCase()),pageable);
+            }else if(field.equalsIgnoreCase("providerName")){
+                Optional<ServiceProvider> provider = serviceProviderRepository.findFirstByNameStartingWithIgnoreCase(value);
+                if(!provider.isPresent())
+                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider not found",null);
+
+                transactionHistories = transactionHistoryRepository.findAllByServiceProviderBiller_ServiceProviderId(provider.get().getId(), pageable);
+            }else if(field.equalsIgnoreCase("date") && endDate != null){
+                LocalDateTime start = getLocalDateFormat(value);
+                LocalDateTime end = getLocalDateFormat(endDate);
+                transactionHistories = transactionHistoryRepository.findAllByCreatedAtBetween(start,end,pageable);
+            }else {
+                transactionHistories = transactionHistoryRepository.findAll(pageable);
+            }
+            return new ApiResponse<>(false,ApiResponse.Code.SUCCESS,"Histories fetch...",transactionHistories);
+        }catch (Exception ex){
+            log.error("::Error adminAnalysis {}",ex.getLocalizedMessage());
+            ex.printStackTrace();
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Something went wrong, "+ex.getLocalizedMessage(),null);
+        }
+    }
+
+
+    private LocalDateTime getLocalDateFormat(String value) throws ParseException {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime localDateTime = LocalDateTime.parse(value, formatter);
+            return localDateTime;
+        }catch (Exception ex){
+          log.error("::Error getLocalDateFormat {}",ex.getLocalizedMessage());
+          throw new ParseException("Date not properly formatted",0);
+        }
+    }
+
+    private String formatNameToCamelCase(String name){
+        try {
+            String[] words = name.split(" ");
+            StringBuilder camelCaseName = new StringBuilder();
+
+            for (int i = 0; i < words.length; i++) {
+                String word = words[i].toLowerCase();
+                if (i > 0) {
+                    // Capitalize the first character of each word except the first word
+                    word = Character.toUpperCase(word.charAt(0)) + word.substring(1);
+                }
+                camelCaseName.append(word);
+            }
+
+            String camelCaseResult = camelCaseName.toString();
+            return camelCaseResult;
+        }catch (Exception ex){
+            log.error("::Error formatNameToCamelCase {}",ex.getLocalizedMessage());
+            return null;
+        }
+    }
 
 }

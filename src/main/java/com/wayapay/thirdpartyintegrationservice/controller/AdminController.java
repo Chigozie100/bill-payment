@@ -320,4 +320,35 @@ public class AdminController {
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "bills analysis by admin", notes = "bills analysis")
+    @GetMapping(path = "/analysis")
+    public ResponseEntity<?> adminAnalysis(HttpServletRequest request){
+        ApiResponse<?> response =  adminBillPaymentService.adminAnalysis(request.getHeader("authorization"));
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+    @ApiOperation(value = "Filter/Search all bill transaction by [reference, status, date,accountNumber,category,email,providerName], dateFormat[yyyy-MM-dd HH:mm:ss]", notes = "Status[FAILED, SUCCESSFUL, ERROR], Category[airtime , databundle , cabletv , epin ,\n" +
+            "    betting ,electricity,education,vehicle,\n" +
+            "    insurance,donation,airline, transport,\n" +
+            "    tax,embassy,subscription,schoolboard,\n" +
+            "    shopping,event_ticket,online_shopping,\n" +
+            "    government_payments,insurance_and_investment,\n" +
+            "    international_airtime, lagos_state_cbs,credit_and_loan_repayment,\n" +
+            "    pay_tv_subscription,religious_institutions,nestle_distributors,\n" +
+            "    black_friday,apm_terminals,dealer_payments], providerName[Baxi, QuickTeller]")
+    @GetMapping(path = "/filter/transactions")
+    public ResponseEntity<?> filterTransactionHistories(HttpServletRequest request,
+                                               @RequestParam(name = "pageNo",defaultValue = "1") int pageNo,
+                                               @RequestParam(name = "pageSize",defaultValue = "5") int pageSize,
+                                                        @RequestParam(name = "endDate",required = false) String endDate,
+                                                        @RequestParam String field,
+                                                        @RequestParam String value){
+        ApiResponse<?> response =  adminBillPaymentService.fetchOrFilterTransactionHistory(request.getHeader("authorization"),endDate,field,value,pageNo,pageSize);
+        return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
+    }
+
 }

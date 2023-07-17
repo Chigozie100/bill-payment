@@ -230,11 +230,11 @@
             <name>Spring Milestones</name>
             <url>https://repo.spring.io/milestone</url>
         </repository>
-<!--        <repository>-->
-<!--            <id>waya-repo</id>-->
-<!--            <name>Waya Repository</name>-->
-<!--            <url>https://waya-nexus.mywayapay.com/repository/waya-repo</url>-->
-<!--        </repository>-->
+        <repository>
+            <id>waya-repo</id>
+            <name>Waya Repository</name>
+            <url>https://waya-nexus.mywayapay.com/repository/waya-repo</url>
+        </repository>
     </repositories>
 
 </project>

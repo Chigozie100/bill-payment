@@ -16,6 +16,7 @@ public class TransactionDto {
     private BigDecimal billerFee = BigDecimal.ZERO;
     private String accountNumber;
     private String senderName;
+    private String senderEmail;
     private String customerDataToken;
     private String narration;
     private String serviceProviderReferenceNumber;

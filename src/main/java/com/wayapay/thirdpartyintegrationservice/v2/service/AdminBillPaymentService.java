@@ -40,5 +40,6 @@ public interface AdminBillPaymentService {
 
     ApiResponse<?> fetchBillChargesForProviders(String token, Long serviceProviderId, int pageNo, int pageSize);
 
-
+    ApiResponse<?> adminAnalysis(String token);
+    ApiResponse<?> fetchOrFilterTransactionHistory(String token,String endDate, String field, String value, int pageNo, int pageSize);
 }

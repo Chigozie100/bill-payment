@@ -281,6 +281,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setSenderName(newWalletResponse.getAcct_name());
                     transactionDto.setServiceProviderProductBundle(null);
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         ApiResponse<?> paymentResponse = baxiService.requestElectricityPayment(electricityPaymentDto.getAmount(),electricityPaymentDto.getType(),electricityPaymentDto.getPhone(),electricityPaymentDto.getAccount(),paymentReferenceNumber);
                         if(paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)){
@@ -331,6 +332,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setServiceProviderProductBundle(null);
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
                     transactionDto.setServiceProviderProduct(providerProduct.get());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         SendPaymentAdviceRequest sendPaymentAdviceRequest = new SendPaymentAdviceRequest();
                         sendPaymentAdviceRequest.setPaymentCode(providerProduct.get().getProductCode());
@@ -452,6 +454,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setSenderName(newWalletResponse.getAcct_name());
                     transactionDto.setServiceProviderProductBundle(serviceProviderProductBundle.get());
                     transactionDto.setServiceProviderBiller(serviceProviderProductBundle.get().getServiceProviderProduct().getServiceProviderBiller());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         ApiResponse<?> paymentResponse = baxiService.requestDataBundlePayment(dataBundlePaymentDto.getProductCode(),dataBundlePaymentDto.getType(),dataBundlePaymentDto.getAmount(), dataBundlePaymentDto.getPhone(), paymentReferenceNumber);
                         if(paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)){
@@ -500,6 +503,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setServiceProviderProductBundle(null);
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
                     transactionDto.setServiceProviderProduct(providerProduct.get());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         SendPaymentAdviceRequest sendPaymentAdviceRequest = new SendPaymentAdviceRequest();
                         sendPaymentAdviceRequest.setPaymentCode(providerProduct.get().getProductCode());
@@ -601,6 +605,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setSenderName(newWalletResponse.getAcct_name());
                     transactionDto.setServiceProviderProductBundle(null);
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         ApiResponse<?> paymentResponse = baxiService.requestAirtimePayment(airtimePaymentDto.getAmount(),airtimePaymentDto.getPlan(), airtimePaymentDto.getPhone(), paymentReferenceNumber, airtimePaymentDto.getType());
                         if(paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)){
@@ -647,6 +652,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setServiceProviderProductBundle(null);
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
                     transactionDto.setServiceProviderProduct(providerProduct.get());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         SendPaymentAdviceRequest sendPaymentAdviceRequest = new SendPaymentAdviceRequest();
                         sendPaymentAdviceRequest.setPaymentCode(providerProduct.get().getProductCode());
@@ -769,6 +775,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setSenderName(newWalletResponse.getAcct_name());
                     transactionDto.setServiceProviderProductBundle(serviceProviderProductBundle.get());
                     transactionDto.setServiceProviderBiller(serviceProviderProductBundle.get().getServiceProviderProduct().getServiceProviderBiller());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         ApiResponse<?> paymentResponse = baxiService.requestEpinPayment(epinPaymentDto.getNumberOfPins(), epinPaymentDto.getAmount(), epinPaymentDto.getFixAmount(),epinPaymentDto.getType(),paymentReferenceNumber);
                         if(paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)){
@@ -884,6 +891,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setSenderName(newWalletResponse.getAcct_name());
                     transactionDto.setServiceProviderProductBundle(serviceProviderProductBundle.get());
                     transactionDto.setServiceProviderBiller(serviceProviderProductBundle.get().getServiceProviderProduct().getServiceProviderBiller());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         ApiResponse<?> paymentResponse = baxiService.requestCableTvPayment(cableTvPaymentDto.getType(),cableTvPaymentDto.getPhone(),cableTvPaymentDto.getAmount(),paymentReferenceNumber,cableTvPaymentDto.getProductCode(),cableTvPaymentDto.getSmartCardNumber(),cableTvPaymentDto.getMonthPaidFor());
                         if(paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)){
@@ -929,6 +937,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setServiceProviderProductBundle(null);
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
                     transactionDto.setServiceProviderProduct(providerProduct.get());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         SendPaymentAdviceRequest sendPaymentAdviceRequest = new SendPaymentAdviceRequest();
                         sendPaymentAdviceRequest.setPaymentCode(providerProduct.get().getProductCode());
@@ -1029,6 +1038,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setSenderName(newWalletResponse.getAcct_name());
                     transactionDto.setServiceProviderProductBundle(null);
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         ApiResponse<?> paymentResponse = baxiService.requestBettingPayment(bettingPaymentDto.getAmount(),bettingPaymentDto.getType(),paymentReferenceNumber,bettingPaymentDto.getAccountNumber());
                         if(paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)){
@@ -1075,6 +1085,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setServiceProviderProductBundle(null);
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
                     transactionDto.setServiceProviderProduct(providerProduct.get());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         SendPaymentAdviceRequest sendPaymentAdviceRequest = new SendPaymentAdviceRequest();
                         sendPaymentAdviceRequest.setPaymentCode(providerProduct.get().getProductCode());
@@ -1183,6 +1194,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setServiceProviderProductBundle(null);
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
                     transactionDto.setServiceProviderProduct(providerProduct.get());
+                    transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
                         SendPaymentAdviceRequest sendPaymentAdviceRequest = new SendPaymentAdviceRequest();
                         sendPaymentAdviceRequest.setPaymentCode(providerProduct.get().getProductCode());
@@ -1496,8 +1508,8 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
     }
 
 
-    private void checkAccountBalance(Double mainWalletResponse, BigDecimal amount) throws ThirdPartyIntegrationException {
-        if (mainWalletResponse < amount.doubleValue())
+    private void checkAccountBalance(Double accountBalance, BigDecimal amount) throws ThirdPartyIntegrationException {
+        if (accountBalance < amount.doubleValue())
             throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, Constants.INSUFFICIENT_FUND);
     }
 

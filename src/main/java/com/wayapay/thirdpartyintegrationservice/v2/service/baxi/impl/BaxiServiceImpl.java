@@ -1,9 +1,14 @@
 package com.wayapay.thirdpartyintegrationservice.v2.service.baxi.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.wayapay.thirdpartyintegrationservice.util.CommonUtils;
+import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.AuthResponse;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.BillCategoryName;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.ApiResponse;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.CustomerTokenValidationDto;
+import com.wayapay.thirdpartyintegrationservice.v2.dto.response.FundTransferResponse;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.GeneralPaymentResponseDto;
 import com.wayapay.thirdpartyintegrationservice.v2.entity.*;
 import com.wayapay.thirdpartyintegrationservice.v2.proxyclient.AuthProxy;
@@ -573,6 +578,10 @@ public class BaxiServiceImpl implements BaxiService {
                     log.error("::Error Baxi Verify {}",ex.getLocalizedMessage());
                     String msg = ex.contentUTF8();
                     int status =  ex.status();
+                    if(msg.contains("message")){
+                        String error = getErrorMessage(msg);
+                        return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),error,null);
+                    }
                     return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),msg,null);
                 }
                 tokenValidationDto.setAccountNumber(verificationResponse.getData().getUser().getAccountNumber());
@@ -590,6 +599,10 @@ public class BaxiServiceImpl implements BaxiService {
                     log.error("::Error Baxi Verify {}",ex.getLocalizedMessage());
                     String msg = ex.contentUTF8();
                     int status =  ex.status();
+                    if(msg.contains("message")){
+                        String error = getErrorMessage(msg);
+                        return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),error,null);
+                    }
                     return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),msg,null);
                 }
                 tokenValidationDto.setAccountNumber(verificationResponse.getData().getUser().getAccountNumber());
@@ -627,6 +640,10 @@ public class BaxiServiceImpl implements BaxiService {
                 ex.printStackTrace();
                 String msg = ex.contentUTF8();
                 int status = ex.status();
+                if(msg.contains("message")){
+                    String error = getErrorMessage(msg);
+                    return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),error,null);
+                }
                 return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),msg,null);
             }
 
@@ -667,6 +684,10 @@ public class BaxiServiceImpl implements BaxiService {
                 ex.printStackTrace();
                 String msg = ex.contentUTF8();
                 int status = ex.status();
+                if(msg.contains("message")){
+                    String error = getErrorMessage(msg);
+                    return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),error,null);
+                }
                 return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),msg,null);
             }
 
@@ -715,6 +736,10 @@ public class BaxiServiceImpl implements BaxiService {
                 ex.printStackTrace();
                 String msg = ex.contentUTF8();
                 int status = ex.status();
+                if(msg.contains("message")){
+                    String error = getErrorMessage(msg);
+                    return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),error,null);
+                }
                 return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),msg,null);
             }
 
@@ -757,6 +782,10 @@ public class BaxiServiceImpl implements BaxiService {
                 ex.printStackTrace();
                 String msg = ex.contentUTF8();
                 int status = ex.status();
+                if(msg.contains("message")){
+                    String error = getErrorMessage(msg);
+                    return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),error,null);
+                }
                 return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),msg,null);
             }
 
@@ -807,6 +836,10 @@ public class BaxiServiceImpl implements BaxiService {
                 ex.printStackTrace();
                 String msg = ex.contentUTF8();
                 int status = ex.status();
+                if(msg.contains("message")){
+                    String error = getErrorMessage(msg);
+                    return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),error,null);
+                }
                 return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),msg,null);
             }
 
@@ -846,6 +879,10 @@ public class BaxiServiceImpl implements BaxiService {
                 ex.printStackTrace();
                 String msg = ex.contentUTF8();
                 int status = ex.status();
+                if(msg.contains("message")){
+                    String error = getErrorMessage(msg);
+                    return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),error,null);
+                }
                 return new ApiResponse<>(false,HttpStatus.valueOf(status).value(),msg,null);
             }
 
@@ -1101,6 +1138,30 @@ public class BaxiServiceImpl implements BaxiService {
             return name;
         }catch (Exception ex){
             log.error("::Error getBillerServiceName {}",ex.getLocalizedMessage());
+            return null;
+        }
+    }
+
+
+    public String getErrorMessage(String errorInJson) {
+        try {
+            return CommonUtils.getObjectMapper().readValue(errorInJson, BaxiErrorDto.class).getMessage();
+        } catch (JsonProcessingException e) {
+            log.error(":::Error getErrorMessage {}", e.getLocalizedMessage());
+            return Constants.ERROR_MESSAGE;
+        }
+    }
+
+    private String formatErrorMessage(String message){
+        try {
+            if(message.contains("message")){
+                JsonNode jsonNode = CommonUtils.getObjectMapper().readTree(message);
+                String msg = jsonNode.get("message").asText();
+                return  msg;
+            }
+            return null;
+        }catch (Exception ex){
+            log.error("::Error formatErrorMessage {}",ex.getLocalizedMessage());
             return null;
         }
     }

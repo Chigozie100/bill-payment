@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wayapay.thirdpartyintegrationservice.annotations.AuditPaymentOperation;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
-import com.wayapay.thirdpartyintegrationservice.v2.dto.response.FundTransferResponse;
+import com.wayapay.thirdpartyintegrationservice.v2.dto.response.*;
 import com.wayapay.thirdpartyintegrationservice.v2.service.notification.NotificationService;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.AuthResponse;
 import com.wayapay.thirdpartyintegrationservice.util.*;
@@ -12,8 +12,6 @@ import com.wayapay.thirdpartyintegrationservice.v2.dto.BillCategoryName;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.BillCategoryType;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.PaymentStatus;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.*;
-import com.wayapay.thirdpartyintegrationservice.v2.dto.response.ApiResponse;
-import com.wayapay.thirdpartyintegrationservice.v2.dto.response.GeneralPaymentResponseDto;
 import com.wayapay.thirdpartyintegrationservice.v2.entity.*;
 import com.wayapay.thirdpartyintegrationservice.v2.proxyclient.AuthProxy;
 import com.wayapay.thirdpartyintegrationservice.v2.proxyclient.WalletProxy;
@@ -59,6 +57,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
     private final BaxiService baxiService;
     private final WalletProxy walletProxy;
     private final QuickTellerService quickTellerService;
+    private final TokenImpl tokenImpl;
 
     @Value("${app.config.baxi.agent-code}")
     private String baxiAgentCode;
@@ -306,10 +305,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error billspayment :: " + ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -362,10 +365,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error billspayment :: " + ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -377,7 +384,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         }catch (Exception ex){
             log.error("::Error makeElectricityPayment {}",ex.getLocalizedMessage());
             ex.printStackTrace();
-            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,ex.getLocalizedMessage(),null);
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process your request, try again later",null);
         }
     }
 
@@ -477,10 +484,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.databundle);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error data bundle {}",ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.databundle);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -533,10 +544,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error billspayment :: " + ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -548,7 +563,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         }catch (Exception ex){
             log.error("::Error makeDataBundlePayment {}",ex.getLocalizedMessage());
             ex.printStackTrace();
-            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,ex.getLocalizedMessage(),null);
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process your request, try again later",null);
         }
     }
 
@@ -626,10 +641,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.airtime);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error Airtime {}",ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.airtime);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -682,10 +701,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error billspayment :: " + ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -697,7 +720,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         }catch (Exception ex){
             log.error("::Error makeAirtimePayment {}",ex.getLocalizedMessage());
             ex.printStackTrace();
-            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,ex.getLocalizedMessage(),null);
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process your request, try again later",null);
         }
     }
 
@@ -796,10 +819,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.epin);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error Epin bundle {}",ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.epin);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -813,7 +840,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         }catch (Exception ex){
             log.error("::Error makeEpinPayment {}",ex.getLocalizedMessage());
             ex.printStackTrace();
-            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,ex.getLocalizedMessage(),null);
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process your request, try again later",null);
         }
     }
 
@@ -912,10 +939,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.cabletv);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error Cable Tv bundle {}",ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.cabletv);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -967,10 +998,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error billspayment :: " + ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -982,7 +1017,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         }catch (Exception ex){
             log.error("::Error makeCableTvPayment {}",ex.getLocalizedMessage());
             ex.printStackTrace();
-            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,ex.getLocalizedMessage(),null);
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process your request, try again later",null);
         }
     }
 
@@ -1059,10 +1094,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.betting);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error Game betting {}",ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.betting);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -1115,10 +1154,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error billspayment :: " + ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -1130,7 +1173,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         }catch (Exception ex){
             log.error("::Error makeBettingPayment {}",ex.getLocalizedMessage());
             ex.printStackTrace();
-            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,ex.getLocalizedMessage(),null);
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process your request, try again later",null);
         }
     }
 
@@ -1224,10 +1267,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             return paymentResponse;
                         }
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error billspayment :: " + ex.getLocalizedMessage());
                         saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.electricity);
+                        //Todo: do reversal
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
@@ -1239,7 +1286,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         }catch (Exception ex){
             log.error("::Error makeBettingPayment {}",ex.getLocalizedMessage());
             ex.printStackTrace();
-            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,ex.getLocalizedMessage(),null);
+            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process your request, try again later",null);
         }
     }
 
@@ -1568,5 +1615,55 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         return Objects.requireNonNull(infoResponse).data;
     }
 
+
+    private void reverseFailedBillPaymentTransaction(String reference,String accountNumber){
+        try {
+            String token = tokenImpl.getToken();
+            WalletTxnResponse existingTxn;
+            try {
+                existingTxn = walletProxy.fetchTransactionByPaymentReference(token,reference);
+                if(!existingTxn.isStatus() && !existingTxn.getCode().equals(ApiResponse.Code.SUCCESS)){
+                    log.info("::Bill Transaction not found for reversal {}",reference);
+                    return;
+                }
+            }catch (FeignException ex){
+               log.error("::Error Txn Bill {}",ex.getLocalizedMessage());
+                log.error("::Error Bill Transaction not found for reversal {}",reference);
+               return;
+            }
+//            List<WalletTransData> walletTransData = (List<WalletTransData>) objectMapper.convertValue(existingTxn.getData(),WalletTransData.class);
+            if(existingTxn.getData().size() < 1){
+                log.info("::NO Bill Transaction not found for reversal {}",reference);
+                return;
+            }
+            Optional<WalletTransData> txn = existingTxn.getData()
+                    .stream().filter(tn -> tn.getAcctNum().equals(accountNumber) &&
+                            tn.getPaymentReference().equalsIgnoreCase(reference) && tn.getPartTranType().equals("D")).findFirst();
+            if(!txn.isPresent()){
+                log.info("::No Match for Bill Transaction not found for reversal {}",reference);
+                return;
+            }
+            //Todo: do reversal
+            ReversalDto reversalDto = new ReversalDto();
+            reversalDto.setTranId(txn.get().getTranId());
+            reversalDto.setTranCrncy(txn.get().getTranCrncyCode());
+            ReversalRespDto resp;
+            try {
+                resp = walletProxy.doPaymentReversal(token,reversalDto);
+                log.info("::Reversal Resp {}",resp);
+                return;
+            }catch (FeignException ex){
+                log.error("::Error Bill Txn Reversal {}",ex.getLocalizedMessage());
+                String msg = ex.contentUTF8();
+                int status = ex.status();
+                log.error("::Error {0}, {1}",msg,status);
+                return;
+            }
+        }catch (Exception ex){
+            log.error("::Error reverseFailedBillPaymentTransaction {}",ex.getLocalizedMessage());
+            ex.printStackTrace();
+            return;
+        }
+    }
 
 }

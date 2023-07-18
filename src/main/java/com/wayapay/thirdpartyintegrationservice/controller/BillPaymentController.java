@@ -221,4 +221,14 @@ public class BillPaymentController {
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
+
+//    @ApiImplicitParams({
+//            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+//    @ApiOperation(value = "Fetch all bundle by product", notes = "Get bundle by product")
+//    @PostMapping(path = "/reversal")
+//    public ResponseEntity<?> reversalTxn(@RequestParam String ref, @RequestParam String acct){
+//        billPaymentService.reverseFailedBillPaymentTransaction(ref,acct);
+//        return new ResponseEntity<>(null, HttpStatus.OK);
+//    }
+
 }

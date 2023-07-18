@@ -18,5 +18,6 @@ public interface BillPaymentService {
     ApiResponse<?> makeBettingPayment(String token,Long serviceProviderBillerId, Long serviceProviderId, BettingPaymentDto bettingPaymentDto,String userAccountNumber,String pin);
     ApiResponse<?> fetchBillTransactionByReference(String token, String reference);
     ApiResponse<?> makeOtherPayment(String token,Long serviceProviderBillerId, Long serviceProviderId, OthersPaymentDto othersPaymentDto,String userAccountNumber, String pin);
+//    void reverseFailedBillPaymentTransaction(String reference,String accountNumber);
 //    ApiResponse<?> fetchAllAddOnsByProduct(String token, Long serviceProviderProductId, String productCode);
 }

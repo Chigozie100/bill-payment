@@ -75,15 +75,13 @@ public class NotificationService {
 
     }
 
-    public void smsNotification(SmsEvent smsEvent, String token) throws ThirdPartyIntegrationException {
+    public void smsNotification(SmsEvent smsEvent, String token){
         try {
             ResponseEntity<ResponseObj<Object>>  responseEntity = notificationFeignClient.smsNotifyUserAtalking(smsEvent,token);
             log.info(" status :: " +Objects.requireNonNull(responseEntity.getBody()).status);
         } catch (Exception e) {
-            log.info(" error sending sms :: " +e.getMessage());
-            throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+            log.info("::Error sending sms :: " +e.getMessage());
         }
-
     }
 
     public void pushINAPP(Map<String, String> map, String token) throws ThirdPartyIntegrationException {
@@ -132,8 +130,7 @@ public class NotificationService {
     }
 
 
-    public void pushSMSv2(TransactionHistory history, String token, String email,String phone)
-            throws ThirdPartyIntegrationException {
+    public void pushSMSv2(TransactionHistory history, String token, String email,String phone){
 
         SmsEvent smsEvent = new SmsEvent();
         SmsPayload data = new SmsPayload();
@@ -160,10 +157,9 @@ public class NotificationService {
         try {
             log.info(" smsEvent :: " + smsEvent);
             smsNotification(smsEvent,token);
-        }catch (ThirdPartyIntegrationException ex){
-            throw new ThirdPartyIntegrationException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }catch (Exception ex){
+            log.error("::Error smsEvent {}",ex.getLocalizedMessage());
         }
-
     }
 
 

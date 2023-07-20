@@ -1523,7 +1523,18 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         List<EpinData> epinList = new ArrayList<>();
         for (GeneralEpinData data: epinDataList){
             EpinData epinData = new EpinData();
-            BeanUtils.copyProperties(data,EpinData.class);
+//            BeanUtils.copyProperties(data,EpinData.class);
+            epinData.setPin(data.getPin());
+
+            if(data.getExpiresOn() != null)
+                epinData.setExpiresOn(data.getExpiresOn());
+
+            if(data.getSerialNumber() != null)
+                epinData.setSerialNumber(data.getSerialNumber());
+
+            if(data.getInstructions() != null)
+                epinData.setInstructions(data.getInstructions());
+
             epinData.setEmail(email);
             epinData.setUserId(userId);
             epinData.setCreatedAt(LocalDateTime.now());

@@ -299,11 +299,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.electricity);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token, notificationEmail, electricityPaymentDto.getPhone());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token, notificationEmail, electricityPaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
@@ -359,11 +355,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.electricity);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token,notificationEmail, electricityPaymentDto.getPhone());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token,notificationEmail, electricityPaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
@@ -478,11 +470,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.databundle);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token,notificationEmail, dataBundlePaymentDto.getPhone());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token,notificationEmail, dataBundlePaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
@@ -538,11 +526,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.electricity);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token,notificationEmail, dataBundlePaymentDto.getPhone());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token,notificationEmail, dataBundlePaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
@@ -635,11 +619,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.airtime);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token,notificationEmail, airtimePaymentDto.getPhone());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token,notificationEmail, airtimePaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
@@ -695,11 +675,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.electricity);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token,notificationEmail, airtimePaymentDto.getPhone());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token,notificationEmail, airtimePaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
@@ -814,11 +790,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.epin);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token,notificationEmail, response.getData().getPhoneNumber());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token,notificationEmail, response.getData().getPhoneNumber());
                             });
                             return paymentResponse;
                         }
@@ -934,11 +906,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.cabletv);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token,notificationEmail, cableTvPaymentDto.getPhone());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token,notificationEmail, cableTvPaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
@@ -993,11 +961,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.electricity);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token,notificationEmail, cableTvPaymentDto.getPhone());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token,notificationEmail, cableTvPaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
@@ -1089,11 +1053,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.betting);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token,notificationEmail, response.getData().getPhoneNumber());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token,notificationEmail, response.getData().getPhoneNumber());
                             });
                             return paymentResponse;
                         }
@@ -1149,11 +1109,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.electricity);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token,notificationEmail, bettingPaymentDto.getPhone());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token,notificationEmail, bettingPaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
@@ -1262,11 +1218,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.electricity);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                try {
-                                    notificationService.pushSMSv2(history, token,notificationEmail, othersPaymentDto.getPhone());
-                                } catch (ThirdPartyIntegrationException e) {
-                                    log.error("::Error pushSMSv2 {}", e.getLocalizedMessage());
-                                }
+                                notificationService.pushSMSv2(history, token,notificationEmail, othersPaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
@@ -1525,7 +1477,6 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             EpinData epinData = new EpinData();
 //            BeanUtils.copyProperties(data,EpinData.class);
             epinData.setPin(data.getPin());
-
             if(data.getExpiresOn() != null)
                 epinData.setExpiresOn(data.getExpiresOn());
 

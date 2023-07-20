@@ -333,7 +333,7 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
             charge.setModifiedBy(response.getData().getEmail());
             charge.setServiceProvider(serviceProvider.get());
             charge.setServiceProviderCategory(serviceProviderCategory.get());
-            billProviderChargeRepository.save(charge);
+            billProviderChargeRepository.saveAndFlush(charge);
             return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Charges created successful",charge);
         }catch (Exception ex){
             log.error("::Error createBillProviderCharges {}",ex.getLocalizedMessage());

@@ -1529,8 +1529,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             epinData.setCreatedAt(LocalDateTime.now());
             epinList.add(epinData);
         }
-        epinDataRepository.saveAll(epinList);
-        return epinList;
+        return epinDataRepository.saveAll(epinList);
     }
 
     private String fetchBillEventId(String providerName) {

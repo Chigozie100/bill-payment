@@ -3,11 +3,13 @@ package com.wayapay.thirdpartyintegrationservice.v2.dto.request;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.BillCategoryName;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.PaymentStatus;
 import com.wayapay.thirdpartyintegrationservice.v2.entity.*;
+import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.dto.GeneralEpinData;
 import lombok.Data;
 
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 public class TransactionDto {
@@ -23,4 +25,5 @@ public class TransactionDto {
     private ServiceProviderBiller serviceProviderBiller;
     private ServiceProviderProductBundle serviceProviderProductBundle;
     private ServiceProviderProduct serviceProviderProduct;
+    private List<GeneralEpinData> epinData;
 }

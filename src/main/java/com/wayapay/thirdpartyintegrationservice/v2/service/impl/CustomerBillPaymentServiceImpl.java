@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wayapay.thirdpartyintegrationservice.annotations.AuditPaymentOperation;
 import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.*;
+import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.dto.GeneralEpinData;
 import com.wayapay.thirdpartyintegrationservice.v2.service.notification.NotificationService;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.AuthResponse;
 import com.wayapay.thirdpartyintegrationservice.util.*;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -58,6 +60,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
     private final WalletProxy walletProxy;
     private final QuickTellerService quickTellerService;
     private final TokenImpl tokenImpl;
+    private final EpinDataRepository epinDataRepository;
 
     @Value("${app.config.baxi.agent-code}")
     private String baxiAgentCode;
@@ -806,6 +809,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                             log.info(":::Epin paymentResponseDto {}",paymentResponseDto);
                             transactionDto.setNarration(paymentResponseDto.getTransactionMessage());
                             transactionDto.setServiceProviderReferenceNumber(paymentResponseDto.getProviderReference());
+                            transactionDto.setEpinData(paymentResponseDto.getPins());
                             log.info("::TransactionDto {}",transactionDto);
                             TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.epin);
                             //Todo: Push sms/email request
@@ -1493,7 +1497,10 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             history.get().setCategoryName(categoryName);
             history.get().setStatus(status);
             history.get().setPaymentReferenceNumber(referenceNumber);
-
+            if(transactionDto.getEpinData() != null && transactionDto.getEpinData().size() > 0){
+             List<EpinData> epinDataList =   mappedData(transactionDto.getEpinData(),email, userId);
+             history.get().setPins(epinDataList);
+            }
             transactionHistoryRepository.save(history.get());
             log.info(":: createTransactionHistory {}",history.get());
             return history.get();
@@ -1512,6 +1519,19 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         }
     }
 
+    private List<EpinData> mappedData(List<GeneralEpinData> epinDataList,String email,String userId){
+        List<EpinData> epinList = new ArrayList<>();
+        for (GeneralEpinData data: epinDataList){
+            EpinData epinData = new EpinData();
+            BeanUtils.copyProperties(data,EpinData.class);
+            epinData.setEmail(email);
+            epinData.setUserId(userId);
+            epinData.setCreatedAt(LocalDateTime.now());
+            epinList.add(epinData);
+        }
+        epinDataRepository.saveAll(epinList);
+        return epinList;
+    }
 
     private String fetchBillEventId(String providerName) {
         String eventId = "";

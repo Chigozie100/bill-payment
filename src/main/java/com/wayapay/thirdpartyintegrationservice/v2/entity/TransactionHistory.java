@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.BillCategoryName;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.PaymentStatus;
+import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.dto.GeneralEpinData;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Entity
@@ -36,6 +38,8 @@ public class TransactionHistory implements Serializable {
     private String accountNumber;
     @Column(name = "sender_name")
     private String senderName;
+    @Column(name = "sender_email")
+    private String senderEmail;
     @Column(name = "sender_user_id")
     private String senderUserId;
     private String narration;
@@ -73,4 +77,6 @@ public class TransactionHistory implements Serializable {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "modified_at")
     private LocalDateTime modifiedAt = LocalDateTime.now();
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private List<EpinData> pins;
 }

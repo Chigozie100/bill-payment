@@ -20,7 +20,7 @@ import com.wayapay.thirdpartyintegrationservice.interceptors.SwaggerFilter;
 @EnableJpaAuditing
 @EnableAsync
 @SpringBootApplication
-//@EnableWayaAuthAuditApi
+@EnableWayaAuthAuditApi
 public class ThirdpartyintegrationserviceApplication {
 
     public static void main(String[] args) {

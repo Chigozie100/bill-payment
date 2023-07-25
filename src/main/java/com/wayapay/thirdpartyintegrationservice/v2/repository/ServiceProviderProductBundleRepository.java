@@ -25,4 +25,6 @@ public interface ServiceProviderProductBundleRepository extends JpaRepository<Se
     Optional<ServiceProviderProductBundle> findByIdAndIsActiveAndIsDeleted(Long id, boolean isActive, boolean isDeleted);
 
     Optional<ServiceProviderProductBundle> findByIdAndIsDeleted(Long id, boolean isDeleted);
+
+    Optional<ServiceProviderProductBundle> findFirstByNameAndBundleCodeAndMonthsPaidForAndServiceProviderProductAndIsActiveAndIsDeleted(String name, String code, String monthsPaidFor, ServiceProviderProduct serviceProviderProduct, boolean isActive, boolean isDeleted);
 }

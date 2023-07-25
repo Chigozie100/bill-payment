@@ -384,7 +384,7 @@ public class BaxiServiceImpl implements BaxiService {
                     }
                     //Todo: loop through each cable tv plans and add product
                     for(Plan plan: cableTvPlanResponse.getData()){
-                        Optional<ServiceProviderProduct> providerProduct = serviceProviderProductRepository.findByNameAndProductCodeAndServiceProviderBillerAndIsActiveAndIsDeleted(plan.getName(),plan.getCode(),biller,true,false);
+                        Optional<ServiceProviderProduct> providerProduct = serviceProviderProductRepository.findFirstByNameAndProductCodeAndServiceProviderBillerAndIsActiveAndIsDeleted(plan.getName(),plan.getCode(),biller,true,false);
                         if(!providerProduct.isPresent()){
                             providerProduct = Optional.of(new ServiceProviderProduct());
                             providerProduct.get().setCreatedBy(response.getData().getEmail());

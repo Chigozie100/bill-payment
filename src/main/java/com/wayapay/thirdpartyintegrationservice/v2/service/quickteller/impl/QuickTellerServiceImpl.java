@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -177,7 +178,7 @@ public class QuickTellerServiceImpl implements QuickTellerService {
     }
 
 
-    @Override
+    @Override @Transactional
     public ApiResponse<?> createQuickTellerServiceProviderCategory(String token, Long serviceProviderId) {
         try {
             AuthResponse response = authProxy.validateUserToken(token);
@@ -256,7 +257,7 @@ public class QuickTellerServiceImpl implements QuickTellerService {
     }
 
 
-    @Override
+    @Override @Transactional
     public ApiResponse<?> createQuickTellerServiceProviderBiller(String token, Long serviceProviderId, Long serviceProviderCategoryId) {
         try {
             AuthResponse response = authProxy.validateUserToken(token);
@@ -350,7 +351,7 @@ public class QuickTellerServiceImpl implements QuickTellerService {
     }
 
 
-    @Override
+    @Override @Transactional
     public ApiResponse<?> createQuickTellerServiceProviderProductByBiller(String token, Long serviceProviderId, Long serviceProviderCategoryId) {
         try {
             AuthResponse response = authProxy.validateUserToken(token);
@@ -399,6 +400,7 @@ public class QuickTellerServiceImpl implements QuickTellerService {
     }
 
 
+    @Transactional
     private void createServiceProviderProduct(List<PaymentItem> itemList, ServiceProviderBiller providerBiller, AuthResponse response){
         try {
             List<ServiceProviderProduct> providerProductList = new ArrayList<>();
@@ -434,15 +436,15 @@ public class QuickTellerServiceImpl implements QuickTellerService {
                     providerProduct.get().setHasAddOns(Boolean.FALSE);
                     providerProduct.get().setModifiedAt(LocalDateTime.now());
                     providerProduct.get().setModifiedBy(response.getData().getEmail());
-                    providerProductList.add(providerProduct.get()); //This neglected because bulk update is not affecting the actual field
-//                    serviceProviderProductRepository.saveAndFlush(providerProduct.get());
+                    //providerProductList.add(providerProduct.get()); //This neglected because bulk update is not affecting the actual field
+                    serviceProviderProductRepository.save(providerProduct.get());
                 }catch (Exception ex){
                     log.error("::Error createQtProduct {}",ex.getLocalizedMessage());
                     continue;
                 }
             }
-            if(providerProductList.size() > 0)
-                serviceProviderProductRepository.saveAll(providerProductList);
+//            if(providerProductList.size() > 0)
+//                serviceProviderProductRepository.saveAll(providerProductList);
             return;
         }catch (Exception ex){
             log.error("::Error creatingQTProduct {}",ex.getLocalizedMessage());

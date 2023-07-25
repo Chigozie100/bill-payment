@@ -384,7 +384,7 @@ public class BaxiServiceImpl implements BaxiService {
                     }
                     //Todo: loop through each cable tv plans and add product
                     for(Plan plan: cableTvPlanResponse.getData()){
-                        Optional<ServiceProviderProduct> providerProduct = serviceProviderProductRepository.findByNameAndProductCodeAndServiceProviderBillerAndIsActiveAndIsDeleted(plan.getName(),plan.getCode(),biller,true,false);
+                        Optional<ServiceProviderProduct> providerProduct = serviceProviderProductRepository.findFirstByNameAndProductCodeAndServiceProviderBillerAndIsActiveAndIsDeleted(plan.getName(),plan.getCode(),biller,true,false);
                         if(!providerProduct.isPresent()){
                             providerProduct = Optional.of(new ServiceProviderProduct());
                             providerProduct.get().setCreatedBy(response.getData().getEmail());
@@ -1025,7 +1025,7 @@ public class BaxiServiceImpl implements BaxiService {
                     for(CableTvPlan pricing: plan.getAvailablePricingOptions()){
                         try {
                             BigDecimal amount = new BigDecimal(pricing.getPrice());
-                            Optional<ServiceProviderProductBundle> productBundle = serviceProviderProductBundleRepository.findByNameAndBundleCodeAndMonthsPaidForAndServiceProviderProductAndIsActiveAndIsDeleted(plan.getName(), plan.getCode(), pricing.getMonthsPaidFor(), providerProduct.get(),true,false);
+                            Optional<ServiceProviderProductBundle> productBundle = serviceProviderProductBundleRepository.findFirstByNameAndBundleCodeAndMonthsPaidForAndServiceProviderProductAndIsActiveAndIsDeleted(plan.getName(), plan.getCode(), pricing.getMonthsPaidFor(), providerProduct.get(),true,false);
                             if(!productBundle.isPresent()){
                                 productBundle  = Optional.of(new ServiceProviderProductBundle());
                                 productBundle.get().setCreatedBy(response.getData().getEmail());
@@ -1078,7 +1078,7 @@ public class BaxiServiceImpl implements BaxiService {
             for(Pricing pricing: plan.getAvailablePricingOptions()){
                 try {
                     BigDecimal amount = new BigDecimal(pricing.getPrice());
-                    Optional<ServiceProviderProductBundle> productBundle = serviceProviderProductBundleRepository.findByNameAndBundleCodeAndMonthsPaidForAndServiceProviderProductAndIsActiveAndIsDeleted(plan.getName(), plan.getCode(), pricing.getMonthsPaidFor(), providerProduct.get(),true,false);
+                    Optional<ServiceProviderProductBundle> productBundle = serviceProviderProductBundleRepository.findFirstByNameAndBundleCodeAndMonthsPaidForAndServiceProviderProductAndIsActiveAndIsDeleted(plan.getName(), plan.getCode(), pricing.getMonthsPaidFor(), providerProduct.get(),true,false);
                     if(!productBundle.isPresent()){
                         productBundle  = Optional.of(new ServiceProviderProductBundle());
                         productBundle.get().setCreatedBy(response.getData().getEmail());

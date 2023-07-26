@@ -384,7 +384,7 @@ public class BaxiServiceImpl implements BaxiService {
                     }
                     //Todo: loop through each cable tv plans and add product
                     for(Plan plan: cableTvPlanResponse.getData()){
-                        Optional<ServiceProviderProduct> providerProduct = serviceProviderProductRepository.findByNameAndProductCodeAndServiceProviderBillerAndIsActiveAndIsDeleted(plan.getName(),plan.getCode(),biller,true,false);
+                        Optional<ServiceProviderProduct> providerProduct = serviceProviderProductRepository.findFirstByNameAndProductCodeAndServiceProviderBillerAndIsActiveAndIsDeleted(plan.getName(),plan.getCode(),biller,true,false);
                         if(!providerProduct.isPresent()){
                             providerProduct = Optional.of(new ServiceProviderProduct());
                             providerProduct.get().setCreatedBy(response.getData().getEmail());
@@ -971,6 +971,7 @@ public class BaxiServiceImpl implements BaxiService {
         }
     }
 
+    @Transactional
     private void createAndUpdateEpinBundle(EPinBundleResponse ePinBundleResponse,AuthResponse response,ServiceProviderBiller biller){
         try {
             for(EPinBundle bundle: ePinBundleResponse.getData()){
@@ -1017,6 +1018,7 @@ public class BaxiServiceImpl implements BaxiService {
     }
 
 
+    @Transactional
     private void createAndUpdateAddOns( AuthResponse response, Optional<ServiceProviderProduct> providerProduct,CableTvAddonsResponse cableTvAddonsResponse){
         try {
             for (CableTvDetail plan: cableTvAddonsResponse.getData()){
@@ -1025,7 +1027,7 @@ public class BaxiServiceImpl implements BaxiService {
                     for(CableTvPlan pricing: plan.getAvailablePricingOptions()){
                         try {
                             BigDecimal amount = new BigDecimal(pricing.getPrice());
-                            Optional<ServiceProviderProductBundle> productBundle = serviceProviderProductBundleRepository.findByNameAndBundleCodeAndMonthsPaidForAndServiceProviderProductAndIsActiveAndIsDeleted(plan.getName(), plan.getCode(), pricing.getMonthsPaidFor(), providerProduct.get(),true,false);
+                            Optional<ServiceProviderProductBundle> productBundle = serviceProviderProductBundleRepository.findFirstByNameAndBundleCodeAndMonthsPaidForAndServiceProviderProductAndIsActiveAndIsDeleted(plan.getName(), plan.getCode(), pricing.getMonthsPaidFor(), providerProduct.get(),true,false);
                             if(!productBundle.isPresent()){
                                 productBundle  = Optional.of(new ServiceProviderProductBundle());
                                 productBundle.get().setCreatedBy(response.getData().getEmail());
@@ -1052,14 +1054,15 @@ public class BaxiServiceImpl implements BaxiService {
                             providerProduct.get().setModifiedAt(LocalDateTime.now());
                             serviceProviderProductRepository.save(providerProduct.get());
 
-                            addonsProductBundleList.add(productBundle.get());
+//                            addonsProductBundleList.add(productBundle.get());
+                            serviceProviderProductBundleRepository.save(productBundle.get());
                         }catch (Exception ex){
                             log.error("::Error Loop Addon bundle cableTvAddonsResponse {}",ex.getLocalizedMessage());
                             ex.printStackTrace();
                             continue;
                         }
                     }
-                    serviceProviderProductBundleRepository.saveAll(addonsProductBundleList);
+//                    serviceProviderProductBundleRepository.saveAll(addonsProductBundleList);
                 }catch (Exception ex){
                     log.error("::Error Loop Addon product cableTvAddonsResponse {}",ex.getLocalizedMessage());
                     ex.printStackTrace();
@@ -1072,13 +1075,14 @@ public class BaxiServiceImpl implements BaxiService {
         }
     }
 
+    @Transactional
     private void createAndUpdateProduct(Plan plan, AuthResponse response, Optional<ServiceProviderProduct> providerProduct){
         try {
             List<ServiceProviderProductBundle> productBundleList = new ArrayList<>();
             for(Pricing pricing: plan.getAvailablePricingOptions()){
                 try {
                     BigDecimal amount = new BigDecimal(pricing.getPrice());
-                    Optional<ServiceProviderProductBundle> productBundle = serviceProviderProductBundleRepository.findByNameAndBundleCodeAndMonthsPaidForAndServiceProviderProductAndIsActiveAndIsDeleted(plan.getName(), plan.getCode(), pricing.getMonthsPaidFor(), providerProduct.get(),true,false);
+                    Optional<ServiceProviderProductBundle> productBundle = serviceProviderProductBundleRepository.findFirstByNameAndBundleCodeAndMonthsPaidForAndServiceProviderProductAndIsActiveAndIsDeleted(plan.getName(), plan.getCode(), pricing.getMonthsPaidFor(), providerProduct.get(),true,false);
                     if(!productBundle.isPresent()){
                         productBundle  = Optional.of(new ServiceProviderProductBundle());
                         productBundle.get().setCreatedBy(response.getData().getEmail());
@@ -1100,14 +1104,15 @@ public class BaxiServiceImpl implements BaxiService {
                         productBundle.get().setValidity(pricing.getMonthsPaidFor() + " Month");
                     }
                     productBundle.get().setAllowance(pricing.getMonthsPaidFor());
-                    productBundleList.add(productBundle.get());
+//                    productBundleList.add(productBundle.get());
+                    serviceProviderProductBundleRepository.save(productBundle.get());
                 }catch (Exception ex){
                     log.error("::Error bundle createAndUpdateProduct {}",ex.getLocalizedMessage());
                     ex.printStackTrace();
                     continue;
                 }
             }
-            serviceProviderProductBundleRepository.saveAll(productBundleList);
+//            serviceProviderProductBundleRepository.saveAll(productBundleList);
         }catch (Exception ex){
             log.error("::Error createAndUpdateProduct {}",ex.getLocalizedMessage());
             ex.printStackTrace();

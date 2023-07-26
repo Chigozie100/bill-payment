@@ -1150,7 +1150,7 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
             }else {
                 transactionHistories = transactionHistoryRepository.findAll(pageable);
             }
-            return new ApiResponse<>(false,ApiResponse.Code.SUCCESS,"Histories fetch...",transactionHistories);
+            return new ApiResponse<>(true,ApiResponse.Code.SUCCESS,"Histories fetch...",transactionHistories);
         }catch (Exception ex){
             log.error("::Error adminAnalysis {}",ex.getLocalizedMessage());
             ex.printStackTrace();

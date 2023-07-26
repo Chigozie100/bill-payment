@@ -25,4 +25,6 @@ public interface ServiceProviderProductRepository extends JpaRepository<ServiceP
     Optional<ServiceProviderProduct> findFirstByProductCodeAndServiceProviderBillerAndIsActiveAndIsDeleted(String type, ServiceProviderBiller biller, boolean isActive, boolean isDeleted);
 
     Optional<ServiceProviderProduct> findByIdAndIsDeleted(Long id, boolean isDeleted);
+
+    Optional<ServiceProviderProduct> findFirstByNameAndProductCodeAndServiceProviderBillerAndIsActiveAndIsDeleted(String name, String code, ServiceProviderBiller biller, boolean isActive, boolean isDeleted);
 }

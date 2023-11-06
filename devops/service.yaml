@@ -37,13 +37,6 @@ spec:
       containers:
       - name: bill-payment-service-v2
         image: 863852973330.dkr.ecr.eu-west-2.amazonaws.com/bill-payment-service:imgtag-v2
-        resources:
-          requests:
-            memory: "200Mi"
-            cpu: "49m"
-          limits:
-            memory: "900Mi"
-            cpu: "100m"
         envFrom:
         - configMapRef:
             name: common-services-config

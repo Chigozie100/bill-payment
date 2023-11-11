@@ -39,7 +39,7 @@ public class AdminController {
     @ApiOperation(value = "Fetch all bill category by admin", notes = "Fetch categories")
     @GetMapping(path = "/fetchAllCategory")
     public ResponseEntity<?> fetchAllCategory(HttpServletRequest request){
-        ApiResponse<?> response =  adminBillPaymentService.fetchAllCategory(request.getHeader("authorization"));
+        ApiResponse<?> response =  adminBillPaymentService.fetchAllCategory(request,request.getHeader("authorization"));
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -48,7 +48,7 @@ public class AdminController {
     @ApiOperation(value = "Activate bill category by admin", notes = "Activate bill category")
     @PatchMapping(path = "/activateCategory/{id}")
     public ResponseEntity<?> activateCategory(HttpServletRequest request,@PathVariable Long id,@RequestParam boolean isActive){
-        ApiResponse<?> response =  adminBillPaymentService.activateCategory(request.getHeader("authorization"),id,isActive);
+        ApiResponse<?> response =  adminBillPaymentService.activateCategory(request,request.getHeader("authorization"),id,isActive);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -57,7 +57,7 @@ public class AdminController {
     @ApiOperation(value = "Create bill category by admin", notes = "Create bill category")
     @PostMapping(path = "/createCategory")
     public ResponseEntity<?> createCategory(HttpServletRequest request, @RequestParam BillCategoryName name, @RequestParam String description){
-        ApiResponse<?> response =  adminBillPaymentService.createCategory(request.getHeader("authorization"),name,description);
+        ApiResponse<?> response =  adminBillPaymentService.createCategory(request,request.getHeader("authorization"),name,description);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -66,7 +66,7 @@ public class AdminController {
     @ApiOperation(value = "Create bill service provider by admin", notes = "Create bill service provider")
     @PostMapping(path = "/createServiceProvider")
     public ResponseEntity<?> createServiceProvider(HttpServletRequest request, @Valid@RequestBody CategoryDto categoryDto){
-        ApiResponse<?> response =  adminBillPaymentService.createServiceProvider(request.getHeader("authorization"),categoryDto);
+        ApiResponse<?> response =  adminBillPaymentService.createServiceProvider(request,request.getHeader("authorization"),categoryDto);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -75,7 +75,7 @@ public class AdminController {
     @ApiOperation(value = "Activate bill service provider by admin", notes = "Activate bill service provider")
     @PatchMapping(path = "/activateServiceProvider/{id}")
     public ResponseEntity<?> activateServiceProvider(HttpServletRequest request, @PathVariable Long id,@RequestParam boolean isActive){
-        ApiResponse<?> response =  adminBillPaymentService.activateServiceProvider(request.getHeader("authorization"),id,isActive);
+        ApiResponse<?> response =  adminBillPaymentService.activateServiceProvider(request,request.getHeader("authorization"),id,isActive);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -84,7 +84,7 @@ public class AdminController {
     @ApiOperation(value = "Update bill service provider by admin", notes = "Update bill service provider")
     @PutMapping(path = "/updateServiceProvider/{id}")
     public ResponseEntity<?> activateServiceProvider(HttpServletRequest request, @PathVariable Long id, @Valid@RequestBody UpdateServiceProvider updateServiceProvider){
-        ApiResponse<?> response =  adminBillPaymentService.updateServiceProvider(request.getHeader("authorization"),updateServiceProvider,id);
+        ApiResponse<?> response =  adminBillPaymentService.updateServiceProvider(request,request.getHeader("authorization"),updateServiceProvider,id);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -93,7 +93,7 @@ public class AdminController {
     @ApiOperation(value = "Fetch all bill service provider by admin", notes = "Fetch all bill service provider")
     @GetMapping(path = "/fetchAllServiceProvider")
     public ResponseEntity<?> fetchAllServiceProvider(HttpServletRequest request){
-        ApiResponse<?> response =  adminBillPaymentService.fetchAllServiceProvider(request.getHeader("authorization"));
+        ApiResponse<?> response =  adminBillPaymentService.fetchAllServiceProvider(request,request.getHeader("authorization"));
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -104,7 +104,7 @@ public class AdminController {
     public ResponseEntity<?> filterAllServiceProvider(HttpServletRequest request,
                                                       @RequestParam(name = "pageNo",defaultValue = "1") int pageNo,
                                                       @RequestParam(name = "pageSize",defaultValue = "5") int pageSize){
-        ApiResponse<?> response =  adminBillPaymentService.filterAllServiceProvider(request.getHeader("authorization"),pageNo,pageSize);
+        ApiResponse<?> response =  adminBillPaymentService.filterAllServiceProvider(request,request.getHeader("authorization"),pageNo,pageSize);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -116,7 +116,7 @@ public class AdminController {
     public ResponseEntity<?> filterAllCategory(HttpServletRequest request,
                                                       @RequestParam(name = "pageNo",defaultValue = "1") int pageNo,
                                                       @RequestParam(name = "pageSize",defaultValue = "5") int pageSize){
-        ApiResponse<?> response =  adminBillPaymentService.filterAllCategory(request.getHeader("authorization"),pageNo,pageSize);
+        ApiResponse<?> response =  adminBillPaymentService.filterAllCategory(request,request.getHeader("authorization"),pageNo,pageSize);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -129,7 +129,7 @@ public class AdminController {
                                                @RequestParam(name = "pageNo",defaultValue = "1") int pageNo,
                                                @RequestParam(name = "pageSize",defaultValue = "5") int pageSize,
                                                               @RequestParam(name = "serviceProviderId",required = false) Long serviceProviderId){
-        ApiResponse<?> response =  adminBillPaymentService.fetchServiceProviderCategory(request.getHeader("authorization"),serviceProviderId,pageNo,pageSize);
+        ApiResponse<?> response =  adminBillPaymentService.fetchServiceProviderCategory(request,request.getHeader("authorization"),serviceProviderId,pageNo,pageSize);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -142,7 +142,7 @@ public class AdminController {
                                                               @RequestParam(name = "pageNo",defaultValue = "1") int pageNo,
                                                               @RequestParam(name = "pageSize",defaultValue = "5") int pageSize,
                                                               @RequestParam(name = "serviceProviderId",required = false) Long serviceProviderId){
-        ApiResponse<?> response =  adminBillPaymentService.fetchBillChargesForProviders(request.getHeader("authorization"),serviceProviderId,pageNo,pageSize);
+        ApiResponse<?> response =  adminBillPaymentService.fetchBillChargesForProviders(request,request.getHeader("authorization"),serviceProviderId,pageNo,pageSize);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -155,7 +155,7 @@ public class AdminController {
                                                               @RequestParam(name = "pageNo",defaultValue = "1") int pageNo,
                                                               @RequestParam(name = "pageSize",defaultValue = "5") int pageSize,
                                                                     @RequestParam(value = "serviceProviderCategoryId",required = false) Long serviceProviderCategoryId){
-        ApiResponse<?> response =  adminBillPaymentService.fetchServiceProviderBiller(request.getHeader("authorization"),serviceProviderCategoryId,pageNo,pageSize);
+        ApiResponse<?> response =  adminBillPaymentService.fetchServiceProviderBiller(request,request.getHeader("authorization"),serviceProviderCategoryId,pageNo,pageSize);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -168,7 +168,7 @@ public class AdminController {
                                                                     @RequestParam(name = "pageNo",defaultValue = "1") int pageNo,
                                                                     @RequestParam(name = "pageSize",defaultValue = "5") int pageSize,
                                                                     @RequestParam(value = "serviceProviderBillerId",required = false) Long serviceProviderBillerId){
-        ApiResponse<?> response =  adminBillPaymentService.fetchServiceProviderProduct(request.getHeader("authorization"),serviceProviderBillerId,pageNo,pageSize);
+        ApiResponse<?> response =  adminBillPaymentService.fetchServiceProviderProduct(request,request.getHeader("authorization"),serviceProviderBillerId,pageNo,pageSize);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -181,7 +181,7 @@ public class AdminController {
                                                              @RequestParam(name = "pageNo",defaultValue = "1") int pageNo,
                                                              @RequestParam(name = "pageSize",defaultValue = "5") int pageSize,
                                                              @RequestParam(value = "serviceProviderProductId",required = false) Long serviceProviderProductId){
-        ApiResponse<?> response =  adminBillPaymentService.fetchServiceProviderProductBundle(request.getHeader("authorization"),serviceProviderProductId,pageNo,pageSize);
+        ApiResponse<?> response =  adminBillPaymentService.fetchServiceProviderProductBundle(request,request.getHeader("authorization"),serviceProviderProductId,pageNo,pageSize);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -195,7 +195,7 @@ public class AdminController {
                                                            @RequestParam String name,
                                                            @RequestParam String serviceType,
                                                            @RequestParam String description){
-        ApiResponse<?> response =  adminBillPaymentService.createServiceProviderCategory(request.getHeader("authorization"),
+        ApiResponse<?> response =  adminBillPaymentService.createServiceProviderCategory(request,request.getHeader("authorization"),
                 serviceProviderId,name,description,serviceType);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
@@ -211,7 +211,7 @@ public class AdminController {
                                                            @RequestParam String name,
                                                            @RequestParam String serviceType,
                                                            @RequestParam String description){
-        ApiResponse<?> response =  adminBillPaymentService.createServiceProviderBiller(request.getHeader("authorization"),
+        ApiResponse<?> response =  adminBillPaymentService.createServiceProviderBiller(request,request.getHeader("authorization"),
                 serviceProviderCategoryId,name,description,serviceType);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
@@ -228,7 +228,7 @@ public class AdminController {
                                                          @RequestParam String description,
                                                           @RequestParam boolean hasBundle,
                                                           @RequestParam boolean hasTokenValidation){
-        ApiResponse<?> response =  adminBillPaymentService.createServiceProviderProduct(request.getHeader("authorization"),
+        ApiResponse<?> response =  adminBillPaymentService.createServiceProviderProduct(request,request.getHeader("authorization"),
                 serviceProviderBillerId,name,description,serviceType,hasBundle,hasTokenValidation);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
@@ -244,7 +244,7 @@ public class AdminController {
                                                           @RequestParam String serviceType,
                                                           @RequestParam String description,
                                                           @RequestParam BigDecimal amount){
-        ApiResponse<?> response =  adminBillPaymentService.createServiceProviderProductBundle(request.getHeader("authorization"),
+        ApiResponse<?> response =  adminBillPaymentService.createServiceProviderProductBundle(request,request.getHeader("authorization"),
                 serviceProviderProductId, amount,name,description,serviceType);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
@@ -258,7 +258,7 @@ public class AdminController {
                                                           @Valid@RequestBody CreateChargeDto createChargeDto,
                                                           @RequestParam Long serviceProviderId,
                                                           @RequestParam Long serviceProviderCategoryId){
-        ApiResponse<?> response =  adminBillPaymentService.createBillProviderCharges(request.getHeader("authorization"),serviceProviderId,serviceProviderCategoryId,createChargeDto);
+        ApiResponse<?> response =  adminBillPaymentService.createBillProviderCharges(request,request.getHeader("authorization"),serviceProviderId,serviceProviderCategoryId,createChargeDto);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -270,7 +270,7 @@ public class AdminController {
     public ResponseEntity<?> updateServiceProviderCharges(HttpServletRequest request,
                                                           @Valid@RequestBody CreateChargeDto createChargeDto,
                                                           @PathVariable Long id){
-        ApiResponse<?> response =  adminBillPaymentService.updateBillProviderCharges(request.getHeader("authorization"),id,createChargeDto);
+        ApiResponse<?> response =  adminBillPaymentService.updateBillProviderCharges(request,request.getHeader("authorization"),id,createChargeDto);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -280,7 +280,7 @@ public class AdminController {
     @ApiOperation(value = "Update biller by admin", notes = "Update biller by admin")
     @PatchMapping(path = "/disableOrEnableBiller/{id}")
     public ResponseEntity<?> updateServiceProviderBiller(HttpServletRequest request, @PathVariable Long id,@RequestParam boolean isActive){
-        ApiResponse<?> response =  adminBillPaymentService.updateBiller(request.getHeader("authorization"),id,isActive);
+        ApiResponse<?> response =  adminBillPaymentService.updateBiller(request,request.getHeader("authorization"),id,isActive);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -289,7 +289,7 @@ public class AdminController {
     @ApiOperation(value = "Update biller product by admin", notes = "Update biller product")
     @PatchMapping(path = "/disableOrEnableBillerProduct/{id}")
     public ResponseEntity<?> updateServiceProviderBillerProduct(HttpServletRequest request, @PathVariable Long id,@RequestParam(name = "amount",required = false) BigDecimal amount,@RequestParam boolean isActive){
-        ApiResponse<?> response =  adminBillPaymentService.updateBillerProduct(request.getHeader("authorization"),id,amount,isActive);
+        ApiResponse<?> response =  adminBillPaymentService.updateBillerProduct(request,request.getHeader("authorization"),id,amount,isActive);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -298,7 +298,7 @@ public class AdminController {
     @ApiOperation(value = "Update biller product bundle by admin", notes = "Update biller product bundle")
     @PatchMapping(path = "/disableOrEnableBillerProductBundle/{id}")
     public ResponseEntity<?> updateServiceProviderBillerProductBundle(HttpServletRequest request, @PathVariable Long id,@RequestParam(name = "amount",required = false) BigDecimal amount,@RequestParam boolean isActive){
-        ApiResponse<?> response =  adminBillPaymentService.updateBillerProductBundle(request.getHeader("authorization"),id,amount,isActive);
+        ApiResponse<?> response =  adminBillPaymentService.updateBillerProductBundle(request,request.getHeader("authorization"),id,amount,isActive);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -307,7 +307,7 @@ public class AdminController {
     @ApiOperation(value = "Update biller category by admin", notes = "Update biller category")
     @PatchMapping(path = "/disableOrEnableBillerCategory/{id}")
     public ResponseEntity<?> updateServiceProviderBillerCategory(HttpServletRequest request, @PathVariable Long id,@RequestParam boolean isActive){
-        ApiResponse<?> response =  adminBillPaymentService.updateBillerCategory(request.getHeader("authorization"),id,isActive);
+        ApiResponse<?> response =  adminBillPaymentService.updateBillerCategory(request,request.getHeader("authorization"),id,isActive);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -316,7 +316,7 @@ public class AdminController {
     @ApiOperation(value = "Update biller category by admin", notes = "Update biller category")
     @PatchMapping(path = "/disableOrEnableCategory/{id}")
     public ResponseEntity<?> disableOrEnableCategory(HttpServletRequest request, @PathVariable Long id,@RequestParam boolean isActive){
-        ApiResponse<?> response =  adminBillPaymentService.updateCategory(request.getHeader("authorization"),id,isActive);
+        ApiResponse<?> response =  adminBillPaymentService.updateCategory(request,request.getHeader("authorization"),id,isActive);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -325,7 +325,7 @@ public class AdminController {
     @ApiOperation(value = "bills analysis by admin", notes = "bills analysis")
     @GetMapping(path = "/analysis")
     public ResponseEntity<?> adminAnalysis(HttpServletRequest request){
-        ApiResponse<?> response =  adminBillPaymentService.adminAnalysis(request.getHeader("authorization"));
+        ApiResponse<?> response =  adminBillPaymentService.adminAnalysis(request,request.getHeader("authorization"));
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -347,7 +347,7 @@ public class AdminController {
                                                         @RequestParam(name = "endDate",required = false) String endDate,
                                                         @RequestParam String field,
                                                         @RequestParam String value){
-        ApiResponse<?> response =  adminBillPaymentService.fetchOrFilterTransactionHistory(request.getHeader("authorization"),endDate,field,value,pageNo,pageSize);
+        ApiResponse<?> response =  adminBillPaymentService.fetchOrFilterTransactionHistory(request,request.getHeader("authorization"),endDate,field,value,pageNo,pageSize);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 

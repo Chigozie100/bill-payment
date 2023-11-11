@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.v2.proxyclient;
 
+import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.LoginDto;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.TokenCheckResponse;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.ApiResponseBody;
@@ -16,11 +17,11 @@ import java.util.Map;
 public interface AuthProxy {
 
     @PostMapping(path = "/api/v1/auth/validate-user")
-    AuthResponse validateUserToken(@RequestHeader String authorization);
+    AuthResponse validateUserToken(@RequestHeader String authorization, @RequestHeader(Constants.CLIENT_ID) String clientId, @RequestHeader(Constants.CLIENT_TYPE) String clientType);
 
     @GetMapping(path = "/api/v1/profile/{userId}")
-    ResponseEntity<ApiResponseBody<Profile>> getProfile(@PathVariable String userId, @RequestHeader String authorization);
+    ResponseEntity<ApiResponseBody<Profile>> getProfile(@PathVariable String userId, @RequestHeader String authorization, @RequestHeader(Constants.CLIENT_ID) String clientId, @RequestHeader(Constants.CLIENT_TYPE) String clientType);
 
     @PostMapping(path = "/api/v1/auth/login")
-    TokenCheckResponse getToken(@Valid @RequestBody LoginDto request);
+    TokenCheckResponse getToken(@Valid @RequestBody LoginDto request, @RequestHeader(Constants.CLIENT_ID) String clientId, @RequestHeader(Constants.CLIENT_TYPE) String clientType);
 }

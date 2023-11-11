@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.v2.service.impl;
 
+import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.PaymentStatus;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.AuthResponse;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.BillCategoryName;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -57,9 +59,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
 
 
     @Override
-    public ApiResponse<?> createServiceProvider(String token, CategoryDto request) {
+    public ApiResponse<?> createServiceProvider(HttpServletRequest req, String token, CategoryDto request) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,req.getHeader(Constants.CLIENT_ID),req.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -91,9 +93,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
 
 
     @Override
-    public ApiResponse<?> updateServiceProvider(String token, UpdateServiceProvider request, Long serviceProviderId) {
+    public ApiResponse<?> updateServiceProvider(HttpServletRequest req,String token, UpdateServiceProvider request, Long serviceProviderId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,req.getHeader(Constants.CLIENT_ID),req.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -119,9 +121,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> fetchAllServiceProvider(String token) {
+    public ApiResponse<?> fetchAllServiceProvider(HttpServletRequest request,String token) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -138,9 +140,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> updateBiller(String token, Long id, boolean isActive) {
+    public ApiResponse<?> updateBiller(HttpServletRequest request,String token, Long id, boolean isActive) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -164,9 +166,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> updateBillerProduct(String token, Long id, BigDecimal amount, boolean isActive) {
+    public ApiResponse<?> updateBillerProduct(HttpServletRequest request,String token, Long id, BigDecimal amount, boolean isActive) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -195,9 +197,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> updateBillerProductBundle(String token, Long id, BigDecimal amount, boolean isActive) {
+    public ApiResponse<?> updateBillerProductBundle(HttpServletRequest request,String token, Long id, BigDecimal amount, boolean isActive) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -225,9 +227,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> updateBillerCategory(String token, Long id, boolean isActive) {
+    public ApiResponse<?> updateBillerCategory(HttpServletRequest request,String token, Long id, boolean isActive) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -252,9 +254,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> updateCategory(String token, Long id, boolean isActive) {
+    public ApiResponse<?> updateCategory(HttpServletRequest request,String token, Long id, boolean isActive) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -279,9 +281,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> activateServiceProvider(String token,Long id, boolean isActive) {
+    public ApiResponse<?> activateServiceProvider(HttpServletRequest request,String token,Long id, boolean isActive) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -306,9 +308,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
 
 
     @Override
-    public ApiResponse<?> createBillProviderCharges(String token,Long serviceProviderId, Long serviceProviderCategoryId, CreateChargeDto createChargeDto) {
+    public ApiResponse<?> createBillProviderCharges(HttpServletRequest request,String token,Long serviceProviderId, Long serviceProviderCategoryId, CreateChargeDto createChargeDto) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -344,9 +346,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
 
 
     @Override
-    public ApiResponse<?> updateBillProviderCharges(String token,Long id, CreateChargeDto updateChargeDto) {
+    public ApiResponse<?> updateBillProviderCharges(HttpServletRequest request,String token,Long id, CreateChargeDto updateChargeDto) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -371,9 +373,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
 
 
     @Override
-    public ApiResponse<?> activateCategory(String token,Long id, boolean isActive) {
+    public ApiResponse<?> activateCategory(HttpServletRequest request,String token,Long id, boolean isActive) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -399,9 +401,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
 
 
     @Override
-    public ApiResponse<?> createCategory(String token, BillCategoryName name, String  description) {
+    public ApiResponse<?> createCategory(HttpServletRequest request,String token, BillCategoryName name, String  description) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -429,9 +431,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> fetchAllCategory(String token) {
+    public ApiResponse<?> fetchAllCategory(HttpServletRequest request,String token) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -705,9 +707,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
 //    }
 
     @Override
-    public ApiResponse<?> filterAllCategory(String token, int pageNo, int pageSize) {
+    public ApiResponse<?> filterAllCategory(HttpServletRequest request,String token, int pageNo, int pageSize) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -726,9 +728,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> filterAllServiceProvider(String token, int pageNo, int pageSize) {
+    public ApiResponse<?> filterAllServiceProvider(HttpServletRequest request,String token, int pageNo, int pageSize) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -777,9 +779,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
 //    }
 
     @Override
-    public ApiResponse<?> createServiceProviderCategory(String token, Long serviceProviderId, String name, String description, String type) {
+    public ApiResponse<?> createServiceProviderCategory(HttpServletRequest request,String token, Long serviceProviderId, String name, String description, String type) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -811,9 +813,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> createServiceProviderBiller(String token, Long serviceProviderCategoryId, String name, String description, String type) {
+    public ApiResponse<?> createServiceProviderBiller(HttpServletRequest request,String token, Long serviceProviderCategoryId, String name, String description, String type) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -845,9 +847,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> createServiceProviderProduct(String token, Long serviceProviderBillerId, String name, String description, String type, boolean hasBundle, boolean hasTokenValidation) {
+    public ApiResponse<?> createServiceProviderProduct(HttpServletRequest request,String token, Long serviceProviderBillerId, String name, String description, String type, boolean hasBundle, boolean hasTokenValidation) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -883,9 +885,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
 
 
     @Override
-    public ApiResponse<?> createServiceProviderProductBundle(String token, Long serviceProviderProductId, BigDecimal amount, String name, String description, String type) {
+    public ApiResponse<?> createServiceProviderProductBundle(HttpServletRequest request,String token, Long serviceProviderProductId, BigDecimal amount, String name, String description, String type) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -919,9 +921,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> fetchServiceProviderCategory(String token, Long serviceProviderId, int pageNo, int pageSize) {
+    public ApiResponse<?> fetchServiceProviderCategory(HttpServletRequest request,String token, Long serviceProviderId, int pageNo, int pageSize) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -949,9 +951,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> fetchServiceProviderBiller(String token, Long serviceProviderCategoryId, int pageNo, int pageSize) {
+    public ApiResponse<?> fetchServiceProviderBiller(HttpServletRequest request,String token, Long serviceProviderCategoryId, int pageNo, int pageSize) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -979,9 +981,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> fetchServiceProviderProduct(String token, Long serviceProviderBillerId, int pageNo, int pageSize) {
+    public ApiResponse<?> fetchServiceProviderProduct(HttpServletRequest request,String token, Long serviceProviderBillerId, int pageNo, int pageSize) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -1010,9 +1012,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
 
 
     @Override
-    public ApiResponse<?> fetchServiceProviderProductBundle(String token, Long serviceProviderProductId, int pageNo, int pageSize) {
+    public ApiResponse<?> fetchServiceProviderProductBundle(HttpServletRequest request,String token, Long serviceProviderProductId, int pageNo, int pageSize) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -1040,9 +1042,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> fetchBillChargesForProviders(String token, Long serviceProviderId, int pageNo, int pageSize) {
+    public ApiResponse<?> fetchBillChargesForProviders(HttpServletRequest request,String token, Long serviceProviderId, int pageNo, int pageSize) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -1070,9 +1072,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> adminAnalysis(String token) {
+    public ApiResponse<?> adminAnalysis(HttpServletRequest request,String token) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -1115,9 +1117,9 @@ public class AdminBillPaymentServiceImpl implements AdminBillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> fetchOrFilterTransactionHistory(String token,String endDate, String field, String value, int pageNo, int pageSize) {
+    public ApiResponse<?> fetchOrFilterTransactionHistory(HttpServletRequest request,String token,String endDate, String field, String value, int pageNo, int pageSize) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 

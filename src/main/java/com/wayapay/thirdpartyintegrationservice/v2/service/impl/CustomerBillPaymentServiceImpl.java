@@ -33,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -42,9 +43,6 @@ import java.util.concurrent.CompletableFuture;
 public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
     private final CategoryRepository categoryRepository;
-//    private final BillerCategoryRepository billerCategoryRepository;
-//    private final BillerProductRepository billerProductRepository;
-//    private final BillerProductBundleRepository billerProductBundleRepository;
     private final ServiceProviderRepository serviceProviderRepository;
     private final ServiceProviderBillerRepository serviceProviderBillerRepository;
     private final ServiceProviderCategoryRepository serviceProviderCategoryRepository;
@@ -72,9 +70,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
     private String quickTellerProviderReferenceCode;
 
     @Override
-    public ApiResponse<?> fetchAllBillCategory(String token) {
+    public ApiResponse<?> fetchAllBillCategory(HttpServletRequest request,String token) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -91,9 +89,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
     }
 
     @Override
-    public ApiResponse<?> verifyCustomerAccountOrToken(String token, ValidateCustomerToken customerToken) {
+    public ApiResponse<?> verifyCustomerAccountOrToken(HttpServletRequest request,String token, ValidateCustomerToken customerToken) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -126,9 +124,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override
-    public ApiResponse<?> fetchBillersByCategory(String token, Long categoryId) {
+    public ApiResponse<?> fetchBillersByCategory(HttpServletRequest request,String token, Long categoryId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -162,9 +160,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override
-    public ApiResponse<?> fetchAllProductByBiller(String token, Long serviceProviderBillerId) {
+    public ApiResponse<?> fetchAllProductByBiller(HttpServletRequest request,String token, Long serviceProviderBillerId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -186,9 +184,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override
-    public ApiResponse<?> fetchAllBundleByProduct(String token, Long serviceProviderProductId) {
+    public ApiResponse<?> fetchAllBundleByProduct(HttpServletRequest request,String token, Long serviceProviderProductId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -234,9 +232,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override @Transactional
-    public ApiResponse<?> makeElectricityPayment(String token,Long serviceProviderBillerId, Long serviceProviderId, ElectricityPaymentDto electricityPaymentDto,String userAccountNumber,String pin) {
+    public ApiResponse<?> makeElectricityPayment(HttpServletRequest request,String token,Long serviceProviderBillerId, Long serviceProviderId, ElectricityPaymentDto electricityPaymentDto,String userAccountNumber,String pin) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -261,7 +259,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             BigDecimal secureAmountSentToBiller = electricityPaymentDto.getAmount().add(billerFee);
             String eventId = fetchBillEventId(serviceProvider.get().getName());
 
-            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(userAccountNumber, token, false);
+            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(request,userAccountNumber, token, false);
             if(newWalletResponse == null)
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Debit account not found",null);
 
@@ -274,7 +272,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             if(serviceProvider.get().getName().toLowerCase().startsWith("baxi")){
 
                 String paymentReferenceNumber = baxiBillPaymentReferenceNumber();
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(electricityPaymentDto.getAmount());
                     transactionDto.setBillerFee(billerFee);
@@ -324,7 +322,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Product not available, can not process your bill payment", null);
 
                 String paymentReferenceNumber =  quickTellerBillPaymentReferenceNumber();
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(electricityPaymentDto.getAmount());
                     transactionDto.setBillerFee(billerFee);
@@ -385,9 +383,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override @Transactional
-    public ApiResponse<?> makeDataBundlePayment(String token,Long serviceProviderBundleId, Long serviceProviderId, DataBundlePaymentDto dataBundlePaymentDto,String userAccountNumber,String pin,Long serviceProviderBillerId) {
+    public ApiResponse<?> makeDataBundlePayment(HttpServletRequest request,String token,Long serviceProviderBundleId, Long serviceProviderId, DataBundlePaymentDto dataBundlePaymentDto,String userAccountNumber,String pin,Long serviceProviderBillerId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -433,7 +431,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             BigDecimal secureAmountSentToBiller = new BigDecimal(dataBundlePaymentDto.getAmount()).add(billerFee);
             String eventId = fetchBillEventId(serviceProvider.get().getName());
 
-            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(userAccountNumber, token, false);
+            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(request,userAccountNumber, token, false);
             if(newWalletResponse == null)
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Debit account not found",null);
 
@@ -447,7 +445,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             if(serviceProvider.get().getName().toLowerCase().startsWith("baxi")){
                 String paymentReferenceNumber = baxiBillPaymentReferenceNumber();
 
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.DATA_TOPUP,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.DATA_TOPUP,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(new BigDecimal(dataBundlePaymentDto.getAmount()));
                     transactionDto.setBillerFee(billerFee);
@@ -495,7 +493,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Product not available, can not process your bill payment", null);
 
                 String paymentReferenceNumber =  quickTellerBillPaymentReferenceNumber();
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(new BigDecimal(dataBundlePaymentDto.getAmount()));
                     transactionDto.setBillerFee(billerFee);
@@ -556,9 +554,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override @Transactional
-    public ApiResponse<?> makeAirtimePayment(String token,Long serviceProviderBillerId, Long serviceProviderId, AirtimePaymentDto airtimePaymentDto,String userAccountNumber,String pin) {
+    public ApiResponse<?> makeAirtimePayment(HttpServletRequest request,String token,Long serviceProviderBillerId, Long serviceProviderId, AirtimePaymentDto airtimePaymentDto,String userAccountNumber,String pin) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -584,7 +582,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             BigDecimal secureAmountSentToBiller = actualAmount.add(billerFee);
             String eventId = fetchBillEventId(serviceProvider.get().getName());
 
-            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(userAccountNumber, token, false);
+            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(request,userAccountNumber, token, false);
             if(newWalletResponse == null)
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Debit account not found",null);
 
@@ -598,7 +596,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             if(serviceProvider.get().getName().toLowerCase().startsWith("baxi")){
 
                 String paymentReferenceNumber = baxiBillPaymentReferenceNumber();
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.AIRTIME_TOPUP,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.AIRTIME_TOPUP,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(new BigDecimal(airtimePaymentDto.getAmount()));
                     transactionDto.setBillerFee(billerFee);
@@ -644,7 +642,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Product not available, can not process your bill payment", null);
 
                 String paymentReferenceNumber =  quickTellerBillPaymentReferenceNumber();
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(new BigDecimal(airtimePaymentDto.getAmount()));
                     transactionDto.setBillerFee(billerFee);
@@ -705,9 +703,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override @Transactional
-    public ApiResponse<?> makeEpinPayment(String token,Long serviceProviderBundleId, Long serviceProviderId, EpinPaymentDto epinPaymentDto,String userAccountNumber, String pin,Long serviceProviderBillerId) {
+    public ApiResponse<?> makeEpinPayment(HttpServletRequest request,String token,Long serviceProviderBundleId, Long serviceProviderId, EpinPaymentDto epinPaymentDto,String userAccountNumber, String pin,Long serviceProviderBillerId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -764,11 +762,11 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                 String paymentReferenceNumber = baxiBillPaymentReferenceNumber();
                 String eventId = fetchBillEventId(serviceProvider.get().getName());
 
-                NewWalletResponse  newWalletResponse = fetchUserAccountDetail(userAccountNumber, token, false);
+                NewWalletResponse  newWalletResponse = fetchUserAccountDetail(request,userAccountNumber, token, false);
                 if(newWalletResponse == null)
                     return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Debit account not found",null);
 
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(new BigDecimal(epinPaymentDto.getAmount()));
                     transactionDto.setBillerFee(billerFee);
@@ -822,9 +820,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override @Transactional
-    public ApiResponse<?> makeCableTvPayment(String token, Long serviceProviderBundleId,Long serviceProviderId, CableTvPaymentDto cableTvPaymentDto,String userAccountNumber, String pin,Long serviceProviderBillerId) {
+    public ApiResponse<?> makeCableTvPayment(HttpServletRequest request,String token, Long serviceProviderBundleId,Long serviceProviderId, CableTvPaymentDto cableTvPaymentDto,String userAccountNumber, String pin,Long serviceProviderBillerId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -871,7 +869,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             BigDecimal secureAmountSentToBiller = actualAmount.add(billerFee);
             String eventId = fetchBillEventId(serviceProvider.get().getName());
 
-            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(userAccountNumber, token, false);
+            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(request,userAccountNumber, token, false);
             if(newWalletResponse == null)
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Debit account not found",null);
 
@@ -885,7 +883,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             if(serviceProvider.get().getName().toLowerCase().startsWith("baxi")){
 
                 String paymentReferenceNumber = baxiBillPaymentReferenceNumber();
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.CABLE,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.CABLE,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(new BigDecimal(cableTvPaymentDto.getAmount()));
                     transactionDto.setBillerFee(billerFee);
@@ -930,7 +928,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Product not available, can not process your bill payment", null);
 
                 String paymentReferenceNumber =  quickTellerBillPaymentReferenceNumber();
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(new BigDecimal(cableTvPaymentDto.getAmount()));
                     transactionDto.setBillerFee(billerFee);
@@ -991,9 +989,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override @Transactional
-    public ApiResponse<?> makeBettingPayment(String token,Long serviceProviderBillerId, Long serviceProviderId, BettingPaymentDto bettingPaymentDto,String userAccountNumber, String pin) {
+    public ApiResponse<?> makeBettingPayment(HttpServletRequest request,String token,Long serviceProviderBillerId, Long serviceProviderId, BettingPaymentDto bettingPaymentDto,String userAccountNumber, String pin) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -1019,7 +1017,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             BigDecimal secureAmountSentToBiller = actualAmount.add(billerFee);
             String eventId = fetchBillEventId(serviceProvider.get().getName());
 
-            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(userAccountNumber, token, false);
+            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(request,userAccountNumber, token, false);
             if(newWalletResponse == null)
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Debit account not found",null);
 
@@ -1032,7 +1030,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
             if(serviceProvider.get().getName().toLowerCase().startsWith("baxi")){
                 String paymentReferenceNumber = baxiBillPaymentReferenceNumber();
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.BETTING,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.BETTING,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(bettingPaymentDto.getAmount());
                     transactionDto.setBillerFee(billerFee);
@@ -1078,7 +1076,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Product not available, can not process your bill payment", null);
 
                 String paymentReferenceNumber =  quickTellerBillPaymentReferenceNumber();
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(bettingPaymentDto.getAmount());
                     transactionDto.setBillerFee(billerFee);
@@ -1139,9 +1137,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override @Transactional
-    public ApiResponse<?> makeOtherPayment(String token,Long serviceProviderBillerId, Long serviceProviderId, OthersPaymentDto othersPaymentDto,String userAccountNumber, String pin) {
+    public ApiResponse<?> makeOtherPayment(HttpServletRequest request,String token,Long serviceProviderBillerId, Long serviceProviderId, OthersPaymentDto othersPaymentDto,String userAccountNumber, String pin) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -1167,7 +1165,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             BigDecimal secureAmountSentToBiller = actualAmount.add(billerFee);
             String eventId = fetchBillEventId(serviceProvider.get().getName());
 
-            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(userAccountNumber, token, false);
+            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(request,userAccountNumber, token, false);
             if(newWalletResponse == null)
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Debit account not found",null);
 
@@ -1187,7 +1185,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Product not available, can not process your bill payment", null);
 
                 String paymentReferenceNumber =  quickTellerBillPaymentReferenceNumber();
-                if (secureFund(serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(othersPaymentDto.getAmount());
                     transactionDto.setBillerFee(billerFee);
@@ -1248,9 +1246,9 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override
-    public ApiResponse<?> fetchBillTransactionByReference(String token, String reference) {
+    public ApiResponse<?> fetchBillTransactionByReference(HttpServletRequest request,String token, String reference) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -1275,154 +1273,94 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             switch (name){
                 case epin:
                     Optional<ServiceProvider> provider = serviceProviderRepository.findFirstByPrecedenceAndProcessEpinAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(provider.isPresent())
-                        return provider.get().getId();
-                    return null;
+                    return provider.map(ServiceProvider::getId).orElse(null);
                 case airtime:
                     Optional<ServiceProvider> airtime = serviceProviderRepository.findFirstByPrecedenceAndProcessAirtimeAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(airtime.isPresent())
-                        return airtime.get().getId();
-                    return null;
+                    return airtime.map(ServiceProvider::getId).orElse(null);
                 case cabletv:
                     Optional<ServiceProvider> cableTv = serviceProviderRepository.findFirstByPrecedenceAndProcessCableTvAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(cableTv.isPresent())
-                        return cableTv.get().getId();
-                    return null;
+                    return cableTv.map(ServiceProvider::getId).orElse(null);
                 case databundle:
                     Optional<ServiceProvider> dataBundle = serviceProviderRepository.findFirstByPrecedenceAndProcessDataBundleAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(dataBundle.isPresent())
-                        return dataBundle.get().getId();
-                    return null;
+                    return dataBundle.map(ServiceProvider::getId).orElse(null);
                 case electricity:
                     Optional<ServiceProvider> electricity = serviceProviderRepository.findFirstByPrecedenceAndProcessElectricityAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(electricity.isPresent())
-                        return electricity.get().getId();
-                    return null;
+                    return electricity.map(ServiceProvider::getId).orElse(null);
                 case betting:
                     Optional<ServiceProvider> betting = serviceProviderRepository.findFirstByPrecedenceAndProcessBettingAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(betting.isPresent())
-                        return betting.get().getId();
-                    return null;
+                    return betting.map(ServiceProvider::getId).orElse(null);
                 case government_payments:
                     Optional<ServiceProvider> government_payments = serviceProviderRepository.findFirstByPrecedenceAndProcessGovernmentPaymentAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(government_payments.isPresent())
-                        return government_payments.get().getId();
-                    return null;
+                    return government_payments.map(ServiceProvider::getId).orElse(null);
                 case education:
                     Optional<ServiceProvider> education = serviceProviderRepository.findFirstByPrecedenceAndProcessSchoolFeesAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(education.isPresent())
-                        return education.get().getId();
-                    return null;
+                    return education.map(ServiceProvider::getId).orElse(null);
                 case insurance:
                     Optional<ServiceProvider> insurance = serviceProviderRepository.findFirstByPrecedenceAndProcessInsuranceAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(insurance.isPresent())
-                        return insurance.get().getId();
-                    return null;
+                    return insurance.map(ServiceProvider::getId).orElse(null);
                 case insurance_and_investment:
                     Optional<ServiceProvider> investmentAndInsurance = serviceProviderRepository.findFirstByPrecedenceAndProcessInsuranceInvestmentAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(investmentAndInsurance.isPresent())
-                        return investmentAndInsurance.get().getId();
-                    return null;
+                    return investmentAndInsurance.map(ServiceProvider::getId).orElse(null);
                 case schoolboard:
                     Optional<ServiceProvider> schoolBoard = serviceProviderRepository.findFirstByPrecedenceAndProcessSchoolBoardAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(schoolBoard.isPresent())
-                        return schoolBoard.get().getId();
-                    return null;
+                    return schoolBoard.map(ServiceProvider::getId).orElse(null);
                 case shopping:
                     Optional<ServiceProvider> shopping = serviceProviderRepository.findFirstByPrecedenceAndProcessShoppingAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(shopping.isPresent())
-                        return shopping.get().getId();
-                    return null;
+                    return shopping.map(ServiceProvider::getId).orElse(null);
                 case online_shopping:
                     Optional<ServiceProvider> online_shopping = serviceProviderRepository.findFirstByPrecedenceAndProcessOnlineShoppingAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(online_shopping.isPresent())
-                        return online_shopping.get().getId();
-                    return null;
+                    return online_shopping.map(ServiceProvider::getId).orElse(null);
                 case subscription:
                     Optional<ServiceProvider> subscription = serviceProviderRepository.findFirstByPrecedenceAndProcessInternetSubscriptionAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(subscription.isPresent())
-                        return subscription.get().getId();
-                    return null;
+                    return subscription.map(ServiceProvider::getId).orElse(null);
                 case international_airtime:
                     Optional<ServiceProvider> international_airtime = serviceProviderRepository.findFirstByPrecedenceAndProcessInternationalAirtimeAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(international_airtime.isPresent())
-                        return international_airtime.get().getId();
-                    return null;
+                    return international_airtime.map(ServiceProvider::getId).orElse(null);
                 case religious_institutions:
                     Optional<ServiceProvider> religious_institutions = serviceProviderRepository.findFirstByPrecedenceAndProcessReligiousInstitutionsAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(religious_institutions.isPresent())
-                        return religious_institutions.get().getId();
-                    return null;
+                    return religious_institutions.map(ServiceProvider::getId).orElse(null);
                 case donation:
                     Optional<ServiceProvider> donation = serviceProviderRepository.findFirstByPrecedenceAndProcessTithesDonationAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(donation.isPresent())
-                        return donation.get().getId();
-                    return null;
+                    return donation.map(ServiceProvider::getId).orElse(null);
                 case pay_tv_subscription:
                     Optional<ServiceProvider> pay_tv_subscription = serviceProviderRepository.findFirstByPrecedenceAndProcessPayTvSubscriptionAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(pay_tv_subscription.isPresent())
-                        return pay_tv_subscription.get().getId();
-                    return null;
+                    return pay_tv_subscription.map(ServiceProvider::getId).orElse(null);
                 case airline:
                     Optional<ServiceProvider> airline = serviceProviderRepository.findFirstByPrecedenceAndProcessAirlineTicketAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(airline.isPresent())
-                        return airline.get().getId();
-                    return null;
+                    return airline.map(ServiceProvider::getId).orElse(null);
                 case credit_and_loan_repayment:
                     Optional<ServiceProvider> creditAndLoan = serviceProviderRepository.findFirstByPrecedenceAndProcessCreditLoanRepaymentAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(creditAndLoan.isPresent())
-                        return creditAndLoan.get().getId();
-                    return null;
+                    return creditAndLoan.map(ServiceProvider::getId).orElse(null);
                 case vehicle:
                     Optional<ServiceProvider>  vehicle= serviceProviderRepository.findFirstByPrecedenceAndProcessVehicleAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(vehicle.isPresent())
-                        return vehicle.get().getId();
-                    return null;
+                    return vehicle.map(ServiceProvider::getId).orElse(null);
                 case transport:
                     Optional<ServiceProvider> transport = serviceProviderRepository.findFirstByPrecedenceAndProcessTransportAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(transport.isPresent())
-                        return transport.get().getId();
-                    return null;
+                    return transport.map(ServiceProvider::getId).orElse(null);
                 case embassy:
                     Optional<ServiceProvider> embassy = serviceProviderRepository.findFirstByPrecedenceAndProcessEmbassyAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(embassy.isPresent())
-                        return embassy.get().getId();
-                    return null;
+                    return embassy.map(ServiceProvider::getId).orElse(null);
                 case event_ticket:
                     Optional<ServiceProvider> event_ticket = serviceProviderRepository.findFirstByPrecedenceAndProcessEventTicketAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(event_ticket.isPresent())
-                        return event_ticket.get().getId();
-                    return null;
+                    return event_ticket.map(ServiceProvider::getId).orElse(null);
                 case lagos_state_cbs:
                     Optional<ServiceProvider> lagos_state_cbs = serviceProviderRepository.findFirstByPrecedenceAndProcessLagosStateCBSAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(lagos_state_cbs.isPresent())
-                        return lagos_state_cbs.get().getId();
-                    return null;
+                    return lagos_state_cbs.map(ServiceProvider::getId).orElse(null);
                 case nestle_distributors:
                     Optional<ServiceProvider> nestle_distributors = serviceProviderRepository.findFirstByPrecedenceAndProcessNestleDistributorsAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(nestle_distributors.isPresent())
-                        return nestle_distributors.get().getId();
-                    return null;
+                    return nestle_distributors.map(ServiceProvider::getId).orElse(null);
                 case black_friday:
                     Optional<ServiceProvider> black_friday = serviceProviderRepository.findFirstByPrecedenceAndProcessBlackFridayAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(black_friday.isPresent())
-                        return black_friday.get().getId();
-                    return null;
+                    return black_friday.map(ServiceProvider::getId).orElse(null);
                 case apm_terminals:
                     Optional<ServiceProvider> apm_terminals = serviceProviderRepository.findFirstByPrecedenceAndProcessApmTerminalsAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(apm_terminals.isPresent())
-                        return apm_terminals.get().getId();
-                    return null;
+                    return apm_terminals.map(ServiceProvider::getId).orElse(null);
                 case dealer_payments:
                     Optional<ServiceProvider> dealer_payments = serviceProviderRepository.findFirstByPrecedenceAndProcessDealerPaymentsAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(dealer_payments.isPresent())
-                        return dealer_payments.get().getId();
-                    return null;
+                    return dealer_payments.map(ServiceProvider::getId).orElse(null);
                 case tax:
                     Optional<ServiceProvider> tax = serviceProviderRepository.findFirstByPrecedenceAndProcessTaxesLeviesAndIsActiveAndIsDeleted(1,true,true,false);
-                    if(tax.isPresent())
-                        return tax.get().getId();
-                    return null;
+                    return tax.map(ServiceProvider::getId).orElse(null);
                 default:
                     return null;
 
@@ -1519,12 +1457,12 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFund(String providerName, BigDecimal amount, Long userId, String userAccountNumber,
+    public boolean secureFund(HttpServletRequest request,String providerName, BigDecimal amount, Long userId, String userAccountNumber,
                               String transactionReference, String token, String pin, String eventId,
                               BillCategoryType billType,Double accountBalance,String accountName)
             throws ThirdPartyIntegrationException {
 
-        processPayment( providerName,amount,userId,userAccountNumber,transactionReference,token,pin,eventId,billType,accountBalance,accountName);
+        processPayment(request,providerName,amount,userId,userAccountNumber,transactionReference,token,pin,eventId,billType,accountBalance,accountName);
         return true;
     }
 
@@ -1542,15 +1480,15 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
     }
 
     @AuditPaymentOperation(stage = Stage.SECURE_FUND, status = Status.START)
-    public boolean secureFundAdmin(String providerName, BigDecimal amount, Long userId, String userAccountNumber, String transactionReference, String token, String pin, BillCategoryType billType, String eventId,Double accountBalance,String accountName)
+    public boolean secureFundAdmin(HttpServletRequest request,String providerName, BigDecimal amount, Long userId, String userAccountNumber, String transactionReference, String token, String pin, BillCategoryType billType, String eventId,Double accountBalance,String accountName)
             throws ThirdPartyIntegrationException {
 
-        processPayment(providerName, amount,  userId,  userAccountNumber,  transactionReference,  token, pin, eventId,billType,accountBalance,accountName);
+        processPayment(request,providerName, amount,  userId,  userAccountNumber,  transactionReference,  token, pin, eventId,billType,accountBalance,accountName);
         return true;
     }
 
 
-    private void processPayment(String providerName, BigDecimal amount, Long userId,String userAccountNumber,
+    private void processPayment(HttpServletRequest request,String providerName, BigDecimal amount, Long userId,String userAccountNumber,
                                 String transactionReference, String token, String pin, String eventId,
                                 BillCategoryType billType,Double accountBalance,String accountName)
             throws ThirdPartyIntegrationException {
@@ -1571,7 +1509,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         trans.setSenderName(accountName);
         trans.setReceiverName(providerName);
         try {
-            ResponseEntity<String> response = walletProxy.transferFromUserToWaya(trans,token, pin);
+            ResponseEntity<String> response = walletProxy.transferFromUserToWaya(trans,token, pin,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             log.info("::Transfer Response {}",response);
         } catch (FeignException ex) {
             log.error(":::Error processPayment {}",ex.getLocalizedMessage());
@@ -1590,8 +1528,8 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         }
     }
 
-    private NewWalletResponse fetchUserAccountDetail(String userAccountNumber, String token, Boolean isAdmin){
-        ResponseEntity<InfoResponse> responseEntity = walletProxy.getUserWalletByUser(userAccountNumber, token);
+    private NewWalletResponse fetchUserAccountDetail(HttpServletRequest request,String userAccountNumber, String token, Boolean isAdmin){
+        ResponseEntity<InfoResponse> responseEntity = walletProxy.getUserWalletByUser(userAccountNumber, token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
         InfoResponse infoResponse = responseEntity.getBody();
         return Objects.requireNonNull(infoResponse).data;
     }
@@ -1600,9 +1538,11 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
     private void reverseFailedBillPaymentTransaction(String reference,String accountNumber){
         try {
             String token = tokenImpl.getToken();
+            String clientId = "WAYABANK";
+            String clientType = "ADMIN";
             WalletTxnResponse existingTxn;
             try {
-                existingTxn = walletProxy.fetchTransactionByPaymentReference(token,reference);
+                existingTxn = walletProxy.fetchTransactionByPaymentReference(token,reference,clientId,clientType);
                 if(!existingTxn.isStatus() && !existingTxn.getCode().equals(ApiResponse.Code.SUCCESS)){
                     log.info("::Bill Transaction not found for reversal {}",reference);
                     return;
@@ -1630,7 +1570,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             reversalDto.setTranCrncy(txn.get().getTranCrncyCode());
             ReversalRespDto resp;
             try {
-                resp = walletProxy.doPaymentReversal(token,reversalDto);
+                resp = walletProxy.doPaymentReversal(token,reversalDto,clientId,clientType);
                 log.info("::Reversal Resp {}",resp);
                 return;
             }catch (FeignException ex){

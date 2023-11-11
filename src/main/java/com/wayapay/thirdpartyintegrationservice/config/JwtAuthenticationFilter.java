@@ -1,15 +1,21 @@
 package com.wayapay.thirdpartyintegrationservice.config;
 
+import com.wayapay.thirdpartyintegrationservice.v2.dto.request.AuthResponse;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.UserDetail;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
+import com.wayapay.thirdpartyintegrationservice.v2.dto.response.TokenCheckResponse;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -17,14 +23,17 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
-    @Autowired
-    private ProfileDetailsService userDetailsService;
+    public JwtAuthenticationFilter(AuthenticationManager authManager) {
+        super(authManager);
+    }
 
     @Autowired
     private JwtTokenHelper jwtTokenUtil;
@@ -32,50 +41,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws IOException, ServletException {
 
-        String authToken = getAuthToken(req.getHeader(Constants.HEADER_STRING)).orElse(null);
-        String username = getUsername(authToken).orElse(null);
+        String header = req.getHeader(Constants.HEADER_STRING);
+        if (header == null) {
+            chain.doFilter(req, res);
+            return;
+        }
+        String clientId = req.getHeader(Constants.CLIENT_ID);
+        if (clientId == null) {
+            chain.doFilter(req, res);
+            return;
+        }
+        String clientType = req.getHeader(Constants.CLIENT_TYPE);
+        if (clientType == null) {
+            chain.doFilter(req, res);
+            return;
+        }
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            log.info("Wha are you doing here name {} context {} ",username,SecurityContextHolder.getContext().getAuthentication());
-            UserDetails userDetails = userDetailsService.loadUserByUsername(authToken);
+        Optional<AuthResponse> tokenResponse = jwtTokenUtil.getUserDetail(header,clientId,clientType);
+        if(tokenResponse.isPresent() && tokenResponse.get().getStatus()){
+            List<GrantedAuthority> grantedAuthorities = tokenResponse.get().getData().getRoles().stream().map(r -> {
+                log.info("Privilege List::: {}, {} and {}", r, 2, 3);
+                return new SimpleGrantedAuthority(r);
+            }).collect(Collectors.toList());
 
-            if (Boolean.TRUE.equals(jwtTokenUtil.isValidToken(authToken, userDetails))) {
-                UsernamePasswordAuthenticationToken authentication = jwtTokenUtil.getAuthentication(userDetails);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                req.setAttribute(Constants.USERNAME, username);
-                req.setAttribute(Constants.TOKEN, authToken);
-            }
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(tokenResponse.get().getData(), null, grantedAuthorities)
+            );
         }
 
         chain.doFilter(req, res);
     }
 
-    private Optional<String> getAuthToken(String header){
-//        log.info("Token is {}", jwtTokenUtil.generateToken(CommonUtils.convertToDate(LocalDate.now().plusDays(30))));
-        if (!Objects.isNull(header) && header.startsWith(Constants.TOKEN_PREFIX)) {
-//            String[] authTokenArray = header.split("\\s+");
-//            return Optional.of(authTokenArray.length == 2 ? authTokenArray[1] : authTokenArray[0]);
-            return Optional.of(header);
-        }
-        return Optional.ofNullable(header);
-    }
 
-    private Optional<String> getUsername(String authToken){
-        if (!Objects.isNull(authToken)){
-            try {
-                Optional<UserDetail> userDetailOptional = jwtTokenUtil.getUserDetail(authToken);
-                return userDetailOptional.map(userDetail -> jwtTokenUtil.getUsernameFromToken(userDetail));
-            } catch (IllegalArgumentException e) {
-                log.error("an error occurred during getting username fromUser token", e);
-            } catch (ExpiredJwtException e) {
-                log.warn("the token is expired and not valid anymore "+ e.getMessage());
-            } catch (SignatureException e) {
-                log.warn("Authentication Failed. Username or Password not valid. "+e.getMessage());
-            } catch (MalformedJwtException e) {
-                log.warn("Malformed token."+e.getMessage());
-            }
-        }
-
-        return Optional.empty();
-    }
 }

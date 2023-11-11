@@ -36,7 +36,9 @@ public class TokenImpl {
             loginDto.setOtp("");
             loginDto.setPassword(environment.getProperty("waya.service.password"));
             loginDto.setEmailOrPhoneNumber( environment.getProperty("waya.service.username"));
-            TokenCheckResponse tokenData = authProxy.getToken(loginDto);
+            String clientId = "WAYABANK";
+            String clientType = "ADMIN";
+            TokenCheckResponse tokenData = authProxy.getToken(loginDto,clientId,clientType);
             return tokenData.getData().getToken();
         }catch (Exception ex){
             log.error("::Error Login {}",ex.getLocalizedMessage());

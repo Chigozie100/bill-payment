@@ -26,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -55,9 +56,9 @@ public class BaxiServiceImpl implements BaxiService {
 
 
     @Override @Transactional
-    public ApiResponse<?> createBaxiServiceProviderCategory(String token, Long serviceProviderId) {
+    public ApiResponse<?> createBaxiServiceProviderCategory(HttpServletRequest request,String token, Long serviceProviderId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -113,9 +114,9 @@ public class BaxiServiceImpl implements BaxiService {
 
 
     @Override @Transactional
-    public ApiResponse<?> createBaxiServiceProviderBiller(String token, Long serviceProviderId) {
+    public ApiResponse<?> createBaxiServiceProviderBiller(HttpServletRequest request,String token, Long serviceProviderId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -338,9 +339,9 @@ public class BaxiServiceImpl implements BaxiService {
 
 
     @Override @Transactional
-    public ApiResponse<?> createBaxiServiceProviderProduct(String token, Long serviceProviderId,Long serviceProviderCategoryId) {
+    public ApiResponse<?> createBaxiServiceProviderProduct(HttpServletRequest request,String token, Long serviceProviderId,Long serviceProviderCategoryId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -480,9 +481,9 @@ public class BaxiServiceImpl implements BaxiService {
 
 
     @Override @Transactional
-    public ApiResponse<?> createBaxiServiceProviderBillerLogo(String token, Long serviceProviderId,Long serviceProviderCategoryId) {
+    public ApiResponse<?> createBaxiServiceProviderBillerLogo(HttpServletRequest request,String token, Long serviceProviderId,Long serviceProviderCategoryId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -901,9 +902,9 @@ public class BaxiServiceImpl implements BaxiService {
     }
 
     @Override
-    public ApiResponse<?> fetchTransactionQuery(String token, String reference) {
+    public ApiResponse<?> fetchTransactionQuery(HttpServletRequest request,String token, String reference) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 

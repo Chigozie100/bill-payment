@@ -39,7 +39,7 @@ public class QuickTellerController {
     @PostMapping(path = "/createCategory/{serviceProviderId}")
     public ResponseEntity<?> createQtServiceProviderCategory(HttpServletRequest request,
                                                            @PathVariable Long serviceProviderId){
-        ApiResponse<?> response =  quickTellerService.createQuickTellerServiceProviderCategory(request.getHeader(HEADER_STRING),serviceProviderId);
+        ApiResponse<?> response =  quickTellerService.createQuickTellerServiceProviderCategory(request,request.getHeader(HEADER_STRING),serviceProviderId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -51,7 +51,7 @@ public class QuickTellerController {
     public ResponseEntity<?> createQtServiceProviderBillerByCategory(HttpServletRequest request,
                                                                    @PathVariable Long serviceProviderId,
                                                                    @RequestParam Long serviceProviderCategoryId){
-        ApiResponse<?> response =  quickTellerService.createQuickTellerServiceProviderBiller(request.getHeader(HEADER_STRING),serviceProviderId,serviceProviderCategoryId);
+        ApiResponse<?> response =  quickTellerService.createQuickTellerServiceProviderBiller(request,request.getHeader(HEADER_STRING),serviceProviderId,serviceProviderCategoryId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -63,7 +63,7 @@ public class QuickTellerController {
     public ResponseEntity<?> createQtServiceProviderProductByBiller(HttpServletRequest request,
                                                                      @PathVariable Long serviceProviderId,
                                                                      @RequestParam Long serviceProviderCategoryId){
-        ApiResponse<?> response =  quickTellerService.createQuickTellerServiceProviderProductByBiller(request.getHeader(HEADER_STRING),serviceProviderId,serviceProviderCategoryId);
+        ApiResponse<?> response =  quickTellerService.createQuickTellerServiceProviderProductByBiller(request,request.getHeader(HEADER_STRING),serviceProviderId,serviceProviderCategoryId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -74,7 +74,7 @@ public class QuickTellerController {
     @PostMapping(path = "/getAuth")
     public ResponseEntity<?> fetchQtAuthCredentials(HttpServletRequest request,
                                                              @RequestParam String url){
-        ApiResponse<?> response =  quickTellerService.fetchHeaders(request.getHeader(HEADER_STRING),url);
+        ApiResponse<?> response =  quickTellerService.fetchHeaders(request,request.getHeader(HEADER_STRING),url);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -84,7 +84,7 @@ public class QuickTellerController {
     @GetMapping(path = "/getBiller/{categoryId}")
     public ResponseEntity<?> fetchQtBillers(HttpServletRequest request,
                                                 @PathVariable String categoryId){
-        ApiResponse<?> response =  quickTellerService.fetchBiller(request.getHeader(HEADER_STRING),categoryId);
+        ApiResponse<?> response =  quickTellerService.fetchBiller(request,request.getHeader(HEADER_STRING),categoryId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -93,7 +93,7 @@ public class QuickTellerController {
     @ApiOperation(value = "Fetch all category", notes = "Fetch all category")
     @GetMapping(path = "/getCategory")
     public ResponseEntity<?> fetchQtCategories(HttpServletRequest request){
-        ApiResponse<?> response =  quickTellerService.fetchCategories(request.getHeader(HEADER_STRING));
+        ApiResponse<?> response =  quickTellerService.fetchCategories(request,request.getHeader(HEADER_STRING));
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -103,7 +103,7 @@ public class QuickTellerController {
     @ApiOperation(value = "Get pay item by billerId", notes = "Get pay item by billerId")
     @GetMapping(path = "/getPayItem/{billerId}")
     public ResponseEntity<?> getQtPayItem(HttpServletRequest request, @PathVariable String billerId){
-        ApiResponse<?> response =  quickTellerService.getPayItem(request.getHeader(HEADER_STRING),billerId);
+        ApiResponse<?> response =  quickTellerService.getPayItem(request,request.getHeader(HEADER_STRING),billerId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -112,7 +112,7 @@ public class QuickTellerController {
     @ApiOperation(value = "Get transactionQuery", notes = "Get transactionQuery")
     @GetMapping(path = "/transactionQuery")
     public ResponseEntity<?> getQuickTellerTransactionQuery(HttpServletRequest request, @RequestParam String reference){
-        ApiResponse<?> response =  quickTellerService.verifyQuickTellerTransactionRefAdmin(request.getHeader(HEADER_STRING),reference);
+        ApiResponse<?> response =  quickTellerService.verifyQuickTellerTransactionRefAdmin(request,request.getHeader(HEADER_STRING),reference);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 

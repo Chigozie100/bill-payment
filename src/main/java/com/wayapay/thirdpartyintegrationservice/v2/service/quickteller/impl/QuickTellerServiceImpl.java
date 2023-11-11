@@ -2,6 +2,7 @@ package com.wayapay.thirdpartyintegrationservice.v2.service.quickteller.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.BillCategoryName;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.AuthResponse;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.ApiResponse;
@@ -25,6 +26,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -87,9 +89,9 @@ public class QuickTellerServiceImpl implements QuickTellerService {
 
 
     @Override
-    public ApiResponse<?> fetchHeaders(String token, String url) {
+    public ApiResponse<?> fetchHeaders(HttpServletRequest request,String token, String url) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -113,9 +115,9 @@ public class QuickTellerServiceImpl implements QuickTellerService {
     }
 
     @Override
-    public ApiResponse<?> fetchCategories(String token) {
+    public ApiResponse<?> fetchCategories(HttpServletRequest request,String token) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -134,9 +136,9 @@ public class QuickTellerServiceImpl implements QuickTellerService {
     }
 
     @Override
-    public ApiResponse<?> fetchBiller(String token, String categoryId) {
+    public ApiResponse<?> fetchBiller(HttpServletRequest request,String token, String categoryId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -157,9 +159,9 @@ public class QuickTellerServiceImpl implements QuickTellerService {
 
 
     @Override
-    public ApiResponse<?> getPayItem(String token, String billerId) {
+    public ApiResponse<?> getPayItem(HttpServletRequest request,String token, String billerId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -179,9 +181,9 @@ public class QuickTellerServiceImpl implements QuickTellerService {
 
 
     @Override @Transactional
-    public ApiResponse<?> createQuickTellerServiceProviderCategory(String token, Long serviceProviderId) {
+    public ApiResponse<?> createQuickTellerServiceProviderCategory(HttpServletRequest request,String token, Long serviceProviderId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -258,9 +260,9 @@ public class QuickTellerServiceImpl implements QuickTellerService {
 
 
     @Override @Transactional
-    public ApiResponse<?> createQuickTellerServiceProviderBiller(String token, Long serviceProviderId, Long serviceProviderCategoryId) {
+    public ApiResponse<?> createQuickTellerServiceProviderBiller(HttpServletRequest request,String token, Long serviceProviderId, Long serviceProviderCategoryId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -352,9 +354,9 @@ public class QuickTellerServiceImpl implements QuickTellerService {
 
 
     @Override @Transactional
-    public ApiResponse<?> createQuickTellerServiceProviderProductByBiller(String token, Long serviceProviderId, Long serviceProviderCategoryId) {
+    public ApiResponse<?> createQuickTellerServiceProviderProductByBiller(HttpServletRequest request,String token, Long serviceProviderId, Long serviceProviderCategoryId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 
@@ -557,6 +559,7 @@ public class QuickTellerServiceImpl implements QuickTellerService {
                 String msg = ex.contentUTF8();
                 int status = ex.status();
                 String message = formatErrorMessage(msg);
+                ex.printStackTrace();
                 if(message != null && message != "")
                     return new ApiResponse<>(false,status,message,null);
                 return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Fail to process your "+categoryType+" bill payment, try again later",null);
@@ -645,9 +648,9 @@ public class QuickTellerServiceImpl implements QuickTellerService {
 
 
     @Override
-    public ApiResponse<?> verifyQuickTellerTransactionRefAdmin(String token, String reference) {
+    public ApiResponse<?> verifyQuickTellerTransactionRefAdmin(HttpServletRequest request,String token, String reference) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token);
+            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
             if(!response.getStatus().equals(Boolean.TRUE))
                 return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
 

@@ -2,6 +2,8 @@ package com.wayapay.thirdpartyintegrationservice.util;
 
 public class Constants {
 
+    public static final String CLIENT_TYPE = "CLIENT-TYPE";
+    public static final String CLIENT_ID = "CLIENT-ID";
     public static final String ERROR_MESSAGE = "Unable to process request";
     public static final String BAXI_VALIDATATION = "Account Validation Error:Account does not exist in vending system";
     public static final String SUCCESS_MESSAGE = "Successful";

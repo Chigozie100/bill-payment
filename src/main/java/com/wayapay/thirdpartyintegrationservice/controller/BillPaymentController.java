@@ -35,7 +35,7 @@ public class BillPaymentController {
     @ApiOperation(value = "Fetch all category", notes = "Fetch all category")
     @GetMapping(path = "/fetchAllCategory")
     public ResponseEntity<?> fetchAllCategories(HttpServletRequest request){
-        ApiResponse<?> response =  billPaymentService.fetchAllBillCategory(request.getHeader(HEADER_STRING));
+        ApiResponse<?> response =  billPaymentService.fetchAllBillCategory(request,request.getHeader(HEADER_STRING));
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -46,7 +46,7 @@ public class BillPaymentController {
     @GetMapping(path = "/fetchBillerByCategory")
     public ResponseEntity<?> fetchAllBillerByCategory(HttpServletRequest request,
                                                    @RequestParam Long categoryId){
-        ApiResponse<?> response =  billPaymentService.fetchBillersByCategory(request.getHeader(HEADER_STRING),categoryId);
+        ApiResponse<?> response =  billPaymentService.fetchBillersByCategory(request,request.getHeader(HEADER_STRING),categoryId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -56,7 +56,7 @@ public class BillPaymentController {
     @GetMapping(path = "/fetchProductByBiller")
     public ResponseEntity<?> fetchAllProductByBiller(HttpServletRequest request,
                                                    @RequestParam Long serviceProviderBillerId){
-        ApiResponse<?> response =  billPaymentService.fetchAllProductByBiller(request.getHeader(HEADER_STRING),serviceProviderBillerId);
+        ApiResponse<?> response =  billPaymentService.fetchAllProductByBiller(request,request.getHeader(HEADER_STRING),serviceProviderBillerId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -67,7 +67,7 @@ public class BillPaymentController {
     @GetMapping(path = "/fetchBundleByProduct")
     public ResponseEntity<?> fetchAllBundleByProduct(HttpServletRequest request,
                                                      @RequestParam Long serviceProviderProductId){
-        ApiResponse<?> response =  billPaymentService.fetchAllBundleByProduct(request.getHeader(HEADER_STRING),serviceProviderProductId);
+        ApiResponse<?> response =  billPaymentService.fetchAllBundleByProduct(request,request.getHeader(HEADER_STRING),serviceProviderProductId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -90,7 +90,7 @@ public class BillPaymentController {
     @PostMapping(path = "/verifyCustomerToken")
     public ResponseEntity<?> verifyCustomerToken(HttpServletRequest request,
                                                  @Valid @RequestBody ValidateCustomerToken validateCustomerToken){
-        ApiResponse<?> response =  billPaymentService.verifyCustomerAccountOrToken(request.getHeader(HEADER_STRING),validateCustomerToken);
+        ApiResponse<?> response =  billPaymentService.verifyCustomerAccountOrToken(request,request.getHeader(HEADER_STRING),validateCustomerToken);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -105,7 +105,7 @@ public class BillPaymentController {
                                                     @RequestParam String userAccountNumber,
                                                     @RequestParam Long serviceProviderId,
                                                     @RequestParam Long serviceProviderBillerId){
-        ApiResponse<?> response =  billPaymentService.makeElectricityPayment(request.getHeader(HEADER_STRING),
+        ApiResponse<?> response =  billPaymentService.makeElectricityPayment(request,request.getHeader(HEADER_STRING),
                 serviceProviderBillerId,serviceProviderId,electricityPaymentDto,userAccountNumber,pin);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
@@ -121,7 +121,7 @@ public class BillPaymentController {
                                                     @RequestParam String userAccountNumber,
                                                     @RequestParam Long serviceProviderId,
                                                     @RequestParam Long serviceProviderBillerId){
-        ApiResponse<?> response =  billPaymentService.makeAirtimePayment(request.getHeader(HEADER_STRING),
+        ApiResponse<?> response =  billPaymentService.makeAirtimePayment(request,request.getHeader(HEADER_STRING),
                 serviceProviderBillerId,serviceProviderId,airtimePaymentDto,userAccountNumber,pin);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
@@ -138,7 +138,7 @@ public class BillPaymentController {
                                                 @RequestParam Long serviceProviderId,
                                                 @RequestParam(name = "serviceProviderBundleId",required = false) Long serviceProviderBundleId,
                                                    @RequestParam(name = "serviceProviderBillerId",required = false) Long serviceProviderBillerId){
-        ApiResponse<?> response =  billPaymentService.makeDataBundlePayment(request.getHeader(HEADER_STRING),
+        ApiResponse<?> response =  billPaymentService.makeDataBundlePayment(request,request.getHeader(HEADER_STRING),
                 serviceProviderBundleId,serviceProviderId,dataBundlePaymentDto,userAccountNumber,pin,serviceProviderBillerId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
@@ -155,7 +155,7 @@ public class BillPaymentController {
                                                    @RequestParam Long serviceProviderId,
                                                    @RequestParam(name = "serviceProviderBundleId",required = false) Long serviceProviderBundleId,
                                                    @RequestParam(name = "serviceProviderBillerId",required = false) Long serviceProviderBillerId){
-        ApiResponse<?> response =  billPaymentService.makeCableTvPayment(request.getHeader(HEADER_STRING),
+        ApiResponse<?> response =  billPaymentService.makeCableTvPayment(request,request.getHeader(HEADER_STRING),
                 serviceProviderBundleId,serviceProviderId,cableTvPaymentDto,userAccountNumber,pin,serviceProviderBillerId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
@@ -172,7 +172,7 @@ public class BillPaymentController {
                                                 @RequestParam Long serviceProviderId,
                                                 @RequestParam(name = "serviceProviderBundleId",required = false) Long serviceProviderBundleId,
                                                 @RequestParam(name = "serviceProviderBillerId",required = false) Long serviceProviderBillerId){
-        ApiResponse<?> response =  billPaymentService.makeEpinPayment(request.getHeader(HEADER_STRING),
+        ApiResponse<?> response =  billPaymentService.makeEpinPayment(request,request.getHeader(HEADER_STRING),
                 serviceProviderBundleId,serviceProviderId,epinPaymentDto,userAccountNumber,pin,serviceProviderBillerId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
@@ -189,7 +189,7 @@ public class BillPaymentController {
                                              @RequestParam String userAccountNumber,
                                              @RequestParam Long serviceProviderId,
                                              @RequestParam Long serviceProviderBillerId){
-        ApiResponse<?> response =  billPaymentService.makeBettingPayment(request.getHeader(HEADER_STRING),
+        ApiResponse<?> response =  billPaymentService.makeBettingPayment(request,request.getHeader(HEADER_STRING),
                 serviceProviderBillerId,serviceProviderId,bettingPaymentDto,userAccountNumber,pin);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
@@ -205,7 +205,7 @@ public class BillPaymentController {
                                                   @RequestParam String userAccountNumber,
                                                   @RequestParam Long serviceProviderId,
                                                   @RequestParam Long serviceProviderBillerId){
-        ApiResponse<?> response =  billPaymentService.makeOtherPayment(request.getHeader(HEADER_STRING),
+        ApiResponse<?> response =  billPaymentService.makeOtherPayment(request,request.getHeader(HEADER_STRING),
                 serviceProviderBillerId,serviceProviderId,othersPaymentDto,userAccountNumber,pin);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
@@ -217,7 +217,7 @@ public class BillPaymentController {
     @GetMapping(path = "/fetchTransactionByReference/{reference}")
     public ResponseEntity<?> fetchTransactionByReference(HttpServletRequest request,
                                                       @RequestParam String reference){
-        ApiResponse<?> response =  billPaymentService.fetchBillTransactionByReference(request.getHeader(HEADER_STRING),reference);
+        ApiResponse<?> response =  billPaymentService.fetchBillTransactionByReference(request,request.getHeader(HEADER_STRING),reference);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 

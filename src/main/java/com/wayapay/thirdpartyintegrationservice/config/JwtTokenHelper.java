@@ -39,22 +39,21 @@ public class JwtTokenHelper implements Serializable {
      * @return subject
      */
     public String getUsernameFromToken(UserDetail userDetail) {
-//        return getClaimFromToken(token, Claims::getSubject);
         return String.valueOf(userDetail.getId());
     }
 
-    public Optional<UserDetail> getUserDetail(String token){
+    public Optional<AuthResponse> getUserDetail(String token,String clientId,String clientType){
         if (Objects.isNull(token)){
             return Optional.empty();
         }
-        Optional<AuthResponse> authResponseOptional = Optional.empty();
+        Optional<AuthResponse> authResponseOptional;
         try {
-            authResponseOptional = Optional.of(authFeignClient.validateUserToken(token));
+            authResponseOptional = Optional.of(authFeignClient.validateUserToken(token,clientId,clientType));
         } catch (FeignException exception) {
             log.error("Unable to validate token : ", exception);
             return Optional.empty();
         }
-        return Optional.of(authResponseOptional.orElse(new AuthResponse()).getData());
+        return authResponseOptional;
     }
 
     /**
@@ -63,7 +62,6 @@ public class JwtTokenHelper implements Serializable {
      * @return role
      */
     public String getRoleFromToken(UserDetail userDetail){
-//        return getAllClaimsFromToken(token).get(ROLE, String.class);
         List<String> roles = userDetail.getRoles();
         return roles.isEmpty() ? "" : roles.get(0);
     }
@@ -114,26 +112,24 @@ public class JwtTokenHelper implements Serializable {
      * @param userDetails Spring Security UserDetail
      * @return true or false
      */
-    public Boolean isValidToken(String token, UserDetails userDetails) {
-//        final String username = getUsernameFromToken(token);
-//        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-        Optional<UserDetail> userDetailOptional = getUserDetail(token);
+    public Boolean isValidToken(String token,String clientId,String clientType, UserDetails userDetails) {
+        Optional<AuthResponse> userDetailOptional = getUserDetail(token,clientId,clientType);
         if (userDetailOptional.isPresent()) {
-            UserDetail userDetail = userDetailOptional.get();
+            UserDetail userDetail = userDetailOptional.get().getData();
             return String.valueOf(userDetail.getId()).equals(userDetails.getUsername());
         }
         return false;
     }
 
-    public String generateToken(Date expiration) {
-        return Jwts.builder()
-                .setSubject("olutimedia@gmail.com")
-                .claim(ROLE, "admin")
-                .signWith(SignatureAlgorithm.HS256, secret)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(expiration)
-                .compact();
-    }
+//    public String generateToken(Date expiration) {
+//        return Jwts.builder()
+//                .setSubject("olutimedia@gmail.com")
+//                .claim(ROLE, "admin")
+//                .signWith(SignatureAlgorithm.HS256, secret)
+//                .setIssuedAt(new Date(System.currentTimeMillis()))
+//                .setExpiration(expiration)
+//                .compact();
+//    }
 
     /**
      * Generate Authentication

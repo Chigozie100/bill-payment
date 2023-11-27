@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.v2.proxyclient;
 
+import com.wayapay.thirdpartyintegrationservice.config.ClientConfiguration;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.InfoResponse;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.ReversalDto;
@@ -11,7 +12,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(contextId = "wallet-service" ,name = "wallet-feign-client", url = "${app.config.wallet.base-url}")
+@FeignClient(contextId = "wallet-service" ,name = "wallet-feign-client", url = "${app.config.wallet.base-url}",configuration = ClientConfiguration.class)
 public interface WalletProxy {
 
     @GetMapping(path = "/api/v1/wallet/user-account/{accountNo}")

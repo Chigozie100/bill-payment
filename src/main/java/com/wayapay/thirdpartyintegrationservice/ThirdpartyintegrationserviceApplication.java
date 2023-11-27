@@ -59,10 +59,4 @@ public class ThirdpartyintegrationserviceApplication {
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         return objectMapper;
     }
-
-//    @Bean
-//    public RequestInterceptor requestInterceptor(){
-//        return new FeignClientInterceptor();
-//    }
-
 }

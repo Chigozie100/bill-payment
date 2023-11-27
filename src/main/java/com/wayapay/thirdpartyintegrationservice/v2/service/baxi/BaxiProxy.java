@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.v2.service.baxi;
 
+import com.wayapay.thirdpartyintegrationservice.config.ClientConfiguration;
 import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.dto.*;
 import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.dto.BundlePaymentResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -9,7 +10,7 @@ import javax.validation.Valid;
 
 import static com.wayapay.thirdpartyintegrationservice.v2.dto.Constants.BAXI_X_API_KEY;
 
-@FeignClient(contextId = "baxi-service" ,name = "baxi-feign-client", url = "${app.config.baxi.base-url}")
+@FeignClient(contextId = "baxi-service" ,name = "baxi-feign-client", url = "${app.config.baxi.base-url}",configuration = ClientConfiguration.class)
 public interface BaxiProxy {
 
     @GetMapping(path = "/services/billers/category/all")

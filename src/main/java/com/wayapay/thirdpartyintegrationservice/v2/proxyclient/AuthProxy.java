@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.v2.proxyclient;
 
+import com.wayapay.thirdpartyintegrationservice.config.ClientConfiguration;
 import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.LoginDto;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.TokenCheckResponse;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.Map;
 
-@FeignClient(name = "wallet-feign-client", url = "${app.config.auth.base-url}")
+@FeignClient(name = "wallet-feign-client", url = "${app.config.auth.base-url}",configuration = ClientConfiguration.class)
 public interface AuthProxy {
 
     @PostMapping(path = "/api/v1/auth/validate-user")

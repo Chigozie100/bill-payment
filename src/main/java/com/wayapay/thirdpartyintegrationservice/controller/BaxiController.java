@@ -36,7 +36,7 @@ public class BaxiController {
     @PostMapping(path = "/createCategory/{serviceProviderId}")
     public ResponseEntity<?> createServiceProviderCategories(HttpServletRequest request,
                                                            @PathVariable Long serviceProviderId){
-        ApiResponse<?> response =  baxiService.createBaxiServiceProviderCategory(request.getHeader(HEADER_STRING),serviceProviderId);
+        ApiResponse<?> response =  baxiService.createBaxiServiceProviderCategory(request,request.getHeader(HEADER_STRING),serviceProviderId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -47,7 +47,7 @@ public class BaxiController {
     @PostMapping(path = "/createBiller/{serviceProviderId}")
     public ResponseEntity<?> createServiceProviderBillers(HttpServletRequest request,
                                                            @PathVariable Long serviceProviderId){
-        ApiResponse<?> response =  baxiService.createBaxiServiceProviderBiller(request.getHeader(HEADER_STRING),serviceProviderId);
+        ApiResponse<?> response =  baxiService.createBaxiServiceProviderBiller(request,request.getHeader(HEADER_STRING),serviceProviderId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -59,7 +59,7 @@ public class BaxiController {
     public ResponseEntity<?> createServiceProviderProductAndBundle(HttpServletRequest request,
                                                          @RequestParam Long serviceProviderCategoryId,
                                                           @RequestParam Long serviceProviderId){
-        ApiResponse<?> response =  baxiService.createBaxiServiceProviderProduct(request.getHeader(HEADER_STRING),serviceProviderId,serviceProviderCategoryId);
+        ApiResponse<?> response =  baxiService.createBaxiServiceProviderProduct(request,request.getHeader(HEADER_STRING),serviceProviderId,serviceProviderCategoryId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -72,7 +72,7 @@ public class BaxiController {
     public ResponseEntity<?> createServiceProviderBillerLogo(HttpServletRequest request,
                                                           @RequestParam Long serviceProviderCategoryId,
                                                           @RequestParam Long serviceProviderId){
-        ApiResponse<?> response =  baxiService.createBaxiServiceProviderBillerLogo(request.getHeader(HEADER_STRING),serviceProviderId,serviceProviderCategoryId);
+        ApiResponse<?> response =  baxiService.createBaxiServiceProviderBillerLogo(request,request.getHeader(HEADER_STRING),serviceProviderId,serviceProviderCategoryId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
@@ -83,7 +83,7 @@ public class BaxiController {
     @GetMapping(path = "/queryTransaction/{reference}")
     public ResponseEntity<?> fetchBaxiTransactionQuery(HttpServletRequest request,
                                                              @RequestParam String reference){
-        ApiResponse<?> response =  baxiService.fetchTransactionQuery(request.getHeader(HEADER_STRING),reference);
+        ApiResponse<?> response =  baxiService.fetchTransactionQuery(request,request.getHeader(HEADER_STRING),reference);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 

@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.v2.service.notification;
 
+import com.wayapay.thirdpartyintegrationservice.config.ClientConfiguration;
 import com.wayapay.thirdpartyintegrationservice.responsehelper.ResponseObj;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-@FeignClient(name = "notification-feign-client", url = "${app.config.notification.base-url}")
+@FeignClient(name = "notification-feign-client", url = "${app.config.notification.base-url}",configuration = ClientConfiguration.class)
 public interface NotificationFeignClient {
 
     @PostMapping("/in-app-notification")

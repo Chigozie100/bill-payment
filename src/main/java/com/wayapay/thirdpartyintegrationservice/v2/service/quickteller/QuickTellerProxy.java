@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.v2.service.quickteller;
 
+import com.wayapay.thirdpartyintegrationservice.config.ClientConfiguration;
 import com.wayapay.thirdpartyintegrationservice.v2.service.quickteller.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -7,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import static com.wayapay.thirdpartyintegrationservice.v2.dto.Constants.*;
 
 
-@FeignClient(name = "quickteller-feign-client", url = "${app.config.quickteller.base-url}")
+@FeignClient(name = "quickteller-feign-client", url = "${app.config.quickteller.base-url}",configuration = ClientConfiguration.class)
 public interface QuickTellerProxy {
 
     @GetMapping(path = "/api/v2/quickteller/categorys")

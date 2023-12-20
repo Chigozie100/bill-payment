@@ -1,5 +1,6 @@
 package com.wayapay.thirdpartyintegrationservice.config;
 
+import com.wayapay.thirdpartyintegrationservice.interceptors.FeignClientInterceptor;
 import com.wayapay.thirdpartyintegrationservice.v2.proxyclient.AuthProxy;
 import com.wayapay.thirdpartyintegrationservice.v2.proxyclient.WalletProxy;
 import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.BaxiProxy;
@@ -18,7 +19,7 @@ public class FeignClientConfig {
 
     @Bean
     public RequestInterceptor requestInterceptor(){
-        return requestTemplate -> requestTemplate.header(HttpHeaders.ACCEPT, ContentType.APPLICATION_JSON.getMimeType());
+        return new FeignClientInterceptor();
     }
 
 }

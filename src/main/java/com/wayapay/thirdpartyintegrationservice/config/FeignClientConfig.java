@@ -11,7 +11,6 @@ import org.apache.http.entity.ContentType;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
 
 @Configuration
 @EnableFeignClients(clients = {AuthProxy.class, BaxiProxy.class, WalletProxy.class, QuickTellerProxy.class, NotificationFeignClient.class})

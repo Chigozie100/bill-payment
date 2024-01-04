@@ -2,21 +2,16 @@ package com.wayapay.thirdpartyintegrationservice.util;
 
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.wayapay.thirdpartyintegrationservice.config.AppCache;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.request.LoginDto;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.TokenCheckResponse;
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.UserDto;
-import com.wayapay.thirdpartyintegrationservice.v2.proxyclient.AuthProxy;
+import com.wayapay.thirdpartyintegrationservice.v2.proxyclient.LoginProxy;
+
 import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-
-import com.wayapay.thirdpartyintegrationservice.exceptionhandling.ThirdPartyIntegrationException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TokenImpl {
 
     @Autowired
-    private AuthProxy authProxy;
+    private LoginProxy authProxy;
 
     @Autowired
     private Environment environment;

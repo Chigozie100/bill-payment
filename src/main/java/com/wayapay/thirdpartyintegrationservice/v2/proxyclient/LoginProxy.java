@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
-@FeignClient(name = "wallet-feign-client", url = "${app.config.auth.base-url}",configuration = ClientConfiguration.class)
+@FeignClient(name = "login-feign-client", url = "${app.config.auth.base-url}",configuration = ClientConfiguration.class)
 public interface LoginProxy {
 
     @PostMapping(path = "/api/v1/auth/login")

@@ -4,11 +4,13 @@ import com.wayapay.thirdpartyintegrationservice.util.Constants;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.entity.ContentType;
-import org.springframework.http.HttpHeaders;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.util.Collection;
+import java.util.Map;
 
 @Slf4j
 public class FeignClientInterceptor implements RequestInterceptor {
@@ -25,14 +27,14 @@ public class FeignClientInterceptor implements RequestInterceptor {
 		if (attrs instanceof ServletRequestAttributes) {
 			return ((ServletRequestAttributes) attrs).getRequest().getHeader(Constants.CLIENT_ID);
 		}
-		return null;
+		return Constants.CLIENT_ID_VALUE;
 	}
 	public static String getBearerClientTypeHeader() {
 		RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
 		if (attrs instanceof ServletRequestAttributes) {
 			return ((ServletRequestAttributes) attrs).getRequest().getHeader(Constants.CLIENT_TYPE);
 		}
-		return null;
+		return Constants.CLIENT_TYPE_VALUE_DEFAULT;
 	}
 
 
@@ -42,16 +44,17 @@ public class FeignClientInterceptor implements RequestInterceptor {
 		String clientId = getBearerClientIdHeader();
 		String clientType = getBearerClientTypeHeader();
 
-		if(token != null && !token.isEmpty())
+		Map<String, Collection<String>> headers = requestTemplate.request().headers();
+		if(!ObjectUtils.isEmpty(token) && !headers.containsKey(Constants.HEADER_STRING)){
 			requestTemplate.header(Constants.HEADER_STRING, token);
-
-		if(clientId != null && !clientId.isEmpty())
+		}
+		if(!headers.containsKey(Constants.CLIENT_ID)){
 			requestTemplate.header(Constants.CLIENT_ID, clientId);
+		}
 
-		if(clientType != null && !clientType.isEmpty())
+		if(!headers.containsKey(Constants.CLIENT_TYPE)){
 			requestTemplate.header(Constants.CLIENT_TYPE, clientType);
-
-		requestTemplate.header(HttpHeaders.ACCEPT, ContentType.APPLICATION_JSON.getMimeType());
+		}
 	}
 
 }

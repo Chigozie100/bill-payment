@@ -27,14 +27,14 @@ public class FeignClientInterceptor implements RequestInterceptor {
 		if (attrs instanceof ServletRequestAttributes) {
 			return ((ServletRequestAttributes) attrs).getRequest().getHeader(Constants.CLIENT_ID);
 		}
-		return null;
+		return Constants.CLIENT_ID_VALUE;
 	}
 	public static String getBearerClientTypeHeader() {
 		RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
 		if (attrs instanceof ServletRequestAttributes) {
 			return ((ServletRequestAttributes) attrs).getRequest().getHeader(Constants.CLIENT_TYPE);
 		}
-		return null;
+		return Constants.CLIENT_TYPE_VALUE_DEFAULT;
 	}
 
 

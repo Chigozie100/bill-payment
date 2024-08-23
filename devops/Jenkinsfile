@@ -63,7 +63,7 @@ pipeline {
                 NAMESPACE = "production"
             }
             when {
-                branch 'productionV2'
+                branch 'stagingV2'
             }
             steps {
                 script {

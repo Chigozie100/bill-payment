@@ -595,6 +595,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             BigDecimal consumerFee = providerCharge.get().getConsumerCharges();
             BigDecimal billerFee = providerCharge.get().getBillerCharges();
             BigDecimal actualAmount = new BigDecimal(airtimePaymentDto.getAmount());
+            //secure amount with fee
 //            BigDecimal secureAmount= actualAmount.add(consumerFee);
             BigDecimal secureAmount;
 

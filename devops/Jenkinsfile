@@ -60,7 +60,7 @@ pipeline {
 
         stage('Deploy') {
             environment {
-                NAMESPACE = "production"
+                NAMESPACE = "staging"
             }
             when {
                 branch 'stagingV2'

@@ -431,6 +431,23 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             BigDecimal secureAmountSentToBiller = new BigDecimal(dataBundlePaymentDto.getAmount()).add(billerFee);
             String eventId = fetchBillEventId(serviceProvider.get().getName());
 
+//            // Calculate secureAmount based on client type
+//            BigDecimal consumerFee = providerCharge.get().getConsumerCharges();
+//            BigDecimal billerFee = providerCharge.get().getBillerCharges();
+//            BigDecimal secureAmount;
+//            String clientType = request.getHeader(Constants.CLIENT_TYPE);
+//
+//            if (Constants.CLIENT_TYPE_VALUE_CORPORATE.equalsIgnoreCase(clientType)) {
+//                // Add consumer charges if client type is CORPORATE
+//                secureAmount = new BigDecimal(dataBundlePaymentDto.getAmount()).add(consumerFee);
+//            } else {
+//                // Do not add charges if client type is not CORPORATE (e.g., PERSONAL)
+//                secureAmount = new BigDecimal(dataBundlePaymentDto.getAmount());
+//            }
+//            BigDecimal secureAmountSentToBiller = new BigDecimal(dataBundlePaymentDto.getAmount()).add(billerFee);
+//            String eventId = fetchBillEventId(serviceProvider.get().getName());
+
+
             NewWalletResponse  newWalletResponse = fetchUserAccountDetail(request,userAccountNumber, token, false);
             if(newWalletResponse == null)
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Debit account not found",null);
@@ -578,7 +595,16 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             BigDecimal consumerFee = providerCharge.get().getConsumerCharges();
             BigDecimal billerFee = providerCharge.get().getBillerCharges();
             BigDecimal actualAmount = new BigDecimal(airtimePaymentDto.getAmount());
-            BigDecimal secureAmount= actualAmount.add(consumerFee);
+//            BigDecimal secureAmount= actualAmount.add(consumerFee);
+            BigDecimal secureAmount;
+
+            if (Constants.CLIENT_TYPE_VALUE_CORPORATE.equalsIgnoreCase(request.getHeader(Constants.CLIENT_TYPE))) {
+                // Add consumer charges if client type is CORPORATE
+                secureAmount = actualAmount.add(consumerFee);
+            } else {
+                // Do not add charges if client type is not CORPORATE (e.g., PERSONAL)
+                secureAmount = actualAmount;
+            }
             BigDecimal secureAmountSentToBiller = actualAmount.add(billerFee);
             String eventId = fetchBillEventId(serviceProvider.get().getName());
 

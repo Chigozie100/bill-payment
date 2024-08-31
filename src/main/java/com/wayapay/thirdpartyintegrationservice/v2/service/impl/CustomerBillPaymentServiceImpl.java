@@ -425,27 +425,21 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
             if(!providerCharge.isPresent())
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Bill charges not found",null);
 
+            // Calculate secureAmount based on client type
             BigDecimal consumerFee = providerCharge.get().getConsumerCharges();
             BigDecimal billerFee = providerCharge.get().getBillerCharges();
-            BigDecimal secureAmount= new BigDecimal(dataBundlePaymentDto.getAmount()).add(consumerFee);
+            BigDecimal secureAmount;
+            String clientType = request.getHeader(Constants.CLIENT_TYPE);
+
+            if (Constants.CLIENT_TYPE_VALUE_CORPORATE.equalsIgnoreCase(clientType)) {
+                // Add consumer charges if client type is CORPORATE
+                secureAmount = new BigDecimal(dataBundlePaymentDto.getAmount()).add(consumerFee);
+            } else {
+                // Do not add charges if client type is not CORPORATE (e.g., PERSONAL)
+                secureAmount = new BigDecimal(dataBundlePaymentDto.getAmount());
+            }
             BigDecimal secureAmountSentToBiller = new BigDecimal(dataBundlePaymentDto.getAmount()).add(billerFee);
             String eventId = fetchBillEventId(serviceProvider.get().getName());
-
-//            // Calculate secureAmount based on client type
-//            BigDecimal consumerFee = providerCharge.get().getConsumerCharges();
-//            BigDecimal billerFee = providerCharge.get().getBillerCharges();
-//            BigDecimal secureAmount;
-//            String clientType = request.getHeader(Constants.CLIENT_TYPE);
-//
-//            if (Constants.CLIENT_TYPE_VALUE_CORPORATE.equalsIgnoreCase(clientType)) {
-//                // Add consumer charges if client type is CORPORATE
-//                secureAmount = new BigDecimal(dataBundlePaymentDto.getAmount()).add(consumerFee);
-//            } else {
-//                // Do not add charges if client type is not CORPORATE (e.g., PERSONAL)
-//                secureAmount = new BigDecimal(dataBundlePaymentDto.getAmount());
-//            }
-//            BigDecimal secureAmountSentToBiller = new BigDecimal(dataBundlePaymentDto.getAmount()).add(billerFee);
-//            String eventId = fetchBillEventId(serviceProvider.get().getName());
 
 
             NewWalletResponse  newWalletResponse = fetchUserAccountDetail(request,userAccountNumber, token, false);

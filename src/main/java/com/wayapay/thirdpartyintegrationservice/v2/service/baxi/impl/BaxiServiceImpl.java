@@ -664,7 +664,7 @@ public class BaxiServiceImpl implements BaxiService {
     }
 
     @Override
-    public ApiResponse<?> requestDataBundlePayment(String productCode,String type,String amount,String phone,String reference) {
+    public ApiResponse<?> requestDataBundlePayment(String productCode,String type,BigDecimal amount,String phone,String reference) {
         try {
             BundlePaymentResponse bundlePaymentResponse;
             try {

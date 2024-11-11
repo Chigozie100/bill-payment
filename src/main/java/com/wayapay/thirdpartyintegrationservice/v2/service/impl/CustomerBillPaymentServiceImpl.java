@@ -433,12 +433,12 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
             if (Constants.CLIENT_TYPE_VALUE_CORPORATE.equalsIgnoreCase(clientType)) {
                 // Add consumer charges if client type is CORPORATE
-                secureAmount = new BigDecimal(dataBundlePaymentDto.getAmount()).add(consumerFee);
+                secureAmount = dataBundlePaymentDto.getAmount().add(consumerFee);
             } else {
                 // Do not add charges if client type is not CORPORATE (e.g., PERSONAL)
-                secureAmount = new BigDecimal(dataBundlePaymentDto.getAmount());
+                secureAmount = dataBundlePaymentDto.getAmount();
             }
-            BigDecimal secureAmountSentToBiller = new BigDecimal(dataBundlePaymentDto.getAmount()).add(billerFee);
+            BigDecimal secureAmountSentToBiller = dataBundlePaymentDto.getAmount().add(billerFee);
             String eventId = fetchBillEventId(serviceProvider.get().getName());
 
 
@@ -458,7 +458,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
                 if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.DATA_TOPUP,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
-                    transactionDto.setAmount(new BigDecimal(dataBundlePaymentDto.getAmount()));
+                    transactionDto.setAmount(dataBundlePaymentDto.getAmount());
                     transactionDto.setBillerFee(billerFee);
                     transactionDto.setAccountNumber(userAccountNumber);
                     transactionDto.setConsumerFee(consumerFee);
@@ -506,7 +506,7 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                 String paymentReferenceNumber =  quickTellerBillPaymentReferenceNumber();
                 if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
-                    transactionDto.setAmount(new BigDecimal(dataBundlePaymentDto.getAmount()));
+                    transactionDto.setAmount(dataBundlePaymentDto.getAmount());
                     transactionDto.setBillerFee(billerFee);
                     transactionDto.setAccountNumber(userAccountNumber);
                     transactionDto.setConsumerFee(consumerFee);

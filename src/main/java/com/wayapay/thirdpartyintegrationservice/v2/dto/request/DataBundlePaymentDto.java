@@ -17,8 +17,6 @@ public class DataBundlePaymentDto {
     @Min(value = 1, message = "Amount must be greater than 0")
     private BigDecimal amount;
     @NotNull(message = "Phone number cannot be null")
-    @Size(min = 11, max = 11, message = "Phone number must be exactly 11 digits")
-    @Pattern(regexp = "\\d{11}", message = "Phone number must contain only digits")
     private String phone;
     private String email;
 }

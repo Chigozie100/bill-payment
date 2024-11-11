@@ -15,8 +15,6 @@ public class AirtimePaymentDto {
     private int amount;
     private String plan;
     @NotNull(message = "Phone number cannot be null")
-    @Size(min = 11, max = 11, message = "Phone number must be exactly 11 digits")
-    @Pattern(regexp = "\\d{11}", message = "Phone number must contain only digits")
     private String phone;
     private String email;
     private String type;

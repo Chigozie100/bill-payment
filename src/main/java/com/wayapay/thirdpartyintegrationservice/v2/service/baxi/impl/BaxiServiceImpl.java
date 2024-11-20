@@ -868,7 +868,7 @@ public class BaxiServiceImpl implements BaxiService {
                 paymentRequest.setAction("WALLET_FUNDING");
                 paymentRequest.setAccountNumber(accountNumber);
                 paymentRequest.setServiceType(type);
-                paymentRequest.setAmount(String.valueOf(amount));
+                paymentRequest.setAmount(amount);
                 paymentRequest.setAgentReference(reference);
                 paymentResponse = baxiProxy.bettingPayment(baxiApiKey,paymentRequest);
                 log.info(":::Betting paymentResponse {}",paymentResponse);

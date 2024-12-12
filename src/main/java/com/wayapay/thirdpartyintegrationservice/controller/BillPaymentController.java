@@ -110,9 +110,9 @@ public class BillPaymentController {
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
-
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+//
+//    @ApiImplicitParams({
+//            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
     @ApiOperation(value = "Make Airtime payment", notes = "Make Airtime payment")
     @PostMapping(path = "/airtime/pay")
     public ResponseEntity<?> makeAirtimePayment(HttpServletRequest request,
@@ -143,9 +143,9 @@ public class BillPaymentController {
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
 
-
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
+//
+//    @ApiImplicitParams({
+//            @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})
     @ApiOperation(value = "Make Cable Tv payment", notes = "Make Cable Tv payment")
     @PostMapping(path = "/cableTv/pay")
     public ResponseEntity<?> makeCableTvPayment(HttpServletRequest request,

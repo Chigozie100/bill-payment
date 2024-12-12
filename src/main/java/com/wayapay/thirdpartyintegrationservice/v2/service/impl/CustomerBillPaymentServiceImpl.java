@@ -231,48 +231,49 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 //    }
 
 
-    @Override @Transactional
-    public ApiResponse<?> makeElectricityPayment(HttpServletRequest request,String token,Long serviceProviderBillerId, Long serviceProviderId, ElectricityPaymentDto electricityPaymentDto,String userAccountNumber,String pin) {
+    @Override
+    @Transactional
+    public ApiResponse<?> makeElectricityPayment(HttpServletRequest request, String token, Long serviceProviderBillerId, Long serviceProviderId, ElectricityPaymentDto electricityPaymentDto, String userAccountNumber, String pin) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
-            if(!response.getStatus().equals(Boolean.TRUE))
-                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+            AuthResponse response = authProxy.validateUserToken(token, request.getHeader(Constants.CLIENT_ID), request.getHeader(Constants.CLIENT_TYPE));
+            if (!response.getStatus().equals(Boolean.TRUE))
+                return new ApiResponse<>(false, ApiResponse.Code.UNAUTHORIZED, "UNAUTHORIZED", null);
 
-            if(response.getData().isAdmin())
-                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+            if (response.getData().isAdmin())
+                return new ApiResponse<>(false, ApiResponse.Code.FORBIDDEN, "Oops!\n You don't have access to this resources", null);
 
-            Optional<ServiceProvider> serviceProvider = serviceProviderRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderId,true ,false);
-            if(!serviceProvider.isPresent())
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider not available",null);
+            Optional<ServiceProvider> serviceProvider = serviceProviderRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderId, true, false);
+            if (!serviceProvider.isPresent())
+                return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Service provider not available", null);
 
-            Optional<ServiceProviderBiller> serviceProviderBiller = serviceProviderBillerRepository.findByIdAndServiceProviderIdAndIsActiveAndIsDeleted(serviceProviderBillerId,serviceProvider.get().getId(),true,false);
-            if(!serviceProviderBiller.isPresent())
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider biller not available",null);
+            Optional<ServiceProviderBiller> serviceProviderBiller = serviceProviderBillerRepository.findByIdAndServiceProviderIdAndIsActiveAndIsDeleted(serviceProviderBillerId, serviceProvider.get().getId(), true, false);
+            if (!serviceProviderBiller.isPresent())
+                return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Service provider biller not available", null);
 
-            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderBiller.get().getServiceProviderCategory(),serviceProvider.get(),true,false);
-            if(!providerCharge.isPresent())
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Bill charges not found",null);
+            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderBiller.get().getServiceProviderCategory(), serviceProvider.get(), true, false);
+            if (!providerCharge.isPresent())
+                return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Bill charges not found", null);
 
             BigDecimal consumerFee = providerCharge.get().getConsumerCharges();
             BigDecimal billerFee = providerCharge.get().getBillerCharges();
-            BigDecimal secureAmount= electricityPaymentDto.getAmount().add(consumerFee);
+            BigDecimal secureAmount = electricityPaymentDto.getAmount().add(consumerFee);
             BigDecimal secureAmountSentToBiller = electricityPaymentDto.getAmount().add(billerFee);
             String eventId = fetchBillEventId(serviceProvider.get().getName());
 
-            NewWalletResponse  newWalletResponse = fetchUserAccountDetail(request,userAccountNumber, token, false);
-            if(newWalletResponse == null)
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Debit account not found",null);
+            NewWalletResponse newWalletResponse = fetchUserAccountDetail(request, userAccountNumber, token, false);
+            if (newWalletResponse == null)
+                return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Debit account not found", null);
 
             String notificationEmail;
-            if(electricityPaymentDto.getEmail() != null && !electricityPaymentDto.getEmail().isEmpty()){
+            if (electricityPaymentDto.getEmail() != null && !electricityPaymentDto.getEmail().isEmpty()) {
                 notificationEmail = electricityPaymentDto.getEmail();
-            }else {
+            } else {
                 notificationEmail = response.getData().getEmail();
             }
-            if(serviceProvider.get().getName().toLowerCase().startsWith("baxi")){
+            if (serviceProvider.get().getName().toLowerCase().startsWith("baxi")) {
 
                 String paymentReferenceNumber = baxiBillPaymentReferenceNumber();
-                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request, serviceProvider.get().getName(), secureAmount, response.getData().getId(), userAccountNumber, paymentReferenceNumber, token, pin, eventId, BillCategoryType.UTILITY, newWalletResponse.getClr_bal_amt(), newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(electricityPaymentDto.getAmount());
                     transactionDto.setBillerFee(billerFee);
@@ -283,46 +284,43 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
                     transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
-                        ApiResponse<?> paymentResponse = baxiService.requestElectricityPayment(electricityPaymentDto.getAmount(),electricityPaymentDto.getType(),electricityPaymentDto.getPhone(),electricityPaymentDto.getAccount(),paymentReferenceNumber);
-                        if(paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)){
-                            GeneralPaymentResponseDto paymentResponseDto = objectMapper.convertValue(paymentResponse.getData(),GeneralPaymentResponseDto.class);
-                            log.info(":::paymentResponseDto {}",paymentResponseDto);
+                        ApiResponse<?> paymentResponse = baxiService.requestElectricityPayment(electricityPaymentDto.getAmount(), electricityPaymentDto.getType(), electricityPaymentDto.getPhone(), electricityPaymentDto.getAccount(), paymentReferenceNumber);
+                        if (paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)) {
+                            GeneralPaymentResponseDto paymentResponseDto = objectMapper.convertValue(paymentResponse.getData(), GeneralPaymentResponseDto.class);
+                            log.info(":::paymentResponseDto {}", paymentResponseDto);
 
                             transactionDto.setServiceProviderReferenceNumber(paymentResponseDto.getProviderReference());
                             transactionDto.setNarration(paymentResponseDto.getTransactionMessage());
-                            if(paymentResponseDto.getTokenCode() != null)
+                            if (paymentResponseDto.getTokenCode() != null)
                                 transactionDto.setCustomerDataToken(paymentResponseDto.getTokenCode());
 
-                            log.info("::TransactionDto {}",transactionDto);
-                            TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.electricity);
-                            //Todo: Push sms/email request
+                            log.info("::TransactionDto {}", transactionDto);
+                            TransactionHistory history = saveTransactionDetail(transactionDto, response.getData().getEmail(), paymentReferenceNumber, String.valueOf(response.getData().getId()), PaymentStatus.SUCCESSFUL, BillCategoryName.electricity);
                             CompletableFuture.runAsync(() -> {
                                 notificationService.pushSMSv2(history, token, notificationEmail, electricityPaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
-                        saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.electricity);
-                        //Todo: do reversal
-                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
+                        saveTransactionDetail(transactionDto, response.getData().getEmail(), paymentReferenceNumber, String.valueOf(response.getData().getId()), PaymentStatus.FAILED, BillCategoryName.electricity);
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber, userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error billspayment :: " + ex.getLocalizedMessage());
-                        saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.electricity);
-                        //Todo: do reversal
-                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
+                        saveTransactionDetail(transactionDto, response.getData().getEmail(), paymentReferenceNumber, String.valueOf(response.getData().getId()), PaymentStatus.ERROR, BillCategoryName.electricity);
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber, userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
                 log.error("Unable to secure fund from user's account");
                 throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-            }else if(serviceProvider.get().getName().toLowerCase().startsWith("quick")){
+            } else if (serviceProvider.get().getName().toLowerCase().startsWith("quick")) {
 
-                Optional<ServiceProviderProduct> providerProduct = serviceProviderProductRepository.findFirstByProductCodeAndServiceProviderBillerAndIsActiveAndIsDeleted(electricityPaymentDto.getType(),serviceProviderBiller.get(),true,false);
-                if(!providerProduct.isPresent())
-                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Product not available, can not process your bill payment", null);
+                Optional<ServiceProviderProduct> providerProduct = serviceProviderProductRepository.findFirstByProductCodeAndServiceProviderBillerAndIsActiveAndIsDeleted(electricityPaymentDto.getType(), serviceProviderBiller.get(), true, false);
+                if (!providerProduct.isPresent())
+                    return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Product not available, can not process your bill payment", null);
 
-                String paymentReferenceNumber =  quickTellerBillPaymentReferenceNumber();
-                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                String paymentReferenceNumber = quickTellerBillPaymentReferenceNumber();
+                if (secureFund(request, serviceProvider.get().getName(), secureAmount, response.getData().getId(), userAccountNumber, paymentReferenceNumber, token, pin, eventId, BillCategoryType.UTILITY, newWalletResponse.getClr_bal_amt(), newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(electricityPaymentDto.getAmount());
                     transactionDto.setBillerFee(billerFee);
@@ -341,43 +339,40 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                         sendPaymentAdviceRequest.setCustomerId(electricityPaymentDto.getAccount());
                         sendPaymentAdviceRequest.setCustomerEmail(notificationEmail);
                         sendPaymentAdviceRequest.setRequestReference(paymentReferenceNumber);
-                        ApiResponse<?> paymentResponse = quickTellerService.makeBillsPaymentRequest(sendPaymentAdviceRequest,serviceProviderBiller.get().getServiceProviderCategory().getType());
-                        if(paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)){
-                            GeneralPaymentResponseDto paymentResponseDto = objectMapper.convertValue(paymentResponse.getData(),GeneralPaymentResponseDto.class);
-                            log.info(":::paymentResponseDto {}",paymentResponseDto);
+                        ApiResponse<?> paymentResponse = quickTellerService.makeBillsPaymentRequest(sendPaymentAdviceRequest, serviceProviderBiller.get().getServiceProviderCategory().getType());
+                        if (paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)) {
+                            GeneralPaymentResponseDto paymentResponseDto = objectMapper.convertValue(paymentResponse.getData(), GeneralPaymentResponseDto.class);
+                            log.info(":::paymentResponseDto {}", paymentResponseDto);
                             transactionDto.setServiceProviderReferenceNumber(paymentResponseDto.getProviderReference());
                             transactionDto.setNarration(paymentResponseDto.getTransactionMessage());
-                            if(paymentResponseDto.getTokenCode() != null)
+                            if (paymentResponseDto.getTokenCode() != null)
                                 transactionDto.setCustomerDataToken(paymentResponseDto.getTokenCode());
-                            log.info("::TransactionDto {}",transactionDto);
-                            TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.electricity);
-                            //Todo: Push sms/email request
+                            log.info("::TransactionDto {}", transactionDto);
+                            TransactionHistory history = saveTransactionDetail(transactionDto, response.getData().getEmail(), paymentReferenceNumber, String.valueOf(response.getData().getId()), PaymentStatus.SUCCESSFUL, BillCategoryName.electricity);
                             CompletableFuture.runAsync(() -> {
-                                notificationService.pushSMSv2(history, token,notificationEmail, electricityPaymentDto.getPhone());
+                                notificationService.pushSMSv2(history, token, notificationEmail, electricityPaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
-                        saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.electricity);
-                        //Todo: do reversal
-                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
+                        saveTransactionDetail(transactionDto, response.getData().getEmail(), paymentReferenceNumber, String.valueOf(response.getData().getId()), PaymentStatus.FAILED, BillCategoryName.electricity);
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber, userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error billspayment :: " + ex.getLocalizedMessage());
-                        saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.electricity);
-                        //Todo: do reversal
-                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
+                        saveTransactionDetail(transactionDto, response.getData().getEmail(), paymentReferenceNumber, String.valueOf(response.getData().getId()), PaymentStatus.ERROR, BillCategoryName.electricity);
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber, userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
                 log.error("Unable to secure fund from user's account");
                 throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-            }else {
-                return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Provider Not yet Supported",null);
+            } else {
+                return new ApiResponse<>(false, ApiResponse.Code.BAD_REQUEST, "Oops!\n Provider Not yet Supported", null);
             }
-        }catch (Exception ex){
-            log.error("::Error makeElectricityPayment {}",ex.getLocalizedMessage());
+        } catch (Exception ex) {
+            log.error("::Error makeElectricityPayment {}", ex.getLocalizedMessage());
             ex.printStackTrace();
-            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process your request, try again later",null);
+            return new ApiResponse<>(false, ApiResponse.Code.BAD_REQUEST, "Oops!\n Unable to process your request, try again later", null);
         }
     }
 
@@ -565,26 +560,26 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
 
 
     @Override @Transactional
-    public ApiResponse<?> makeAirtimePayment(HttpServletRequest request,String token,Long serviceProviderBillerId, Long serviceProviderId, AirtimePaymentDto airtimePaymentDto,String userAccountNumber,String pin) {
+    public ApiResponse<?> makeAirtimePayment(HttpServletRequest request, String token, Long serviceProviderBillerId, Long serviceProviderId, AirtimePaymentDto airtimePaymentDto, String userAccountNumber, String pin) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
-            if(!response.getStatus().equals(Boolean.TRUE))
-                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+//            AuthResponse response = authProxy.validateUserToken(token, request.getHeader(Constants.CLIENT_ID), request.getHeader(Constants.CLIENT_TYPE));
+//            if (!response.getStatus().equals(Boolean.TRUE))
+//                return new ApiResponse<>(false, ApiResponse.Code.UNAUTHORIZED, "UNAUTHORIZED", null);
+//
+//            if (response.getData().isAdmin())
+//                return new ApiResponse<>(false, ApiResponse.Code.FORBIDDEN, "Oops!\n You don't have access to this resources", null);
 
-            if(response.getData().isAdmin())
-                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+            Optional<ServiceProvider> serviceProvider = serviceProviderRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderId, true, false);
+            if (!serviceProvider.isPresent())
+                return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Service provider not available", null);
 
-            Optional<ServiceProvider> serviceProvider = serviceProviderRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderId,true ,false);
-            if(!serviceProvider.isPresent())
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider not available",null);
+            Optional<ServiceProviderBiller> serviceProviderBiller = serviceProviderBillerRepository.findByIdAndServiceProviderIdAndIsActiveAndIsDeleted(serviceProviderBillerId, serviceProvider.get().getId(), true, false);
+            if (!serviceProviderBiller.isPresent())
+                return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Service provider biller not available", null);
 
-            Optional<ServiceProviderBiller> serviceProviderBiller = serviceProviderBillerRepository.findByIdAndServiceProviderIdAndIsActiveAndIsDeleted(serviceProviderBillerId,serviceProvider.get().getId(),true,false);
-            if(!serviceProviderBiller.isPresent())
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider biller not available",null);
-
-            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderBiller.get().getServiceProviderCategory(),serviceProvider.get(),true,false);
-            if(!providerCharge.isPresent())
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Bill charges not found",null);
+            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderBiller.get().getServiceProviderCategory(), serviceProvider.get(), true, false);
+            if (!providerCharge.isPresent())
+                return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Bill charges not found", null);
 
             BigDecimal consumerFee = providerCharge.get().getConsumerCharges();
             BigDecimal billerFee = providerCharge.get().getBillerCharges();
@@ -608,72 +603,72 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                 return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Debit account not found",null);
 
             String notificationEmail;
-            if(airtimePaymentDto.getEmail() != null && !airtimePaymentDto.getEmail().isEmpty()){
+            if (airtimePaymentDto.getEmail() != null && !airtimePaymentDto.getEmail().isEmpty()) {
                 notificationEmail = airtimePaymentDto.getEmail();
-            }else {
-                notificationEmail = response.getData().getEmail();
+            } else {
+                notificationEmail = "";
             }
 
-            if(serviceProvider.get().getName().toLowerCase().startsWith("baxi")){
+            if (serviceProvider.get().getName().toLowerCase().startsWith("baxi")) {
 
                 String paymentReferenceNumber = baxiBillPaymentReferenceNumber();
-                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.AIRTIME_TOPUP,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+//                if (secureFund(request, serviceProvider.get().getName(), secureAmount, response.getData().getId(), userAccountNumber, paymentReferenceNumber, token, pin, eventId, BillCategoryType.AIRTIME_TOPUP, newWalletResponse.getClr_bal_amt(), newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(new BigDecimal(airtimePaymentDto.getAmount()));
                     transactionDto.setBillerFee(billerFee);
                     transactionDto.setAccountNumber(userAccountNumber);
                     transactionDto.setConsumerFee(consumerFee);
-                    transactionDto.setSenderName(newWalletResponse.getAcct_name());
+                    transactionDto.setSenderName("");
                     transactionDto.setServiceProviderProductBundle(null);
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
-                    transactionDto.setSenderEmail(response.getData().getEmail());
+                    transactionDto.setSenderEmail("");
                     try {
-                        ApiResponse<?> paymentResponse = baxiService.requestAirtimePayment(airtimePaymentDto.getAmount(),airtimePaymentDto.getPlan(), airtimePaymentDto.getPhone(), paymentReferenceNumber, airtimePaymentDto.getType());
-                        if(paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)){
-                            GeneralPaymentResponseDto paymentResponseDto = objectMapper.convertValue(paymentResponse.getData(),GeneralPaymentResponseDto.class);
-                            log.info(":::Airtime paymentResponseDto {}",paymentResponseDto);
+                        ApiResponse<?> paymentResponse = baxiService.requestAirtimePayment(airtimePaymentDto.getAmount(), airtimePaymentDto.getPlan(), airtimePaymentDto.getPhone(), paymentReferenceNumber, airtimePaymentDto.getType());
+                        if (paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)) {
+                            GeneralPaymentResponseDto paymentResponseDto = objectMapper.convertValue(paymentResponse.getData(), GeneralPaymentResponseDto.class);
+                            log.info(":::Airtime paymentResponseDto {}", paymentResponseDto);
                             transactionDto.setNarration(paymentResponseDto.getTransactionMessage());
                             transactionDto.setServiceProviderReferenceNumber(paymentResponseDto.getProviderReference());
-                            log.info("::TransactionDto {}",transactionDto);
-                            TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.airtime);
+                            log.info("::TransactionDto {}", transactionDto);
+                            TransactionHistory history = saveTransactionDetail(transactionDto, "", paymentReferenceNumber, String.valueOf(1L), PaymentStatus.SUCCESSFUL, BillCategoryName.airtime);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                notificationService.pushSMSv2(history, token,notificationEmail, airtimePaymentDto.getPhone());
+                                notificationService.pushSMSv2(history, token, notificationEmail, airtimePaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
-                        saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.airtime);
+                        saveTransactionDetail(transactionDto, "", paymentReferenceNumber, String.valueOf(1L), PaymentStatus.FAILED, BillCategoryName.airtime);
                         //Todo: do reversal
-                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber, userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
-                        log.error(":::Error Airtime {}",ex.getLocalizedMessage());
-                        saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.airtime);
+                        log.error(":::Error Airtime {}", ex.getLocalizedMessage());
+                        saveTransactionDetail(transactionDto, "", paymentReferenceNumber, String.valueOf(1L), PaymentStatus.ERROR, BillCategoryName.airtime);
                         //Todo: do reversal
-                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber, userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
-                }
-                log.error("Unable to secure fund from user's account");
-                throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-            }else if(serviceProvider.get().getName().toLowerCase().startsWith("quick")){
+//                }
+//                log.error("Unable to secure fund from user's account");
+//                throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+            } else if (serviceProvider.get().getName().toLowerCase().startsWith("quick")) {
 
-                Optional<ServiceProviderProduct> providerProduct = serviceProviderProductRepository.findFirstByProductCodeAndServiceProviderBillerAndIsActiveAndIsDeleted(airtimePaymentDto.getType(),serviceProviderBiller.get(),true,false);
-                if(!providerProduct.isPresent())
-                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Product not available, can not process your bill payment", null);
+                Optional<ServiceProviderProduct> providerProduct = serviceProviderProductRepository.findFirstByTypeAndServiceProviderBillerAndIsActiveAndIsDeleted(airtimePaymentDto.getType(), serviceProviderBiller.get(), true, false);
+                if (!providerProduct.isPresent())
+                    return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Product not available, can not process your bill payment", null);
 
-                String paymentReferenceNumber =  quickTellerBillPaymentReferenceNumber();
-                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                String paymentReferenceNumber = quickTellerBillPaymentReferenceNumber();
+//                if (secureFund(request, serviceProvider.get().getName(), secureAmount, response.getData().getId(), userAccountNumber, paymentReferenceNumber, token, pin, eventId, BillCategoryType.UTILITY, newWalletResponse.getClr_bal_amt(), newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(new BigDecimal(airtimePaymentDto.getAmount()));
                     transactionDto.setBillerFee(billerFee);
                     transactionDto.setAccountNumber(userAccountNumber);
                     transactionDto.setConsumerFee(consumerFee);
-                    transactionDto.setSenderName(newWalletResponse.getAcct_name());
+//                    transactionDto.setSenderName(newWalletResponse.getAcct_name());
                     transactionDto.setServiceProviderProductBundle(null);
                     transactionDto.setServiceProviderBiller(serviceProviderBiller.get());
                     transactionDto.setServiceProviderProduct(providerProduct.get());
-                    transactionDto.setSenderEmail(response.getData().getEmail());
+                    transactionDto.setSenderEmail("");
                     try {
                         SendPaymentAdviceRequest sendPaymentAdviceRequest = new SendPaymentAdviceRequest();
                         sendPaymentAdviceRequest.setPaymentCode(providerProduct.get().getProductCode());
@@ -682,112 +677,112 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                         sendPaymentAdviceRequest.setCustomerId(airtimePaymentDto.getPhone());
                         sendPaymentAdviceRequest.setCustomerEmail(notificationEmail);
                         sendPaymentAdviceRequest.setRequestReference(paymentReferenceNumber);
-                        ApiResponse<?> paymentResponse = quickTellerService.makeBillsPaymentRequest(sendPaymentAdviceRequest,serviceProviderBiller.get().getServiceProviderCategory().getType());
-                        if(paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)){
-                            GeneralPaymentResponseDto paymentResponseDto = objectMapper.convertValue(paymentResponse.getData(),GeneralPaymentResponseDto.class);
-                            log.info(":::paymentResponseDto {}",paymentResponseDto);
+                        ApiResponse<?> paymentResponse = quickTellerService.makeBillsPaymentRequest(sendPaymentAdviceRequest, serviceProviderBiller.get().getServiceProviderCategory().getType());
+                        if (paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)) {
+                            GeneralPaymentResponseDto paymentResponseDto = objectMapper.convertValue(paymentResponse.getData(), GeneralPaymentResponseDto.class);
+                            log.info(":::paymentResponseDto {}", paymentResponseDto);
                             transactionDto.setServiceProviderReferenceNumber(paymentResponseDto.getProviderReference());
                             transactionDto.setNarration(paymentResponseDto.getTransactionMessage());
-                            if(paymentResponseDto.getTokenCode() != null)
+                            if (paymentResponseDto.getTokenCode() != null)
                                 transactionDto.setCustomerDataToken(paymentResponseDto.getTokenCode());
-                            log.info("::TransactionDto {}",transactionDto);
-                            TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.electricity);
+                            log.info("::TransactionDto {}", transactionDto);
+                            TransactionHistory history = saveTransactionDetail(transactionDto, "", paymentReferenceNumber, String.valueOf(1L), PaymentStatus.SUCCESSFUL, BillCategoryName.electricity);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                notificationService.pushSMSv2(history, token,notificationEmail, airtimePaymentDto.getPhone());
+                                notificationService.pushSMSv2(history, token, notificationEmail, airtimePaymentDto.getPhone());
                             });
                             return paymentResponse;
                         }
-                        saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.electricity);
+                        saveTransactionDetail(transactionDto, "", paymentReferenceNumber, String.valueOf(1L), PaymentStatus.FAILED, BillCategoryName.electricity);
                         //Todo: do reversal
-                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber, userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
                         log.error(":::Error billspayment :: " + ex.getLocalizedMessage());
-                        saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.electricity);
+                        saveTransactionDetail(transactionDto, "", paymentReferenceNumber, String.valueOf(1L), PaymentStatus.ERROR, BillCategoryName.electricity);
                         //Todo: do reversal
-                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber, userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
-                }
-                log.error("Unable to secure fund from user's account");
-                throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-            }else {
-                return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Provider Not yet Supported",null);
+//                }
+//                log.error("Unable to secure fund from user's account");
+//                throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
+            } else {
+                return new ApiResponse<>(false, ApiResponse.Code.BAD_REQUEST, "Oops!\n Provider Not yet Supported", null);
             }
-        }catch (Exception ex){
-            log.error("::Error makeAirtimePayment {}",ex.getLocalizedMessage());
+        } catch (Exception ex) {
+            log.error("::Error makeAirtimePayment {}", ex.getLocalizedMessage());
             ex.printStackTrace();
-            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process your request, try again later",null);
+            return new ApiResponse<>(false, ApiResponse.Code.BAD_REQUEST, "Oops!\n Unable to process your request, try again later", null);
         }
     }
 
 
     @Override @Transactional
-    public ApiResponse<?> makeEpinPayment(HttpServletRequest request,String token,Long serviceProviderBundleId, Long serviceProviderId, EpinPaymentDto epinPaymentDto,String userAccountNumber, String pin,Long serviceProviderBillerId) {
+    public ApiResponse<?> makeEpinPayment(HttpServletRequest request, String token, Long serviceProviderBundleId, Long serviceProviderId, EpinPaymentDto epinPaymentDto, String userAccountNumber, String pin, Long serviceProviderBillerId) {
         try {
-            AuthResponse response = authProxy.validateUserToken(token,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
-            if(!response.getStatus().equals(Boolean.TRUE))
-                return new ApiResponse<>(false,ApiResponse.Code.UNAUTHORIZED,"UNAUTHORIZED",null);
+            AuthResponse response = authProxy.validateUserToken(token, request.getHeader(Constants.CLIENT_ID), request.getHeader(Constants.CLIENT_TYPE));
+            if (!response.getStatus().equals(Boolean.TRUE))
+                return new ApiResponse<>(false, ApiResponse.Code.UNAUTHORIZED, "UNAUTHORIZED", null);
 
-            if(response.getData().isAdmin())
-                return new ApiResponse<>(false,ApiResponse.Code.FORBIDDEN,"Oops!\n You don't have access to this resources",null);
+            if (response.getData().isAdmin())
+                return new ApiResponse<>(false, ApiResponse.Code.FORBIDDEN, "Oops!\n You don't have access to this resources", null);
 
-            Optional<ServiceProvider> serviceProvider = serviceProviderRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderId,true ,false);
-            if(!serviceProvider.isPresent())
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider not available",null);
+            Optional<ServiceProvider> serviceProvider = serviceProviderRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderId, true, false);
+            if (!serviceProvider.isPresent())
+                return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Service provider not available", null);
 
             Optional<ServiceProviderBiller> serviceProviderBiller = Optional.empty();
-            if(serviceProviderBillerId != null){
-                serviceProviderBiller = serviceProviderBillerRepository.findByIdAndServiceProviderIdAndIsActiveAndIsDeleted(serviceProviderBillerId,serviceProvider.get().getId(), true,false);
-                if(!serviceProviderBiller.isPresent())
-                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider biller not available",null);
+            if (serviceProviderBillerId != null) {
+                serviceProviderBiller = serviceProviderBillerRepository.findByIdAndServiceProviderIdAndIsActiveAndIsDeleted(serviceProviderBillerId, serviceProvider.get().getId(), true, false);
+                if (!serviceProviderBiller.isPresent())
+                    return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Service provider biller not available", null);
 
             }
 
             Optional<ServiceProviderProductBundle> serviceProviderProductBundle = Optional.empty();
-            if(serviceProviderBundleId != null){
-                serviceProviderProductBundle = serviceProviderProductBundleRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderBundleId,true,false);
-                if(!serviceProviderProductBundle.isPresent())
-                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider product bundle not available",null);
+            if (serviceProviderBundleId != null) {
+                serviceProviderProductBundle = serviceProviderProductBundleRepository.findByIdAndIsActiveAndIsDeleted(serviceProviderBundleId, true, false);
+                if (!serviceProviderProductBundle.isPresent())
+                    return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Service provider product bundle not available", null);
 
             }
 
             ServiceProviderCategory serviceProviderCategory;
-            if(serviceProviderBiller.isPresent()){
+            if (serviceProviderBiller.isPresent()) {
                 serviceProviderCategory = serviceProviderBiller.get().getServiceProviderCategory();
-            }else if(serviceProviderProductBundle.isPresent()){
+            } else if (serviceProviderProductBundle.isPresent()) {
                 serviceProviderCategory = serviceProviderProductBundle.get().getServiceProviderProduct().getServiceProviderBiller().getServiceProviderCategory();
-            }else {
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Service provider biller/bundle not found",null);
+            } else {
+                return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Service provider biller/bundle not found", null);
             }
 
-            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderCategory,serviceProvider.get(),true,false);
-            if(!providerCharge.isPresent())
-                return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Bill charges not found",null);
+            Optional<BillProviderCharge> providerCharge = billProviderChargeRepository.findByServiceProviderCategoryAndServiceProviderAndIsActiveAndIsDeleted(serviceProviderCategory, serviceProvider.get(), true, false);
+            if (!providerCharge.isPresent())
+                return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Bill charges not found", null);
 
             String notificationEmail;
-            if(epinPaymentDto.getEmail() != null && !epinPaymentDto.getEmail().isEmpty()){
+            if (epinPaymentDto.getEmail() != null && !epinPaymentDto.getEmail().isEmpty()) {
                 notificationEmail = epinPaymentDto.getEmail();
-            }else {
+            } else {
                 notificationEmail = response.getData().getEmail();
             }
 
-            if(serviceProvider.get().getName().toLowerCase().startsWith("baxi")){
+            if (serviceProvider.get().getName().toLowerCase().startsWith("baxi")) {
 
                 BigDecimal consumerFee = providerCharge.get().getConsumerCharges();
                 BigDecimal billerFee = providerCharge.get().getBillerCharges();
                 BigDecimal actualAmount = new BigDecimal(epinPaymentDto.getAmount());
-                BigDecimal secureAmount= actualAmount.add(consumerFee);
+                BigDecimal secureAmount = actualAmount.add(consumerFee);
                 BigDecimal secureAmountSentToBiller = actualAmount.add(billerFee);
                 String paymentReferenceNumber = baxiBillPaymentReferenceNumber();
                 String eventId = fetchBillEventId(serviceProvider.get().getName());
 
-                NewWalletResponse  newWalletResponse = fetchUserAccountDetail(request,userAccountNumber, token, false);
-                if(newWalletResponse == null)
-                    return new ApiResponse<>(false,ApiResponse.Code.NOT_FOUND,"Debit account not found",null);
+                NewWalletResponse newWalletResponse = fetchUserAccountDetail(request, userAccountNumber, token, false);
+                if (newWalletResponse == null)
+                    return new ApiResponse<>(false, ApiResponse.Code.NOT_FOUND, "Debit account not found", null);
 
-                if (secureFund(request,serviceProvider.get().getName(),secureAmount,response.getData().getId(),userAccountNumber,paymentReferenceNumber,token,pin,eventId,BillCategoryType.UTILITY,newWalletResponse.getClr_bal_amt(),newWalletResponse.getAcct_name())) {
+                if (secureFund(request, serviceProvider.get().getName(), secureAmount, response.getData().getId(), userAccountNumber, paymentReferenceNumber, token, pin, eventId, BillCategoryType.UTILITY, newWalletResponse.getClr_bal_amt(), newWalletResponse.getAcct_name())) {
                     TransactionDto transactionDto = new TransactionDto();
                     transactionDto.setAmount(new BigDecimal(epinPaymentDto.getAmount()));
                     transactionDto.setBillerFee(billerFee);
@@ -798,44 +793,44 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
                     transactionDto.setServiceProviderBiller(serviceProviderProductBundle.get().getServiceProviderProduct().getServiceProviderBiller());
                     transactionDto.setSenderEmail(response.getData().getEmail());
                     try {
-                        ApiResponse<?> paymentResponse = baxiService.requestEpinPayment(epinPaymentDto.getNumberOfPins(), epinPaymentDto.getAmount(), epinPaymentDto.getFixAmount(),epinPaymentDto.getType(),paymentReferenceNumber);
-                        if(paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)){
-                            GeneralPaymentResponseDto paymentResponseDto = objectMapper.convertValue(paymentResponse.getData(),GeneralPaymentResponseDto.class);
-                            log.info(":::Epin paymentResponseDto {}",paymentResponseDto);
+                        ApiResponse<?> paymentResponse = baxiService.requestEpinPayment(epinPaymentDto.getNumberOfPins(), epinPaymentDto.getAmount(), epinPaymentDto.getFixAmount(), epinPaymentDto.getType(), paymentReferenceNumber);
+                        if (paymentResponse.getCode().equals(ApiResponse.Code.SUCCESS)) {
+                            GeneralPaymentResponseDto paymentResponseDto = objectMapper.convertValue(paymentResponse.getData(), GeneralPaymentResponseDto.class);
+                            log.info(":::Epin paymentResponseDto {}", paymentResponseDto);
                             transactionDto.setNarration(paymentResponseDto.getTransactionMessage());
                             transactionDto.setServiceProviderReferenceNumber(paymentResponseDto.getProviderReference());
                             transactionDto.setEpinData(paymentResponseDto.getPins());
-                            log.info("::TransactionDto {}",transactionDto);
-                            TransactionHistory history = saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.SUCCESSFUL,BillCategoryName.epin);
+                            log.info("::TransactionDto {}", transactionDto);
+                            TransactionHistory history = saveTransactionDetail(transactionDto, response.getData().getEmail(), paymentReferenceNumber, String.valueOf(response.getData().getId()), PaymentStatus.SUCCESSFUL, BillCategoryName.epin);
                             //Todo: Push sms/email request
                             CompletableFuture.runAsync(() -> {
-                                notificationService.pushSMSv2(history, token,notificationEmail, response.getData().getPhoneNumber());
+                                notificationService.pushSMSv2(history, token, notificationEmail, response.getData().getPhoneNumber());
                             });
                             return paymentResponse;
                         }
-                        saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.FAILED,BillCategoryName.epin);
+                        saveTransactionDetail(transactionDto, response.getData().getEmail(), paymentReferenceNumber, String.valueOf(response.getData().getId()), PaymentStatus.FAILED, BillCategoryName.epin);
                         //Todo: do reversal
-                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber, userAccountNumber);
                         return paymentResponse;
                     } catch (Exception ex) {
-                        log.error(":::Error Epin bundle {}",ex.getLocalizedMessage());
-                        saveTransactionDetail(transactionDto,response.getData().getEmail(),paymentReferenceNumber, String.valueOf(response.getData().getId()),PaymentStatus.ERROR,BillCategoryName.epin);
+                        log.error(":::Error Epin bundle {}", ex.getLocalizedMessage());
+                        saveTransactionDetail(transactionDto, response.getData().getEmail(), paymentReferenceNumber, String.valueOf(response.getData().getId()), PaymentStatus.ERROR, BillCategoryName.epin);
                         //Todo: do reversal
-                        reverseFailedBillPaymentTransaction(paymentReferenceNumber,userAccountNumber);
+                        reverseFailedBillPaymentTransaction(paymentReferenceNumber, userAccountNumber);
                         throw new ThirdPartyIntegrationException(HttpStatus.BAD_REQUEST, ex.getLocalizedMessage());
                     }
                 }
                 log.error("Unable to secure fund from user's account");
                 throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, Constants.ERROR_MESSAGE);
-            }else if(serviceProvider.get().getName().toLowerCase().startsWith("quick")){
-                return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Provider Not yet Supported",null);
-            }else {
-                return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Provider Not yet Supported",null);
+            } else if (serviceProvider.get().getName().toLowerCase().startsWith("quick")) {
+                return new ApiResponse<>(false, ApiResponse.Code.BAD_REQUEST, "Oops!\n Provider Not yet Supported", null);
+            } else {
+                return new ApiResponse<>(false, ApiResponse.Code.BAD_REQUEST, "Oops!\n Provider Not yet Supported", null);
             }
-        }catch (Exception ex){
-            log.error("::Error makeEpinPayment {}",ex.getLocalizedMessage());
+        } catch (Exception ex) {
+            log.error("::Error makeEpinPayment {}", ex.getLocalizedMessage());
             ex.printStackTrace();
-            return new ApiResponse<>(false,ApiResponse.Code.BAD_REQUEST,"Oops!\n Unable to process your request, try again later",null);
+            return new ApiResponse<>(false, ApiResponse.Code.BAD_REQUEST, "Oops!\n Unable to process your request, try again later", null);
         }
     }
 
@@ -1509,14 +1504,14 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
     }
 
 
-    private void processPayment(HttpServletRequest request,String providerName, BigDecimal amount, Long userId,String userAccountNumber,
+    private void processPayment(HttpServletRequest request, String providerName, BigDecimal amount, Long userId, String userAccountNumber,
                                 String transactionReference, String token, String pin, String eventId,
-                                BillCategoryType billType,Double accountBalance,String accountName)
+                                BillCategoryType billType, Double accountBalance, String accountName)
             throws ThirdPartyIntegrationException {
 
 //        NewWalletResponse mainWalletResponse2 = fetchUserAccountDetail(userAccountNumber, token, isAdmin);
 
-        checkAccountBalance(accountBalance,amount);
+        checkAccountBalance(accountBalance, amount);
 
         TransferFromWalletPojo trans = new TransferFromWalletPojo();
         trans.setAmount(amount);
@@ -1530,10 +1525,10 @@ public class CustomerBillPaymentServiceImpl implements BillPaymentService {
         trans.setSenderName(accountName);
         trans.setReceiverName(providerName);
         try {
-            ResponseEntity<String> response = walletProxy.transferFromUserToWaya(trans,token, pin,request.getHeader(Constants.CLIENT_ID),request.getHeader(Constants.CLIENT_TYPE));
-            log.info("::Transfer Response {}",response);
+            ResponseEntity<String> response = walletProxy.transferFromUserToWaya(trans, token, pin, request.getHeader(Constants.CLIENT_ID), request.getHeader(Constants.CLIENT_TYPE));
+            log.info("::Transfer Response {}", response);
         } catch (FeignException ex) {
-            log.error(":::Error processPayment {}",ex.getLocalizedMessage());
+            log.error(":::Error processPayment {}", ex.getLocalizedMessage());
             ex.printStackTrace();
             throw new ThirdPartyIntegrationException(HttpStatus.EXPECTATION_FAILED, getErrorMessage(ex.contentUTF8()));
         }

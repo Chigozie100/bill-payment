@@ -1,7 +1,10 @@
 package com.wayapay.thirdpartyintegrationservice.controller;
 
 import com.wayapay.thirdpartyintegrationservice.v2.dto.response.ApiResponse;
+import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.BaxiProxy;
 import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.BaxiService;
+import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.dto.DataBundleRequest;
+import com.wayapay.thirdpartyintegrationservice.v2.service.baxi.dto.DataBundleResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -13,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
 import static com.wayapay.thirdpartyintegrationservice.util.Constants.*;
@@ -62,8 +66,6 @@ public class BaxiController {
         ApiResponse<?> response =  baxiService.createBaxiServiceProviderProduct(request,request.getHeader(HEADER_STRING),serviceProviderId,serviceProviderCategoryId);
         return new ResponseEntity<>(response, HttpStatus.valueOf(response.getCode()));
     }
-
-
 
     @ApiImplicitParams({
             @ApiImplicitParam(name = "authorization", value = "token", paramType = "header", required = true, dataTypeClass = String.class)})

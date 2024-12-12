@@ -16,7 +16,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableJpaAuditing
 @EnableAsync
 @SpringBootApplication
-@EnableWayaAuthAuditApi
+//@EnableWayaAuthAuditApi
 public class ThirdpartyintegrationserviceApplication {
 
     public static void main(String[] args) {

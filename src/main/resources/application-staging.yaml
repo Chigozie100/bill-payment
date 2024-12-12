@@ -2,9 +2,9 @@ spring:
   application:
     name: bill-payment-service
   datasource:
-    url: jdbc:postgresql://postgresdb:5432/billspayment-service?useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
-    username: root
-    password: pONvagaJf3BTbu9l
+    url: jdbc:postgresql://localhost:5432/bills_payment?useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+    username: your_user
+    password: root
     initialization-mode: always
     driver-class-name: org.postgresql.Driver
     continue-on-error: true
@@ -28,22 +28,22 @@ kafka:
 
 
 server:
-  port: ${SERVER_PORT:80}
+  port: 5056
   error:
     include-message: always
   servlet:
     context-path: /billspayment-service
 
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: ${EUREKA_SERVER_URL:http://eureka-service/eureka}
-    service-url:
-      default-zone: ${EUREKA_SERVER_URL:http://eureka-service/eureka}
-  register-with-eureka: false
-  fetch-registry: false
-  instance:
-    preferIpAddress: true
+#eureka:
+#  client:
+#    serviceUrl:
+#      defaultZone: ${EUREKA_SERVER_URL:http://eureka-service/eureka}
+#    service-url:
+#      default-zone: ${EUREKA_SERVER_URL:http://eureka-service/eureka}
+#  register-with-eureka: false
+#  fetch-registry: false
+#  instance:
+#    preferIpAddress: true
 
 app:
   config:
@@ -62,8 +62,8 @@ app:
       transaction-ref-code: ${QUICK_TELLER_TRANSACTION_REF_CODE:1453}
       terminal-id: ${QUICK_TELLER_TERMIAL_ID:3DMO0001}
     baxi:
-      base-url: ${BAXI_BASE:https://payments.baxipay.com.ng/api/baxipay}
-      x-api-key: ${BAXI_X_API_KEY:5adea9-044a85-708016-7ae662-646d59}
+      base-url: ${BAXI_BASE:https://api.baxibap.com}
+      x-api-key: ${BAXI_X_API_KEY:T7Wi2Q7tHFkq6sxU5WaUSBIGg3ynb96Qi74RnAeY6ys=}
       agent-code: ${BAXI_AGENT_CODE:69}
       account-number: ${BAXI_ACCOUNT_NUMBER:0000000001}
     itex:
@@ -79,7 +79,7 @@ app:
     dispute:
       base-url: ${DISPUTE_BASE:https://services.staging.wayabank.ng/complaint-service/dispute}
     wallet:
-      base-url: ${CONFIG_BASEURL_TWALLET:https://services.staging.wayabank.ng/temporal-service}
+      base-url: http://localhost:9191/temporal-service
     auth:
       base-url: ${CONFIG_BASEURL_AUTH:https://services.staging.wayabank.ng/auth-service}
     notification:
@@ -104,3 +104,10 @@ feign:
 
 jwt:
   secret: ${JWT_SECRET:test}
+
+waya:
+  secure:
+    auth: AUTHENTICATION-SERVICE-API
+    authurl: https://services.staging.wayabank.ng/auth-service/api/v1
+    log: LOGGING-SERVICE-API
+    logurl: https://services.staging.wayabank.ng/logs-service/api/v1
